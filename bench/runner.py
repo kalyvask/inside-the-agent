@@ -57,14 +57,22 @@ def _load_catalog(path: str = "sae/features.yaml") -> dict:
     return catalog
 
 
-def _load_tasks(path: str) -> list[dict]:
+def _load_tasks(path: str, limit: int | None = None) -> list[dict]:
     p = Path(path)
     if p.is_dir():
         tasks = []
         for f in sorted(p.glob("*.json")):
-            tasks.append(json.loads(f.read_text()))
-        return tasks
-    return json.loads(p.read_text())
+            data = json.loads(f.read_text())
+            if isinstance(data, list):
+                tasks.extend(data)
+            else:
+                tasks.append(data)
+    else:
+        data = json.loads(p.read_text())
+        tasks = data if isinstance(data, list) else [data]
+    if limit:
+        tasks = tasks[:limit]
+    return tasks
 
 
 def _make_env():
@@ -78,6 +86,7 @@ def main(
     policy: str = typer.Option("baseline", help="Policy name from POLICY_REGISTRY"),
     tasks: str = typer.Option("shopgym/tasks", help="Path to task JSON or directory"),
     trials: int = typer.Option(3, help="Trials per task"),
+    limit: int = typer.Option(None, help="Run at most N tasks (for smoke tests)"),
     output: str = typer.Option("data/results", help="Output directory"),
     catalog_path: str = typer.Option("sae/features.yaml", help="Feature catalog YAML"),
 ):
@@ -89,7 +98,7 @@ def main(
     if not catalog:
         console.print("[yellow]features.yaml is empty — running with baseline-equivalent behavior[/yellow]")
 
-    task_list = _load_tasks(tasks)
+    task_list = _load_tasks(tasks, limit=limit)
     console.print(f"Loaded {len(task_list)} tasks, policy={policy}, trials={trials}")
 
     brain_call = _make_brain_call()

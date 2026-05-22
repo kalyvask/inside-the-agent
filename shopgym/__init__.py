@@ -1,9 +1,21 @@
 """
 ShopGym: deterministic mini-storefronts for controlled benchmark.
-
-Day 2 work: build storefront_template.py + 10 calibration tasks + 20 held-out.
 """
 
-from .storefront_template import StorefrontTemplate, ShopGymEnv
+from .storefront_template import (
+    ShopGymEnv,
+    StorefrontConfig,
+    Product,
+    render_storefront_html,
+    extract_page_summary,
+    read_env_state,
+)
 
-__all__ = ["StorefrontTemplate", "ShopGymEnv"]
+__all__ = [
+    "ShopGymEnv",
+    "StorefrontConfig",
+    "Product",
+    "render_storefront_html",
+    "extract_page_summary",
+    "read_env_state",
+]

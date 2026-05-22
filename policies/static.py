@@ -9,34 +9,53 @@ from sae.steering_controller import SteeringPlan
 
 def static_policy(features_dict: dict, step_idx: int, catalog: dict | None = None) -> SteeringPlan:
     """
-    Apply the same intervention every step. Catalog has the recommended deltas.
+    Apply the same intervention every step. Picks one feature per category.
 
-    Until catalog is populated, returns an empty plan (= baseline behavior).
+    Selection rule per category:
+      1. Prefer features with tuning_status == 'tuned' (calibrated by tune_deltas)
+      2. Then by confidence (high > medium > low)
+      3. Then by |contrast_score|
+      4. Then by absolute delta strength
+
+    Skips features without a usable delta (fragile/no-effect/zero).
     """
     plan = SteeringPlan()
     if not catalog:
         return plan
 
-    # Pick the strongest catalog entries from each category.
     by_category = {"behavioral": [], "epistemic": [], "task": [], "risk": []}
     for fid, entry in catalog.items():
         cat = entry.get("category")
         if cat in by_category:
             by_category[cat].append((fid, entry))
 
-    # Sort each category by confidence, take top entry.
+    def sort_key(item):
+        _, e = item
+        is_tuned = 1 if e.get("tuning_status") == "tuned" else 0
+        conf = {"high": 3, "medium": 2, "low": 1}.get(e.get("confidence", "low"), 0)
+        cs = abs(float(e.get("contrast_score", 0) or 0))
+        return (is_tuned, conf, cs)
+
+    # Compound steering scaling. Single-feature deltas tune cleanly at ±3-6,
+    # but applying 4 simultaneously (one per category) destroys coherence.
+    # Empirical scale of 0.35 keeps total |delta| around 4-5, preserving the
+    # model's outputs while still applying multi-axis pressure.
+    COMPOUND_SCALE = 0.35
+
     for cat, entries in by_category.items():
         if not entries:
             continue
-        entries.sort(key=lambda x: {"high": 3, "medium": 2, "low": 1}.get(x[1].get("confidence", "low"), 0), reverse=True)
-        fid, entry = entries[0]
-        delta = entry.get("recommended_delta", 0.0)
-        if delta == 0:
-            continue
-        plan.add(
-            feature_id=fid,
-            delta=delta,
-            label=entry.get("label", ""),
-            source="static",
-        )
+        entries.sort(key=sort_key, reverse=True)
+        # Pick first entry whose delta is usable.
+        for fid, entry in entries:
+            delta = entry.get("recommended_delta", 0.0)
+            if delta is None or delta == 0:
+                continue
+            plan.add(
+                feature_id=fid,
+                delta=float(delta) * COMPOUND_SCALE,
+                label=entry.get("label", ""),
+                source="static",
+            )
+            break  # one per category
     return plan

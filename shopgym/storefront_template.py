@@ -17,10 +17,21 @@ attribute as ground truth.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+# On Windows + Python 3.12, Playwright's subprocess transport requires the
+# ProactorEventLoop. Force the policy before any playwright import touches
+# the event loop.
+if sys.platform == "win32":
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    except Exception:
+        pass
 
 from playwright.sync_api import Browser, Page, sync_playwright
 

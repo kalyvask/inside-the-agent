@@ -83,7 +83,8 @@ class TrajectoryLogger:
         self.run_id = run_id
         self.path = Path(base_dir) / f"{run_id}.jsonl"
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._file = self.path.open("a", encoding="utf-8")
+        # Overwrite — one file per run_id. Avoids accumulating prior runs.
+        self._file = self.path.open("w", encoding="utf-8")
 
     def log(self, step: StepLog):
         self._file.write(step.to_json() + "\n")

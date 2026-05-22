@@ -121,10 +121,14 @@ class BrainServer:
             self._steering_handle.remove()
             self._steering_handle = None
 
-    def _install_steering(self, edits: dict, clamp_min: float = -10.0, clamp_max: float = 10.0):
+    def _install_steering(self, edits: dict, clamp_min: float = -100.0, clamp_max: float = 100.0):
         """
         Install a forward hook on layer 19 that applies feature-level deltas to
         the residual stream. Edits = {feature_id: delta}.
+
+        The clamp is a safety rail against runaway activations only; do not set
+        it tighter than Llama's typical residual range (±50-100). Tighter clamps
+        will silently destroy the model's internal state and produce garbled output.
         """
         import torch
 
@@ -146,6 +150,7 @@ class BrainServer:
         def steering_hook(module, input, output):
             hidden = output[0]  # (batch, seq, d_in)
             new_hidden = hidden + delta_activation
+            # Safety clamp wide enough to NOT alter normal residual values.
             new_hidden = torch.clamp(new_hidden, clamp_min, clamp_max)
             # output is a tuple; replace first element
             return (new_hidden,) + output[1:]
@@ -207,8 +212,8 @@ class BrainServer:
         max_new_tokens: int = 128,
         temperature: float = 0.2,
         top_k: int = TOP_K_DEFAULT,
-        clamp_min: float = -10.0,
-        clamp_max: float = 10.0,
+        clamp_min: float = -100.0,
+        clamp_max: float = 100.0,
     ):
         """
         Generate a response with optional steering.
