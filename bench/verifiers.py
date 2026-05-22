@@ -20,10 +20,14 @@ def _target_name(task: dict) -> str:
 
 
 def cart_contains_target_product(state: dict, task: dict) -> tuple[bool, float]:
-    """Pass if cart contains the target product AND nothing else."""
+    """Pass if cart contains target AND no other distinct products.
+
+    Multiple copies of the target are fine — only the absence of distractors
+    matters for the promotional-trap demo.
+    """
     target = _target_name(task)
     items = state.get("cart_items", [])
-    if items == [target]:
+    if items and all(i == target for i in items):
         return True, 1.0
     return False, 0.0
 

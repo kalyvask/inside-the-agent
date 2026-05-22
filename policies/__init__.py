@@ -13,6 +13,7 @@ from .static import static_policy
 from .dynamic import dynamic_policy
 from .random_policy import random_policy
 from .wrong_sign import wrong_sign_policy
+from .targeted import targeted_policy
 
 POLICY_REGISTRY = {
     "baseline": None,
@@ -20,7 +21,7 @@ POLICY_REGISTRY = {
     "dynamic": dynamic_policy,
     "random": random_policy,
     "wrong-sign": wrong_sign_policy,
-    "targeted": dynamic_policy,  # alias; pick whichever wins calibration
+    "targeted": targeted_policy,  # empirically validated by step0_calibration
 }
 
 __all__ = ["POLICY_REGISTRY", "static_policy", "dynamic_policy", "random_policy", "wrong_sign_policy"]

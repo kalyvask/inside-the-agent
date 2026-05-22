@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from agent.hud_publisher import HudPublisher
 from agent.prompts import build_chat_prompt
 from agent.trajectory import (
     FeatureLog,
@@ -76,6 +77,7 @@ class SAEAgent:
         policy: Callable | None = None,
         feature_catalog: dict[int, dict] | None = None,
         config: AgentConfig | None = None,
+        hud: HudPublisher | None = None,
     ):
         self.brain = brain_call
         self.env = env
@@ -83,6 +85,7 @@ class SAEAgent:
         self.catalog = feature_catalog or {}
         self.cfg = config or AgentConfig()
         self.controller = SteeringController()
+        self.hud = hud or HudPublisher(enabled=False)
 
     def _label_features(self, raw_features: list[dict]) -> list[FeatureLog]:
         out = []
@@ -110,6 +113,8 @@ class SAEAgent:
 
         try:
             for step_idx in range(self.cfg.max_steps):
+                self.hud.step_started(run_id, task["id"], step_idx)
+
                 # Build prompt
                 prompt = build_chat_prompt(
                     goal=task["instruction"],
@@ -117,11 +122,14 @@ class SAEAgent:
                     history=history,
                 )
 
-                # Read features first (always; required for policy)
-                # Then decide steering, then steered generate.
-                # For latency, we can do this in one call if brain-server supports it.
+                # Read features first
                 feats_only = self.brain(prompt=prompt, edits={}, mode="read")
                 feature_dict = {f["id"]: f["activation"] for f in feats_only["top_features"]}
+                labeled_features = self._label_features(feats_only["top_features"])
+                self.hud.features_read([
+                    {"id": f.id, "label": f.label, "activation": f.activation}
+                    for f in labeled_features
+                ])
 
                 # Apply policy
                 if self.policy is not None:
@@ -129,6 +137,11 @@ class SAEAgent:
                 else:
                     plan = self.controller.get_plan()  # empty plan = baseline
                 self.controller.set_plan(plan)
+                if plan.edits:
+                    self.hud.steering_applied([
+                        {"feature_id": e.feature_id, "label": e.label, "delta": e.delta, "source": e.source}
+                        for e in plan.edits
+                    ])
 
                 # Generate (with steering if policy populated the plan)
                 result = self.brain(
@@ -140,11 +153,13 @@ class SAEAgent:
 
                 action = parse_action(result["response"])
                 history.append(action)
+                self.hud.action_chosen(action)
 
                 # Execute
                 next_obs, reward, env_done = self.env.step(action)
                 total_reward += reward
                 done = env_done
+                self.hud.env_updated(next_obs.get("screenshot_path", ""))
 
                 # Log
                 step_log = StepLog(
@@ -186,12 +201,14 @@ class SAEAgent:
         finally:
             logger.close()
 
+        success = bool(total_reward > 0)
+        self.hud.task_done(success)
         return {
             "run_id": run_id,
             "task_id": task["id"],
             "policy": policy_name,
             "steps": step_idx + 1,
             "total_reward": total_reward,
-            "success": bool(total_reward > 0),
+            "success": success,
             "log_path": str(logger.path),
         }

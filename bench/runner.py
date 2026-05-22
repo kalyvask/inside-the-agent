@@ -11,6 +11,11 @@ Usage:
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
+import time
+from contextlib import contextmanager
 from pathlib import Path
 
 import typer
@@ -18,6 +23,7 @@ import yaml
 from rich.console import Console
 from rich.progress import Progress
 
+from agent.hud_publisher import HudPublisher
 from agent.llm_agent import AgentConfig, SAEAgent
 from policies import POLICY_REGISTRY
 
@@ -81,6 +87,33 @@ def _make_env():
     return ShopGymEnv(headless=True)
 
 
+@contextmanager
+def _maybe_start_ws_server(enable: bool):
+    """If enable, start ws_server as a subprocess and tear it down on exit."""
+    if not enable:
+        yield None
+        return
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
+    console.print("[cyan]Starting ws_server on http://localhost:8765 ...[/cyan]")
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "agent.ws_server"],
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    # Give uvicorn a moment to bind.
+    time.sleep(2.5)
+    try:
+        yield proc
+    finally:
+        console.print("[cyan]Stopping ws_server...[/cyan]")
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+
+
 @app.command()
 def main(
     policy: str = typer.Option("baseline", help="Policy name from POLICY_REGISTRY"),
@@ -89,6 +122,7 @@ def main(
     limit: int = typer.Option(None, help="Run at most N tasks (for smoke tests)"),
     output: str = typer.Option("data/results", help="Output directory"),
     catalog_path: str = typer.Option("sae/features.yaml", help="Feature catalog YAML"),
+    hud: bool = typer.Option(False, help="Spin up ws_server + publish events to HUD"),
 ):
     if policy not in POLICY_REGISTRY:
         console.print(f"[red]Unknown policy: {policy}. Available: {list(POLICY_REGISTRY)}[/red]")
@@ -104,6 +138,7 @@ def main(
     brain_call = _make_brain_call()
     env = _make_env()
     policy_fn = POLICY_REGISTRY[policy]
+    publisher = HudPublisher(enabled=hud)
 
     agent = SAEAgent(
         brain_call=brain_call,
@@ -111,19 +146,26 @@ def main(
         policy=policy_fn,
         feature_catalog=catalog,
         config=AgentConfig(),
+        hud=publisher,
     )
 
     results = []
     out_dir = Path(output)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    with Progress(console=console) as progress:
-        bar = progress.add_task(f"Running {policy}", total=len(task_list) * trials)
-        for task in task_list:
-            for seed in range(trials):
-                r = agent.run(task=task, seed=seed, policy_name=policy)
-                results.append(r)
-                progress.advance(bar)
+    with _maybe_start_ws_server(hud):
+        if hud:
+            console.print(
+                "[green]HUD: open hud/ in a second terminal "
+                "(NEXT_PUBLIC_WS_URL=ws://localhost:8765/feed npm run dev)[/green]"
+            )
+        with Progress(console=console) as progress:
+            bar = progress.add_task(f"Running {policy}", total=len(task_list) * trials)
+            for task in task_list:
+                for seed in range(trials):
+                    r = agent.run(task=task, seed=seed, policy_name=policy)
+                    results.append(r)
+                    progress.advance(bar)
 
     out_file = out_dir / f"{policy}.jsonl"
     with out_file.open("w") as f:
