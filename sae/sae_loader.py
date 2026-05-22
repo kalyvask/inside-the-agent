@@ -31,10 +31,12 @@ import torch.nn.functional as F
 
 
 KEY_ALIASES = {
-    "W_enc": ["W_enc", "encoder.weight", "encoder.W"],
-    "b_enc": ["b_enc", "encoder.bias", "encoder.b"],
-    "W_dec": ["W_dec", "decoder.weight", "decoder.W"],
-    "b_dec": ["b_dec", "decoder.bias", "decoder.b", "pre_bias"],
+    # Goodfire's released SAE uses nn.Linear naming: encoder_linear.weight etc.
+    # Other conventions: W_enc directly, or encoder.weight (deprecated).
+    "W_enc": ["encoder_linear.weight", "W_enc", "encoder.weight", "encoder.W"],
+    "b_enc": ["encoder_linear.bias", "b_enc", "encoder.bias", "encoder.b"],
+    "W_dec": ["decoder_linear.weight", "W_dec", "decoder.weight", "decoder.W"],
+    "b_dec": ["decoder_linear.bias", "b_dec", "decoder.bias", "decoder.b", "pre_bias"],
 }
 
 
@@ -46,12 +48,20 @@ def _find_key(state_dict: dict, candidates: list[str]) -> Optional[str]:
 
 
 class SAE(nn.Module):
-    """Standard ReLU SAE: features = ReLU(W_enc @ (x - b_dec) + b_enc)."""
+    """
+    SAE matching Goodfire's nn.Linear formulation:
+        features = ReLU(x @ W_enc + b_enc)
+        x_hat    = features @ W_dec + b_dec
+
+    No b_dec pre-subtraction from x (Goodfire's encoder is plain nn.Linear).
+    Use TopK wrapper externally if the model is TopK-trained (Goodfire L0 ≈ 91).
+    """
 
     def __init__(self, d_in: int, d_features: int, dtype=torch.bfloat16):
         super().__init__()
         self.d_in = d_in
         self.d_features = d_features
+        # Canonical storage: W_enc (d_in, d_features), W_dec (d_features, d_in).
         self.W_enc = nn.Parameter(torch.zeros(d_in, d_features, dtype=dtype))
         self.b_enc = nn.Parameter(torch.zeros(d_features, dtype=dtype))
         self.W_dec = nn.Parameter(torch.zeros(d_features, d_in, dtype=dtype))
@@ -59,7 +69,7 @@ class SAE(nn.Module):
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """x: (..., d_in) -> features: (..., d_features)"""
-        return F.relu((x - self.b_dec) @ self.W_enc + self.b_enc)
+        return F.relu(x @ self.W_enc + self.b_enc)
 
     def decode(self, features: torch.Tensor) -> torch.Tensor:
         """features: (..., d_features) -> x_hat: (..., d_in)"""
@@ -109,18 +119,23 @@ def load_goodfire_sae(
     if W_enc.ndim != 2:
         raise ValueError(f"W_enc has wrong shape: {W_enc.shape}")
 
-    # W_enc could be (d_in, d_features) or (d_features, d_in). Detect by larger dim.
+    # SAE expansion: d_features is typically much larger than d_in (e.g., 65536 vs 4096).
+    # nn.Linear stores weight as (out_features, in_features), so encoder_linear.weight
+    # has shape (d_features, d_in). Canonical W_enc is (d_in, d_features) for x @ W_enc.
     if W_enc.shape[0] > W_enc.shape[1]:
-        d_in, d_features = W_enc.shape
-    else:
+        # Got (d_features, d_in) — transpose to canonical form.
         d_features, d_in = W_enc.shape
         W_enc = W_enc.T
+    else:
+        # Got (d_in, d_features) — already canonical.
+        d_in, d_features = W_enc.shape
 
     print(f"[sae_loader] Inferred d_in={d_in}, d_features={d_features}")
 
     sae = SAE(d_in=d_in, d_features=d_features, dtype=dtype)
 
-    # Ensure decoder is (d_features, d_in).
+    # Decoder: nn.Linear(d_features, d_in) stores weight as (d_in, d_features).
+    # Canonical W_dec is (d_features, d_in) for features @ W_dec.
     W_dec = mapped["W_dec"]
     if W_dec.shape != (d_features, d_in):
         W_dec = W_dec.T

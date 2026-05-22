@@ -64,7 +64,7 @@ def _connect():
     """Returns a reference to the deployed BrainServer."""
     import modal
 
-    BrainServer = modal.Cls.lookup("inside-the-agent", "BrainServer")
+    BrainServer = modal.Cls.from_name("inside-the-agent", "BrainServer")
     return BrainServer()
 
 

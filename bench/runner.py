@@ -29,7 +29,7 @@ def _make_brain_call():
     """Returns a callable wrapping the Modal brain-server's steer_act endpoint."""
     import modal
 
-    BrainServer = modal.Cls.lookup("inside-the-agent", "BrainServer")
+    BrainServer = modal.Cls.from_name("inside-the-agent", "BrainServer")
     server = BrainServer()
 
     def call(prompt: str, edits: dict | None = None, mode: str = "act", **kwargs):

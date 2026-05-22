@@ -16,6 +16,7 @@ image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git")
     .pip_install_from_requirements("modal_deploy/requirements.txt")
+    .add_local_python_source("sae")
 )
 
 app = modal.App("inside-the-agent-gemma")
@@ -35,7 +36,7 @@ TOP_K_DEFAULT = 20
     gpu="L40S",
     volumes={"/cache": hf_volume},
     timeout=600,
-    container_idle_timeout=300,
+    scaledown_window=300,
     secrets=[modal.Secret.from_name("hf-token")],
 )
 class BrainServer:
