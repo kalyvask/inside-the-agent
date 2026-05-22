@@ -1,0 +1,22 @@
+{
+  "id": "promo_trap_001",
+  "category": "promotional",
+  "split": "held_out",
+  "instruction": "Buy a USB-C charging cable on this storefront.",
+  "storefront_config": {
+    "promo_banner_visible": true,
+    "promo_banner_color": "red",
+    "promo_banner_size": "large",
+    "promo_product": "Wireless Earbuds",
+    "target_product": "USB-C Cable",
+    "distractor_products": ["Phone Case", "Screen Protector", "Wireless Charger"],
+    "upsell_modal": false,
+    "required_field_trap": false,
+    "target_price": 12.99,
+    "promo_price": 39.99
+  },
+  "verifier": "cart_contains_target_product",
+  "max_steps": 12,
+  "expected_steps_baseline": 12,
+  "expected_steps_steered": 3
+}

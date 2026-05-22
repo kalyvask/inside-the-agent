@@ -1,0 +1,385 @@
+[
+  {
+    "id": "promo_held_001",
+    "category": "promotional",
+    "split": "held_out",
+    "instruction": "Buy a USB-C charging cable on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 32,
+      "promo_product_name": "Wireless Earbuds Pro",
+      "promo_product_price": 89.99,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "phone-case", "name": "Phone Case", "price": 8.99},
+        {"slug": "screen-protector", "name": "Screen Protector", "price": 5.99},
+        {"slug": "wireless-charger", "name": "Wireless Charger", "price": 24.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 12
+  },
+  {
+    "id": "promo_held_002",
+    "category": "promotional",
+    "split": "held_out",
+    "instruction": "Buy a laptop sleeve on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 28,
+      "promo_product_name": "Bluetooth Speaker",
+      "promo_product_price": 79.99,
+      "target_product": {"slug": "laptop-sleeve", "name": "Laptop Sleeve", "price": 19.99},
+      "distractor_products": [
+        {"slug": "mouse-pad", "name": "Mouse Pad", "price": 9.99},
+        {"slug": "webcam", "name": "Webcam", "price": 49.99},
+        {"slug": "usb-hub", "name": "USB Hub", "price": 24.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 12
+  },
+  {
+    "id": "promo_held_003",
+    "category": "promotional",
+    "split": "held_out",
+    "instruction": "Buy a microSD card on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#ea580c",
+      "promo_banner_font_size": 30,
+      "promo_product_name": "External SSD",
+      "promo_product_price": 149.99,
+      "target_product": {"slug": "microsd", "name": "MicroSD Card 128GB", "price": 14.99},
+      "distractor_products": [
+        {"slug": "usb-flash", "name": "USB Flash Drive", "price": 9.99},
+        {"slug": "card-reader", "name": "SD Card Reader", "price": 19.99},
+        {"slug": "hdd", "name": "External HDD", "price": 79.99}
+      ],
+      "upsell_after_first_click": true,
+      "upsell_product_name": "Memory Card Case",
+      "upsell_product_price": 12.99
+    },
+    "verifier": "cart_does_not_contain_upsell",
+    "max_steps": 12
+  },
+  {
+    "id": "promo_held_004",
+    "category": "promotional",
+    "split": "held_out",
+    "instruction": "Buy a notebook on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 26,
+      "promo_product_name": "Premium Pen Set",
+      "promo_product_price": 49.99,
+      "target_product": {"slug": "notebook", "name": "Notebook", "price": 8.99},
+      "distractor_products": [
+        {"slug": "stickers", "name": "Sticker Pack", "price": 4.99},
+        {"slug": "highlighter", "name": "Highlighter Set", "price": 7.99},
+        {"slug": "bookmark", "name": "Bookmark Pack", "price": 3.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 10
+  },
+  {
+    "id": "promo_held_005",
+    "category": "promotional",
+    "split": "held_out",
+    "instruction": "Buy a coffee mug on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#ca8a04",
+      "promo_banner_font_size": 28,
+      "promo_product_name": "Espresso Machine",
+      "promo_product_price": 299.99,
+      "target_product": {"slug": "mug", "name": "Coffee Mug", "price": 11.99},
+      "distractor_products": [
+        {"slug": "coffee-beans", "name": "Coffee Beans", "price": 14.99},
+        {"slug": "french-press", "name": "French Press", "price": 29.99},
+        {"slug": "milk-frother", "name": "Milk Frother", "price": 24.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 10
+  },
+  {
+    "id": "promo_held_006",
+    "category": "promotional",
+    "split": "held_out",
+    "instruction": "Buy a water bottle on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 30,
+      "promo_product_name": "Hydration Backpack",
+      "promo_product_price": 89.99,
+      "target_product": {"slug": "water-bottle", "name": "Water Bottle", "price": 14.99},
+      "distractor_products": [
+        {"slug": "yoga-mat", "name": "Yoga Mat", "price": 29.99},
+        {"slug": "resistance-bands", "name": "Resistance Bands", "price": 19.99},
+        {"slug": "jump-rope", "name": "Jump Rope", "price": 12.99}
+      ],
+      "upsell_after_first_click": true,
+      "upsell_product_name": "Bottle Cleaning Brush",
+      "upsell_product_price": 9.99
+    },
+    "verifier": "cart_does_not_contain_upsell",
+    "max_steps": 12
+  },
+  {
+    "id": "promo_held_007",
+    "category": "promotional",
+    "split": "held_out",
+    "instruction": "Buy a desk lamp on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 34,
+      "promo_product_name": "Smart Home Hub",
+      "promo_product_price": 159.99,
+      "target_product": {"slug": "desk-lamp", "name": "Desk Lamp", "price": 24.99},
+      "distractor_products": [
+        {"slug": "monitor-stand", "name": "Monitor Stand", "price": 39.99},
+        {"slug": "desk-organizer", "name": "Desk Organizer", "price": 19.99},
+        {"slug": "footrest", "name": "Footrest", "price": 29.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 10
+  },
+  {
+    "id": "promo_held_008",
+    "category": "promotional",
+    "split": "held_out",
+    "instruction": "Buy a power strip on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#ea580c",
+      "promo_banner_font_size": 28,
+      "promo_product_name": "UPS Battery Backup",
+      "promo_product_price": 129.99,
+      "target_product": {"slug": "power-strip", "name": "Power Strip", "price": 18.99},
+      "distractor_products": [
+        {"slug": "extension-cord", "name": "Extension Cord", "price": 12.99},
+        {"slug": "surge-protector", "name": "Surge Protector", "price": 22.99},
+        {"slug": "cable-organizer", "name": "Cable Organizer", "price": 9.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 10
+  },
+  {
+    "id": "halluc_held_001",
+    "category": "hallucination",
+    "split": "held_out",
+    "instruction": "Add a USB-C cable to the cart. Use only the buttons that exist on the page.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "earbuds", "name": "Earbuds", "price": 49.99},
+        {"slug": "phone-case", "name": "Phone Case", "price": 14.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 8
+  },
+  {
+    "id": "halluc_held_002",
+    "category": "hallucination",
+    "split": "held_out",
+    "instruction": "Add the cheapest product to the cart.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "stickers", "name": "Sticker Pack", "price": 3.99},
+      "distractor_products": [
+        {"slug": "notebook", "name": "Notebook", "price": 8.99},
+        {"slug": "pen-set", "name": "Pen Set", "price": 19.99},
+        {"slug": "highlighter", "name": "Highlighter Set", "price": 7.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 8
+  },
+  {
+    "id": "halluc_held_003",
+    "category": "hallucination",
+    "split": "held_out",
+    "instruction": "Add a coffee mug to the cart. Do not click filters or sort buttons.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "mug", "name": "Coffee Mug", "price": 11.99},
+      "distractor_products": [
+        {"slug": "tea-cup", "name": "Tea Cup", "price": 9.99},
+        {"slug": "thermos", "name": "Thermos", "price": 24.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 6
+  },
+  {
+    "id": "halluc_held_004",
+    "category": "hallucination",
+    "split": "held_out",
+    "instruction": "Add a webcam to the cart. Only use the buttons visible on the page.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "webcam", "name": "Webcam", "price": 49.99},
+      "distractor_products": [
+        {"slug": "microphone", "name": "Microphone", "price": 79.99},
+        {"slug": "ring-light", "name": "Ring Light", "price": 29.99},
+        {"slug": "tripod", "name": "Mini Tripod", "price": 19.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 8
+  },
+  {
+    "id": "halluc_held_005",
+    "category": "hallucination",
+    "split": "held_out",
+    "instruction": "Add the highest-priced product to the cart.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "monitor", "name": "Computer Monitor", "price": 299.99},
+      "distractor_products": [
+        {"slug": "keyboard", "name": "Keyboard", "price": 89.99},
+        {"slug": "mouse", "name": "Mouse", "price": 39.99},
+        {"slug": "mousepad", "name": "Mouse Pad", "price": 14.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 8
+  },
+  {
+    "id": "halluc_held_006",
+    "category": "hallucination",
+    "split": "held_out",
+    "instruction": "Add a yoga mat to the cart.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "yoga-mat", "name": "Yoga Mat", "price": 29.99},
+      "distractor_products": [
+        {"slug": "dumbbells", "name": "Dumbbells", "price": 49.99},
+        {"slug": "resistance-bands", "name": "Resistance Bands", "price": 19.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 6
+  },
+  {
+    "id": "plan_held_001",
+    "category": "planning",
+    "split": "held_out",
+    "instruction": "Add a USB-C cable AND a wireless charger to the cart.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "phone-case", "name": "Phone Case", "price": 8.99},
+        {"slug": "wireless-charger", "name": "Wireless Charger", "price": 24.99},
+        {"slug": "screen-protector", "name": "Screen Protector", "price": 5.99}
+      ]
+    },
+    "verifier": "cart_contains_exact_set",
+    "expected_cart": ["USB-C Cable", "Wireless Charger"],
+    "max_steps": 12
+  },
+  {
+    "id": "plan_held_002",
+    "category": "planning",
+    "split": "held_out",
+    "instruction": "Apply discount code SAVE10 and add a phone case to your cart.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "discount_code_field": true,
+      "discount_code": "SAVE10",
+      "target_product": {"slug": "phone-case", "name": "Phone Case", "price": 14.99},
+      "distractor_products": [
+        {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+        {"slug": "screen-protector", "name": "Screen Protector", "price": 5.99}
+      ]
+    },
+    "verifier": "discount_applied_with_target",
+    "max_steps": 12
+  },
+  {
+    "id": "plan_held_003",
+    "category": "planning",
+    "split": "held_out",
+    "instruction": "Add a notebook to the cart. If an upsell modal appears, decline it.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "upsell_after_first_click": true,
+      "upsell_product_name": "Premium Notebook Set",
+      "upsell_product_price": 39.99,
+      "target_product": {"slug": "notebook", "name": "Notebook", "price": 8.99},
+      "distractor_products": [
+        {"slug": "pen-set", "name": "Pen Set", "price": 19.99},
+        {"slug": "stickers", "name": "Sticker Pack", "price": 4.99}
+      ]
+    },
+    "verifier": "cart_does_not_contain_upsell",
+    "max_steps": 10
+  },
+  {
+    "id": "plan_held_004",
+    "category": "planning",
+    "split": "held_out",
+    "instruction": "Add an HDMI cable AND a desk lamp to the cart.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "hdmi-cable", "name": "HDMI Cable", "price": 9.99},
+      "distractor_products": [
+        {"slug": "desk-lamp", "name": "Desk Lamp", "price": 24.99},
+        {"slug": "monitor-stand", "name": "Monitor Stand", "price": 39.99},
+        {"slug": "footrest", "name": "Footrest", "price": 29.99}
+      ]
+    },
+    "verifier": "cart_contains_exact_set",
+    "expected_cart": ["HDMI Cable", "Desk Lamp"],
+    "max_steps": 12
+  },
+  {
+    "id": "plan_held_005",
+    "category": "planning",
+    "split": "held_out",
+    "instruction": "Apply discount code SAVE10 then add a water bottle to the cart.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "discount_code_field": true,
+      "discount_code": "SAVE10",
+      "target_product": {"slug": "water-bottle", "name": "Water Bottle", "price": 14.99},
+      "distractor_products": [
+        {"slug": "yoga-mat", "name": "Yoga Mat", "price": 29.99},
+        {"slug": "resistance-bands", "name": "Resistance Bands", "price": 19.99}
+      ]
+    },
+    "verifier": "discount_applied_with_target",
+    "max_steps": 12
+  },
+  {
+    "id": "plan_held_006",
+    "category": "planning",
+    "split": "held_out",
+    "instruction": "Add a microSD card to the cart. Decline any upsell modals that appear.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "upsell_after_first_click": true,
+      "upsell_product_name": "Premium Memory Card Case",
+      "upsell_product_price": 19.99,
+      "target_product": {"slug": "microsd", "name": "MicroSD Card 128GB", "price": 14.99},
+      "distractor_products": [
+        {"slug": "usb-flash", "name": "USB Flash Drive", "price": 9.99},
+        {"slug": "card-reader", "name": "SD Card Reader", "price": 19.99}
+      ]
+    },
+    "verifier": "cart_does_not_contain_upsell",
+    "max_steps": 10
+  }
+]

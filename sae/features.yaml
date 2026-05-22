@@ -1,0 +1,44 @@
+# Evidence-backed feature catalog.
+#
+# Each entry MUST include:
+#   id:                       integer feature ID in the Goodfire SAE
+#   label:                    human-readable concept name
+#   category:                 one of {behavioral, epistemic, task, risk}
+#   top_activation_examples:  3+ prompts where this feature fires strongly
+#   contrast_score:           activation on positive prompt vs neutral baseline
+#   causal_effect:            measured behavioral delta when steering +/-
+#   recommended_delta:        suggested amplify/suppress magnitude
+#   confidence:               one of {low, medium, high} — based on contrast clarity
+#   notes:                    anything else worth recording
+#
+# Day 3 work: discover via contrast prompts on Modal, fill this file in.
+# Day 4 work: verify causal_effect by running steered generations.
+#
+# Until Day 3, this file is a SCHEMA, not data. Do not trust the IDs below
+# until they're verified against the actual Goodfire checkpoint.
+
+behavioral: []
+  # Example schema (to be filled with real verified features):
+  # - id: 0
+  #   label: "planning / step-by-step reasoning"
+  #   category: "behavioral"
+  #   top_activation_examples:
+  #     - "Let me think about this step by step..."
+  #     - "First I should plan the actions..."
+  #     - "Before clicking, I need to consider..."
+  #   contrast_score: 0.0   # placeholder
+  #   causal_effect:
+  #     amplify_5x: "Output becomes more deliberate, more steps shown"
+  #     suppress_2x: "Output jumps directly to action"
+  #   recommended_delta: +5.0
+  #   confidence: low
+  #   notes: "PLACEHOLDER - replace after Day 3 discovery"
+
+epistemic: []
+  # Will hold: uncertainty, hallucination, confabulation, hedging features
+
+task: []
+  # Will hold: goal tracking, instruction following, completion detection
+
+risk: []
+  # Will hold: promotional bias, distraction, impulsivity, off-task attention

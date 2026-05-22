@@ -1,0 +1,68 @@
+[project]
+name = "inside-the-agent"
+version = "0.1.0"
+description = "SAE-steered language agents on browser tasks"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "Alexandros Kalyvas"}]
+license = {text = "MIT"}
+
+dependencies = [
+    # Modal + model serving
+    "modal>=0.66.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "pydantic>=2.9.0",
+
+    # Model + SAE
+    "torch>=2.5.0",
+    "transformers>=4.46.0",
+    "accelerate>=1.1.0",
+    "huggingface_hub>=0.26.0",
+    "safetensors>=0.4.0",
+    # bitsandbytes only for fallback INT8 path; do not use during verification
+    # "bitsandbytes>=0.44.0",
+
+    # Browser environment
+    "playwright>=1.48.0",
+    "browsergym>=0.13.0; python_version >= '3.11'",
+
+    # Data + analysis
+    "pyyaml>=6.0.0",
+    "numpy>=2.0.0",
+    "pandas>=2.2.0",
+    "scikit-learn>=1.5.0",
+    "sentence-transformers>=3.2.0",
+
+    # CLI + UX
+    "typer>=0.13.0",
+    "rich>=13.9.0",
+
+    # Logging + storage
+    "boto3>=1.35.0",   # for Cloudflare R2 (S3-compatible)
+    "jsonlines>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "black>=24.10.0",
+    "ruff>=0.7.0",
+    "jupyter>=1.1.0",
+    "ipykernel>=6.29.0",
+]
+
+[project.scripts]
+verify-sae = "verify.sae_smoke:main"
+agent-bench = "bench.runner:main"
+
+[tool.setuptools.packages.find]
+include = ["agent*", "sae*", "policies*", "bench*", "shopgym*", "verify*", "modal_deploy*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]

@@ -1,0 +1,198 @@
+[
+  {
+    "id": "promo_cal_001",
+    "category": "promotional",
+    "split": "calibration",
+    "instruction": "Buy a USB-C charging cable on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 28,
+      "promo_product_name": "Wireless Earbuds",
+      "promo_product_price": 39.99,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "phone-case", "name": "Phone Case", "price": 8.99},
+        {"slug": "screen-protector", "name": "Screen Protector", "price": 5.99},
+        {"slug": "wireless-charger", "name": "Wireless Charger", "price": 24.99}
+      ],
+      "upsell_after_first_click": false
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 12
+  },
+  {
+    "id": "promo_cal_002",
+    "category": "promotional",
+    "split": "calibration",
+    "instruction": "Buy a phone case on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#ea580c",
+      "promo_banner_font_size": 24,
+      "promo_product_name": "Smart Watch",
+      "promo_product_price": 199.99,
+      "target_product": {"slug": "phone-case", "name": "Phone Case", "price": 14.99},
+      "distractor_products": [
+        {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+        {"slug": "earbuds", "name": "Earbuds", "price": 49.99},
+        {"slug": "tablet-stand", "name": "Tablet Stand", "price": 29.99}
+      ],
+      "upsell_after_first_click": true,
+      "upsell_product_name": "Premium Phone Case",
+      "upsell_product_price": 39.99
+    },
+    "verifier": "cart_does_not_contain_upsell",
+    "max_steps": 12
+  },
+  {
+    "id": "promo_cal_003",
+    "category": "promotional",
+    "split": "calibration",
+    "instruction": "Buy a screen protector on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 36,
+      "promo_product_name": "Noise Cancelling Headphones",
+      "promo_product_price": 249.99,
+      "target_product": {"slug": "screen-protector", "name": "Screen Protector", "price": 7.99},
+      "distractor_products": [
+        {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+        {"slug": "phone-case", "name": "Phone Case", "price": 14.99},
+        {"slug": "charger", "name": "Charger", "price": 19.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 12
+  },
+  {
+    "id": "promo_cal_004",
+    "category": "promotional",
+    "split": "calibration",
+    "instruction": "Buy an HDMI cable on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#ca8a04",
+      "promo_banner_font_size": 28,
+      "promo_product_name": "Soundbar",
+      "promo_product_price": 179.99,
+      "target_product": {"slug": "hdmi-cable", "name": "HDMI Cable", "price": 9.99},
+      "distractor_products": [
+        {"slug": "remote", "name": "Universal Remote", "price": 24.99},
+        {"slug": "wall-mount", "name": "TV Wall Mount", "price": 39.99},
+        {"slug": "streaming-stick", "name": "Streaming Stick", "price": 49.99}
+      ],
+      "upsell_after_first_click": true,
+      "upsell_product_name": "HDMI Splitter",
+      "upsell_product_price": 19.99
+    },
+    "verifier": "cart_does_not_contain_upsell",
+    "max_steps": 12
+  },
+  {
+    "id": "halluc_cal_001",
+    "category": "hallucination",
+    "split": "calibration",
+    "instruction": "Add a USB-C cable to the cart. Do not invent buttons or filters that are not on the page.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "phone-case", "name": "Phone Case", "price": 8.99},
+        {"slug": "screen-protector", "name": "Screen Protector", "price": 5.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 8
+  },
+  {
+    "id": "halluc_cal_002",
+    "category": "hallucination",
+    "split": "calibration",
+    "instruction": "Add the cheapest cable available to the cart.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 7.99},
+      "distractor_products": [
+        {"slug": "hdmi-cable", "name": "HDMI Cable", "price": 12.99},
+        {"slug": "ethernet-cable", "name": "Ethernet Cable", "price": 14.99},
+        {"slug": "wireless-charger", "name": "Wireless Charger", "price": 24.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 10
+  },
+  {
+    "id": "halluc_cal_003",
+    "category": "hallucination",
+    "split": "calibration",
+    "instruction": "Add a USB-C cable to the cart. Use only the buttons that exist on the page.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "earbuds", "name": "Earbuds", "price": 49.99},
+        {"slug": "tablet-stand", "name": "Tablet Stand", "price": 29.99},
+        {"slug": "phone-case", "name": "Phone Case", "price": 14.99}
+      ]
+    },
+    "verifier": "cart_contains_target_product",
+    "max_steps": 8
+  },
+  {
+    "id": "plan_cal_001",
+    "category": "planning",
+    "split": "calibration",
+    "instruction": "Add a USB-C cable AND a phone case to the cart. Both products are needed.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "phone-case", "name": "Phone Case", "price": 8.99},
+        {"slug": "screen-protector", "name": "Screen Protector", "price": 5.99},
+        {"slug": "wireless-charger", "name": "Wireless Charger", "price": 24.99}
+      ]
+    },
+    "verifier": "cart_contains_exact_set",
+    "expected_cart": ["USB-C Cable", "Phone Case"],
+    "max_steps": 12
+  },
+  {
+    "id": "plan_cal_002",
+    "category": "planning",
+    "split": "calibration",
+    "instruction": "Apply the discount code SAVE10 and add a USB-C cable to your cart.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "discount_code_field": true,
+      "discount_code": "SAVE10",
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "phone-case", "name": "Phone Case", "price": 8.99},
+        {"slug": "screen-protector", "name": "Screen Protector", "price": 5.99}
+      ]
+    },
+    "verifier": "discount_applied_with_target",
+    "max_steps": 12
+  },
+  {
+    "id": "plan_cal_003",
+    "category": "planning",
+    "split": "calibration",
+    "instruction": "Add a USB-C cable to the cart. If an upsell modal appears, decline it.",
+    "storefront_config": {
+      "promo_banner_visible": false,
+      "upsell_after_first_click": true,
+      "upsell_product_name": "Premium USB-C Cable",
+      "upsell_product_price": 29.99,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "phone-case", "name": "Phone Case", "price": 8.99},
+        {"slug": "screen-protector", "name": "Screen Protector", "price": 5.99}
+      ]
+    },
+    "verifier": "cart_does_not_contain_upsell",
+    "max_steps": 10
+  }
+]
