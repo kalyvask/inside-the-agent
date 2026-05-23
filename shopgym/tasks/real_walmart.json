@@ -9,6 +9,7 @@
     "max_steps": 6,
     "verifier": "qualitative",
     "cookies_pre_accepted": true,
-    "notes": "Walmart homepage loads cleanly headlessly on most visits. If you hit the PRESS-AND-HOLD CAPTCHA (intermittent), pre-warm cookies: python warm_session.py --url https://www.walmart.com/ --out data/walmart_storage_state.json, then add 'storage_state': 'data/walmart_storage_state.json' to this task config. Homepage has: search bar + hero product carousel + 'Departments' distractor + 'Add' buttons — close to ShopGym's structure."
+    "storage_state": "data/walmart_storage_state.json",
+    "notes": "Walmart search results for usb-c-cable. Pre-warmed via warm_session.py — storage_state has the post-CAPTCHA, post-cookie-banner session. The page has an explicit Sponsored Powertek result at the top (the trap) and organic listings below — cleanest 'click sponsored vs scroll to organic' decision on a real US site. If cookies expire (~24h) re-warm via python warm_session.py --url https://www.walmart.com/search?q=usb+c+cable --out data/walmart_storage_state.json."
   }
 ]
