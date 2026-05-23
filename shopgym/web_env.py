@@ -185,7 +185,9 @@ class WebEnv:
     def step(self, action: dict) -> tuple[dict, float, bool]:
         self._step_count += 1
         if not self._page:
-            return self._observation(extra_text="NO PAGE"), 0.0, True
+            obs = self._observation(extra_text="NO PAGE")
+            obs["executed"] = False
+            return obs, 0.0, True
 
         kind = action.get("action", "")
         ok = self._dispatch(kind, action)
@@ -196,7 +198,12 @@ class WebEnv:
         max_steps = (self._task or {}).get("max_steps", 8)
         done = self._step_count >= max_steps or kind == "done"
         reward = 0.0
-        return self._observation(extra_text="" if ok else f"INVALID ACTION: {kind}"), reward, done
+        # v0.8: thread Playwright dispatch result into the observation so the
+        # agent loop's trajectory log can record `executed: bool` separately
+        # from `valid_action` (which only checks JSON parseability).
+        obs = self._observation(extra_text="" if ok else f"INVALID ACTION: {kind}")
+        obs["executed"] = bool(ok)
+        return obs, reward, done
 
     def _dispatch(self, kind: str, action: dict) -> bool:
         try:

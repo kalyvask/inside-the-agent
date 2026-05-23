@@ -41,15 +41,22 @@ class _MockBrain:
 
 
 class _MockEnv:
-    """Minimal env: returns one observation then terminates immediately."""
+    """Minimal env: returns one observation then terminates immediately.
+
+    `executed_flag` lets a test simulate Playwright dispatch failure (e.g.
+    click target not in DOM) so we can assert the trajectory log captures
+    that distinct from JSON-parse validity (v0.8 P1 fix)."""
+
+    def __init__(self, executed_flag: bool = True):
+        self.executed_flag = executed_flag
 
     def reset(self, task):
         return {"url": "test://noop", "page_summary": "PAGE", "screenshot_path": ""}
 
     def step(self, action):
-        return ({"url": "test://noop", "page_summary": "PAGE", "screenshot_path": ""},
-                0.0,
-                True)  # done after one step
+        obs = {"url": "test://noop", "page_summary": "PAGE",
+               "screenshot_path": "", "executed": self.executed_flag}
+        return (obs, 0.0, True)  # done after one step
 
 
 def test_noise_policy_routes_to_noise_endpoint():

@@ -257,6 +257,11 @@ class SAEAgent:
                     ],
                     result=ResultLog(
                         valid_action=(action.get("action") != "invalid"),
+                        # v0.8: read execution flag from the env's observation
+                        # (set in shopgym/{storefront_template,web_env}.step).
+                        # Default True so policies parsing as valid count as
+                        # executed unless the env explicitly flags otherwise.
+                        executed=bool(next_obs.get("executed", True)),
                         reward=reward,
                         done=env_done,
                     ),

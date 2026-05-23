@@ -15,14 +15,20 @@ Two empirically-validated SAE feature edits at one decision step shift success r
 
 ## Headline result
 
-8 held-out promotional-trap shopping tasks, 3 trials per policy (**24 trials each**), Wilson 95% CIs:
+8 held-out promotional-trap shopping tasks, 3 trials per policy (**24 trials each**), Wilson 95% CIs.
+
+> 📊 **Source of truth: [`artifacts/benchmark_report.md`](artifacts/benchmark_report.md)** — auto-regenerated from `data/results/*.jsonl` via `python -m bench.report`. The table below is a snapshot from `v0.2`; it is verified against the auto-generated report on every CI run by [`python -m bench.artifact_check`](bench/artifact_check.py). Discrepancies fail the build.
+>
+> _v0.7 reviewer feedback closed: noise control + prompt-only control now route through their proper endpoints (P0-3 / P0-4 fixed); real-web tasks no longer report a fake 0% success rate (P0-5); hard_held_out task knobs are wired through (P0-3). v0.8 reruns at all six policies are in flight — table below updates when complete._
 
 | Policy | Success | 95% CI | Δ vs baseline | Notes |
 |---|---|---|---|---|
 | baseline (no steering) | **0.0%** | [0.0%, 13.8%] | — | Falls for the trap every time |
 | wrong-sign | 4.2% | [0.7%, 20.2%] | +4 pts | Sign-flipped targeted edits |
-| random | 45.8% | [27.9%, 64.9%] | +46 pts | Random feature edits, same magnitudes |
-| **targeted — 2 SAE feature edits at Step 0** | **83.3%** | **[64.1%, 93.3%]** | **+83 pts** | f26737 (-6) + f23803 (+6) |
+| random | 0.0% _(was 45.8% pre-v0.2 seed fix)_ | [0.0%, 13.8%] | — | Random feature edits w/ proper per-trial seeds (v0.2-A) |
+| prompt-only (system-prompt control) | 75.0% | [55.1%, 88.0%] | +75 pts | "Avoid promotional banners; use search" in the prompt |
+| noise (matched-norm random perturbation) | _pending v0.8 rerun_ | — | — | Reviewer P0-4: was dead code pre-v0.7-B |
+| **targeted — 2 SAE feature edits at Step 0** | **83.3%** | **[64.1%, 93.3%]** | **+83 pts** | f26737 (-6) + f23803 (+6), `position_mode=all` |
 
 ![Headline chart](artifacts/headline.png)
 

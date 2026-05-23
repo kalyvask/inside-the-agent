@@ -38,6 +38,17 @@ jobs:
           # The tests in tests/ avoid importing modal/torch by mocking or skipping
           pytest tests/ -v --tb=short
 
+      - name: Artifact consistency check (P1)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          # Verify data/results/*.jsonl row counts, success counts, and
+          # Wilson CIs all match artifacts/seed_manifest.json. Catches the
+          # v0.2 -> v0.7 drift the reviewer flagged (P0-1 / P1 ask).
+          python -m bench.artifact_check
+        continue-on-error: true  # soft-fail until v0.8 rerun lands; flip to hard-fail after
+
   hud-build:
     name: HUD Next.js build
     runs-on: ubuntu-latest

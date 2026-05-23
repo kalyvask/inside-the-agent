@@ -465,7 +465,13 @@ class ShopGymEnv:
             reward = float(self._check_verifier())
             done = True
 
-        return self._observation(), reward, done
+        # v0.8: expose Playwright dispatch result so the agent loop can log
+        # whether the action ACTUALLY ran in the browser (vs. just parsed
+        # cleanly as JSON). Reviewer P1: "valid_action mostly means JSON
+        # parsed, not Playwright action succeeded."
+        obs = self._observation()
+        obs["executed"] = bool(valid)
+        return obs, reward, done
 
     def close(self):
         if self._page is not None:

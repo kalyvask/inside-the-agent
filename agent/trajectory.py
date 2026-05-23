@@ -51,7 +51,14 @@ class SteeringLog:
 
 @dataclass
 class ResultLog:
+    # v0.1: did the model emit syntactically valid JSON?
     valid_action: bool = True
+    # v0.8: did the browser env (ShopGym / WebEnv) actually execute the
+    # dispatched action? Reviewer P1: valid_action conflated "JSON parsed"
+    # with "Playwright clicked / typed something". They're now separate.
+    # A click on a selector that doesn't exist gets executed=False even
+    # though valid_action=True.
+    executed: bool = True
     reward: float = 0.0
     done: bool = False
     error: str = ""
