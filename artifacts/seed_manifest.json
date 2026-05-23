@@ -129,6 +129,65 @@
           0.829
         ]
       },
+      "dynamic": {
+        "successes": 6,
+        "trials": 60,
+        "rate": 0.1,
+        "wilson_ci_95": [
+          0.047,
+          0.201
+        ]
+      },
+      "failure-mining": {
+        "successes": 35,
+        "trials": 60,
+        "rate": 0.583,
+        "wilson_ci_95": [
+          0.457,
+          0.699
+        ]
+      }
+    },
+    "policy_success_rates_by_scope": {
+      "all": {
+        "successes": 34,
+        "trials": 60,
+        "rate": 0.567,
+        "wilson_ci_95": [
+          0.441,
+          0.684
+        ]
+      },
+      "all_prompt": {
+        "successes": 22,
+        "trials": 60,
+        "rate": 0.367,
+        "wilson_ci_95": [
+          0.256,
+          0.493
+        ]
+      },
+      "last_prompt_only": {
+        "successes": 12,
+        "trials": 60,
+        "rate": 0.2,
+        "wilson_ci_95": [
+          0.118,
+          0.318
+        ]
+      }
+    }
+  },
+  "caveats": [
+    "Steering hook is not position-aware. It applies to entire layer-19 residual during the steered forward pass, not just the action-generation token.",
+    "Feature labels (e.g. 'invented_action_supp') are functional, not semantic. They describe behavioral effect, not what concept the feature encodes.",
+    "Lenient verifier accepts multiple copies of the target in cart. Strict verifier (cart_contains_target_exactly_once) added in v0.2.",
+    "ShopGym page summary lists target product from step 0; benchmark tests trap-avoidance, not target-discovery.",
+    "HUD steering controls are placeholders in v0.1. v0.2 plans a HUD-to-runner command channel."
+  ],
+  "demo_captures": {
+    "_note": "Single-trial captures from real public sites (ebay, walmart, google shopping). Not part of the canonical held-out benchmark. Kept here for traceability of the HUD replay trajectories.",
+    "policy_runs": {
       "static": {
         "successes": 0,
         "trials": 1,
@@ -219,24 +278,6 @@
           0.793
         ]
       },
-      "dynamic": {
-        "successes": 6,
-        "trials": 60,
-        "rate": 0.1,
-        "wilson_ci_95": [
-          0.047,
-          0.201
-        ]
-      },
-      "failure-mining": {
-        "successes": 35,
-        "trials": 60,
-        "rate": 0.583,
-        "wilson_ci_95": [
-          0.457,
-          0.699
-        ]
-      },
       "targeted_google_targeted": {
         "successes": 0,
         "trials": 1,
@@ -247,7 +288,7 @@
         ]
       }
     },
-    "policy_success_rates_by_scope": {
+    "scope_runs": {
       "cf": {
         "successes": 1,
         "trials": 1,
@@ -320,24 +361,6 @@
           0.793
         ]
       },
-      "all": {
-        "successes": 34,
-        "trials": 60,
-        "rate": 0.567,
-        "wilson_ci_95": [
-          0.441,
-          0.684
-        ]
-      },
-      "all_prompt": {
-        "successes": 22,
-        "trials": 60,
-        "rate": 0.367,
-        "wilson_ci_95": [
-          0.256,
-          0.493
-        ]
-      },
       "google_targeted": {
         "successes": 0,
         "trials": 1,
@@ -346,23 +369,7 @@
           0,
           0.793
         ]
-      },
-      "last_prompt_only": {
-        "successes": 12,
-        "trials": 60,
-        "rate": 0.2,
-        "wilson_ci_95": [
-          0.118,
-          0.318
-        ]
       }
     }
-  },
-  "caveats": [
-    "Steering hook is not position-aware. It applies to entire layer-19 residual during the steered forward pass, not just the action-generation token.",
-    "Feature labels (e.g. 'invented_action_supp') are functional, not semantic. They describe behavioral effect, not what concept the feature encodes.",
-    "Lenient verifier accepts multiple copies of the target in cart. Strict verifier (cart_contains_target_exactly_once) added in v0.2.",
-    "ShopGym page summary lists target product from step 0; benchmark tests trap-avoidance, not target-discovery.",
-    "HUD steering controls are placeholders in v0.1. v0.2 plans a HUD-to-runner command channel."
-  ]
+  }
 }

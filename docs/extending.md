@@ -251,8 +251,7 @@ The `bench/` and `verify/` folders are independent CLIs:
 
 - `bench/report.py` regenerates `artifacts/benchmark_report.md` from `data/results/*.jsonl`.
 - `bench/make_chart.py` regenerates `artifacts/headline.png`.
-- `bench/artifact_check.py` is the CI gate.
-- `bench/compute_strict.py` reconstructs strict-cart from action histories.
+- `bench/artifact_check.py` is the CI gate (hard-fails on drift between manifest and `artifacts/results/`).
 - `verify/feature_characterize.py` runs logit-lens + decoder-similarity.
 - `verify/corpus_probe_large.py` (v0.22) does the 1k-prompt naturalistic probe.
 

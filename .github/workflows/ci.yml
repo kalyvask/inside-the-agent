@@ -38,16 +38,16 @@ jobs:
           # The tests in tests/ avoid importing modal/torch by mocking or skipping
           pytest tests/ -v --tb=short
 
-      - name: Artifact consistency check (P1)
+      - name: Artifact consistency check
         env:
           PYTHONPATH: ${{ github.workspace }}
           PYTHONIOENCODING: utf-8
         run: |
-          # Verify data/results/*.jsonl row counts, success counts, and
-          # Wilson CIs all match artifacts/seed_manifest.json. Catches the
-          # v0.2 -> v0.7 drift the reviewer flagged (P0-1 / P1 ask).
+          # v0.24-D: hard-fail on drift. Validates artifacts/results/*.jsonl
+          # (committed canonical snapshot) against artifacts/seed_manifest.json.
+          # data/results/ is gitignored scratch space; this gate reads only
+          # what has been promoted into the artifact set.
           python -m bench.artifact_check
-        continue-on-error: true  # soft-fail until v0.8 rerun lands; flip to hard-fail after
 
   hud-build:
     name: HUD Next.js build

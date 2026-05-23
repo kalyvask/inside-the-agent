@@ -4,7 +4,9 @@
 
 A fully open reference implementation of **SAE-feature-level steering on a browser agent**, with a deterministic benchmark and a live interpretability telemetry surface.
 
-Two empirically-validated SAE feature edits at one decision step shift success rate by **+83 percentage points** on a held-out promotional-trap benchmark, with a sign-flipped control dropping back into baseline's confidence interval. The features themselves are *under-characterized* — we name them by feature ID, not by semantic label, until they are independently validated.
+Two SAE feature edits at one decision step shift overall success rate from **10% (baseline) to 57% (targeted)** on a 60-trial held-out suite. The lift is concentrated where the features were calibrated: **promotional traps 0 → 79%** and **hallucination tasks 0 → 67%**. On planning tasks the same edits **hurt the agent (33 → 17%)** — a real cost we surface, not bury. A prompt-only control beats targeted overall at **73%** by doing well across all categories, but loses to it on promotional traps. Direction-flipped, random, and matched-norm-noise controls all stay near baseline.
+
+The honest framing: this is not a "best browser agent" claim. It is a working reference for runtime SAE interventions, an observability + controllability surface for agentic LLMs, and a benchmark that surfaces both wins and failure modes by construction. Features themselves are *under-characterized*; we name them by feature ID and logit-lens-derived behavior tag (`f26737_ui_selection_vocab`, `f23803_distraction_avoidance_vocab`) until independent validation lands.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -54,7 +56,7 @@ Three honest findings:
 - **Random at 15% is the corrected number.** v0.1 reported random at 45.8% due to a fixed-seed bug; v0.2-A fixed it; v0.8 confirms random doesn't get lucky much.
 - **Targeted at 57% is the average across three categories.** See breakdown above for the mechanistic story.
 - **Position-mode caveat.** The 57% / 79% uses `position_mode=all` (delta applied at every position). The surgical `position_mode=last_prompt_only` (Modal default) gives **0%** in our tests — the effect is real and causal, not yet localized to a single token. Scope-comparison table in `artifacts/benchmark_report.md`.
-- **Verifier caveat.** Headline rate uses the lenient verifier (cart contains target). A strict-cart pass — "exactly once, no other product polluted" — is wired (`bench/compute_strict.py`) and on the roadmap as the canonical headline.
+- **Verifier caveat.** Headline rate uses the lenient verifier (cart contains target). A strict-cart pass that requires "exactly once, no other product polluted" is being captured directly in the runner (v0.22 P2, see roadmap) and will become the canonical headline once the full rerun lands. The earlier approximate strict from action history was removed in v0.24-D after it was found to count click intents rather than executed adds.
 
 This is *not* a claim that we found "the promotional bias feature." It's a claim that **two specific SAE features, intervened at the first decision step, causally shift the agent's success rate — strongly on the calibration distribution, with measurable cross-domain transfer, AND with a documented failure mode on planning tasks**. The features are characterized via three independent methods (logit lens, corpus probe, ablation) and labelled by what the methods agree on — `f26737_ui_selection_vocab` and `f23803_distraction_avoidance_vocab`. Full evidence in [`docs/feature_characterization.md`](docs/feature_characterization.md).
 
@@ -78,7 +80,7 @@ This project wires them into a working agent as a **runtime intervention surface
 
 - **Interactive cockpit** for browser-agent SAE interventions. Live SAE feature activations, an effect-size strip per active edit (source-coded colors), a command queue for HUD-issued edits that drain at the next agent step, a baseline-vs-current action diff, a 3-second viewport-ring pulse + source badge whenever a steering edit lands, and a **live counterfactual** at every steering step (`WITHOUT EDIT` row showing what the same model on the same prompt would have done without your intervention).
 - **Trajectory replayer + in-HUD browser** (v0.21). A `▶ REPLAY SAVED` button lists every past `data/trajectories/*.jsonl` and replays it through the same cockpit at controllable speed — zero Modal cost, deterministic playback. Both `▶ TARGETED` and `▷ baseline` run buttons are in the HUD too, so the entire demo flow lives inside the browser.
-- **Reproducible testbed**. `bench/artifact_check.py` verifies that every published number in `seed_manifest.json` matches `data/results/*.jsonl` (fails CI on drift). `bench/report.py` regenerates `artifacts/benchmark_report.md`. `bench/make_chart.py` regenerates `artifacts/headline.png` from raw artifacts. `bench/compute_strict.py` reconstructs strict-cart from action histories; v0.22 also captures strict directly in the runner.
+- **Reproducible testbed**. `bench/artifact_check.py` verifies that every published number in `seed_manifest.json` matches the committed `artifacts/results/*.jsonl` snapshot. Hard-fails CI on drift (v0.24-D). `bench/report.py` regenerates `artifacts/benchmark_report.md`. `bench/make_chart.py` regenerates `artifacts/headline.png` from raw artifacts. Strict-cart canonical (exactly-one-target, no pollution) is being captured directly in the runner and is on the roadmap.
 - **11 controlled policies** in `POLICY_REGISTRY`:
   - `baseline` / `static` / `random` / `wrong-sign` / `noise` (controls)
   - `targeted` — 2 contrast-derived SAE features at step 0
@@ -204,9 +206,8 @@ python -m bench.rerun_p0_2_scope   # targeted at last_prompt_only + all_prompt (
 python -m bench.v0_8_finalize
 
 # Inspect / verify the artifacts
-python -m bench.artifact_check     # CI gate: verifies manifest matches data/results
+python -m bench.artifact_check     # CI gate: hard-fails on drift between manifest and artifacts/results
 python -m bench.report             # regenerates artifacts/benchmark_report.md
-python -m bench.compute_strict     # approximate strict-cart from action history
 ```
 
 ### Watch the HUD live (for the demo)
@@ -283,7 +284,6 @@ inside-the-agent/
 │   ├── artifact_check.py       CI gate: verifies manifest ↔ jsonl consistency
 │   ├── report.py               regenerates artifacts/benchmark_report.md
 │   ├── make_chart.py           regenerates artifacts/headline.png (v0.20)
-│   ├── compute_strict.py       approximate strict-cart from action histories
 │   └── verifiers.py            lenient + strict + upsell verifiers
 ├── hud/                  Next.js cockpit on localhost:3000
 │   ├── app/page.tsx            layout + event handlers
@@ -308,8 +308,9 @@ inside-the-agent/
 │                         verifiers, task config, noise routing, executed
 │                         tracking, ...)
 ├── notebooks/            explore_demo_pages.py (12-site survey)
-├── artifacts/            committed subset of data/: seed_manifest.json,
-│                         headline.png, benchmark_report.md, strict_rates.json,
+├── artifacts/            committed canonical subset of data/:
+│                         seed_manifest.json, headline.png, benchmark_report.md,
+│                         results/*.jsonl (10 benchmark policy snapshots),
 │                         sample_trajectory_*.jsonl
 ├── record_demo.py        one-command live demo launcher (clear + warm + countdown + fire)
 ├── warm_session.py       headed-Chrome cookie warm-up for bot-walled sites

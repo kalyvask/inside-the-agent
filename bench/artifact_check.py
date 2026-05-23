@@ -35,7 +35,12 @@ from rich.console import Console
 from rich.table import Table
 
 ARTIFACTS_DIR = Path("artifacts")
-RESULTS_DIR = Path("data/results")
+# v0.24-D: prefer the committed artifacts/results/ snapshot so CI on a clean
+# clone can verify numbers without needing data/results/ (which is gitignored
+# scratch space for new runs). Falls back to data/results/ for local dev.
+COMMITTED_RESULTS_DIR = ARTIFACTS_DIR / "results"
+SCRATCH_RESULTS_DIR = Path("data/results")
+RESULTS_DIR = COMMITTED_RESULTS_DIR if COMMITTED_RESULTS_DIR.exists() else SCRATCH_RESULTS_DIR
 MANIFEST_PATH = ARTIFACTS_DIR / "seed_manifest.json"
 
 console = Console()
