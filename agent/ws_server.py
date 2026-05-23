@@ -171,6 +171,97 @@ class StartRunRequest(BaseModel):
     output_suffix: str = "hud"
 
 
+class ReplayRequest(BaseModel):
+    """v0.21 HUD-triggered trajectory replay."""
+    trajectory_path: str
+    step_delay: float = 1.5
+    qualitative: bool = False
+
+
+@app.get("/trajectories")
+async def list_trajectories():
+    """v0.21: list all trajectory files under data/trajectories/.
+
+    The HUD's trajectory-browser sidebar calls this on mount to populate
+    a clickable list. Each entry includes the file path + parsed metadata
+    (task_id, policy, n_steps, mtime) so the user can pick a recording
+    to replay without leaving the cockpit.
+    """
+    from pathlib import Path
+    import json as _json
+    traj_dir = Path("data/trajectories")
+    if not traj_dir.exists():
+        return {"trajectories": []}
+    entries = []
+    for path in sorted(traj_dir.glob("*.jsonl"), key=lambda p: -p.stat().st_mtime):
+        try:
+            first_line = ""
+            n = 0
+            with path.open("r", encoding="utf-8") as f:
+                for i, line in enumerate(f):
+                    if i == 0:
+                        first_line = line
+                    n += 1
+            if not first_line:
+                continue
+            d = _json.loads(first_line)
+            entries.append({
+                "path": str(path),
+                "name": path.name,
+                "task_id": d.get("task_id", "?"),
+                "policy": d.get("policy", "?"),
+                "n_steps": n,
+                "mtime": path.stat().st_mtime,
+                "size": path.stat().st_size,
+            })
+        except Exception:
+            continue
+    return {"trajectories": entries[:200]}  # cap to avoid huge payloads
+
+
+@app.post("/replay")
+async def replay_trajectory(req: ReplayRequest):
+    """v0.21: spawn `verify.replay_trajectory` as a subprocess that
+    publishes events back to this same ws_server. Returns immediately
+    with the spawned PID; events stream via /publish.
+
+    Use case: HUD's trajectory browser lets the user click a past
+    recording → server fires the replayer → cockpit visualizes the
+    saved run with no Modal cost."""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    if not Path(req.trajectory_path).exists():
+        return {"ok": False, "error": f"trajectory file not found: {req.trajectory_path}"}
+
+    env = {
+        **os.environ,
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUTF8": "1",
+        "HUD_PUBLISH": "1",
+    }
+    cmd = [
+        sys.executable, "-u", "-m", "verify.replay_trajectory",
+        req.trajectory_path,
+        "--step-delay", str(req.step_delay),
+    ]
+    # Default: don't spawn ws_server (we're already inside one), DO publish.
+    # Both are the typer defaults so no flags needed.
+    if req.qualitative:
+        cmd.append("--qualitative")
+    log_dir = Path("data/hud_runs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"replay_{int(time.time())}.log"
+    proc = subprocess.Popen(
+        cmd, env=env,
+        stdout=log_path.open("w", encoding="utf-8"),
+        stderr=subprocess.STDOUT,
+    )
+    return {"ok": True, "pid": proc.pid, "log_path": str(log_path)}
+
+
 @app.post("/start_run")
 async def start_run(req: StartRunRequest):
     """Spawn a bench.runner subprocess that publishes events back to this

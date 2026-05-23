@@ -98,6 +98,14 @@ def main(
     slow: bool = typer.Option(False, "--slow", help="Slow down to 2.5s/step for emphasis"),
     fast: bool = typer.Option(False, "--fast", help="Speed up to 0.6s/step"),
     show_verdict: bool = typer.Option(True, help="Show success/failure card at end"),
+    qualitative: bool = typer.Option(
+        False, "--qualitative",
+        help="Real-web tasks (eBay, Google Shopping, etc.) have no automated "
+             "verifier — emit verdict=None so the HUD shows 'task ended' "
+             "instead of a misleading SUCCESS/FAILURE. Auto-detected for "
+             "task_ids starting with 'google_', 'ebay_', 'aliexpress_', or "
+             "'walmart_' but the flag forces the behavior.",
+    ),
 ):
     """Replay a saved trajectory event-by-event to the HUD."""
     path = Path(trajectory)
@@ -128,7 +136,16 @@ def main(
         f"  task={task_id} policy={policy} delay={step_delay}s\n"
     )
 
-    final_success = bool(steps[-1].get("result", {}).get("reward", 0) > 0)
+    # v0.20: qualitative tasks have no verifier so reward stays 0 throughout;
+    # emit success=None (Verdict component renders neutral "task ended") if
+    # either the explicit flag is set or the task_id matches a known real-web
+    # prefix.
+    REAL_WEB_PREFIXES = ("google_", "ebay_", "aliexpress_", "walmart_", "target_", "bestbuy_")
+    is_qualitative = qualitative or any(task_id.startswith(p) for p in REAL_WEB_PREFIXES)
+    if is_qualitative:
+        final_success = None
+    else:
+        final_success = bool(steps[-1].get("result", {}).get("reward", 0) > 0)
 
     with _maybe_start_ws_server(hud):
         if hud:
@@ -221,10 +238,12 @@ def main(
                 ws_url,
                 publish,
             )
-            console.print(
-                f"\n[bold green]✓ SUCCESS[/bold green]" if final_success
-                else f"\n[bold red]✗ FAILURE[/bold red]"
-            )
+            if final_success is None:
+                console.print("\n[bold cyan]● TASK ENDED (qualitative, no verifier)[/bold cyan]")
+            elif final_success:
+                console.print("\n[bold green]✓ SUCCESS[/bold green]")
+            else:
+                console.print("\n[bold red]✗ FAILURE[/bold red]")
 
     console.print("[dim]Replay complete.[/dim]")
 

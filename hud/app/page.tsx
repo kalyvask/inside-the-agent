@@ -12,6 +12,7 @@ import EffectSizeStrip from "@/components/EffectSizeStrip";
 import CommandQueue from "@/components/CommandQueue";
 import BeforeAfterDiff from "@/components/BeforeAfterDiff";
 import CurrentAction from "@/components/CurrentAction";
+import TrajectoryBrowser from "@/components/TrajectoryBrowser";
 import {
   connectWS,
   type AgentEvent,
@@ -250,16 +251,23 @@ export default function Page() {
 
   return (
     <main className="h-screen flex flex-col overflow-hidden">
-      <DemoBanner
-        taskId={taskId}
-        policy={policy}
-        step={step}
-        totalSteps={totalSteps}
-        positionMode={positionMode}
-        seed={seed}
-        steeringEndpoint={steeringEndpoint}
-        runStatus={runStatus}
-      />
+      <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-2">
+        <div className="flex-1 min-w-0">
+          <DemoBanner
+            taskId={taskId}
+            policy={policy}
+            step={step}
+            totalSteps={totalSteps}
+            positionMode={positionMode}
+            seed={seed}
+            steeringEndpoint={steeringEndpoint}
+            runStatus={runStatus}
+          />
+        </div>
+        <div className="shrink-0 pl-2">
+          <TrajectoryBrowser />
+        </div>
+      </div>
 
       {/* v0.10 demo-fit layout: viewport widened to col-span 8 and Row 1
           stretched to 1.35fr so the live page screenshot dominates the
