@@ -555,7 +555,25 @@ class ShopGymEnv:
         verifier_fn = get_verifier(self._task["verifier"])
         state = read_env_state(self._page)
         ok, _ = verifier_fn(state, self._task)
+        # v0.22: ALSO compute the strict verifier alongside whatever the
+        # task declared. Stash on the env so the agent loop can read both
+        # at end-of-episode and write strict_success to the trial result.
+        # The strict verifier ("cart_contains_target_exactly_once") demands
+        # exactly-one-of-target with no other product polluted; the lenient
+        # default just demands target is in cart.
+        try:
+            strict_fn = get_verifier("cart_contains_target_exactly_once")
+            strict_ok, _ = strict_fn(state, self._task)
+            self._last_strict_success = bool(strict_ok)
+        except Exception:
+            self._last_strict_success = None
         return ok
+
+    def strict_success(self) -> bool | None:
+        """Returns the strict verifier result from the last _check_verifier
+        call. Used by the agent loop in v0.22 to log both lenient and strict
+        success per trial without changing the task config."""
+        return getattr(self, "_last_strict_success", None)
 
 
 # ---------------------------------------------------------------------------

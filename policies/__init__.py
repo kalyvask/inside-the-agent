@@ -17,6 +17,8 @@ from .targeted import targeted_policy
 from .prompt_only_control import prompt_only_policy, PROMPT_PREFIX as PROMPT_ONLY_PREFIX
 from .noise_control import noise_control_policy
 from .failure_mining import failure_mining_policy
+from .targeted_f26737_only import targeted_f26737_only_policy
+from .targeted_f23803_only import targeted_f23803_only_policy
 
 POLICY_REGISTRY = {
     "baseline": None,
@@ -28,6 +30,10 @@ POLICY_REGISTRY = {
     "prompt-only": prompt_only_policy,  # v0.4-D: prompt-prefix-only control
     "noise": noise_control_policy,      # v0.5-B: matched-norm residual noise
     "failure-mining": failure_mining_policy,  # v0.9: data-derived 4 features at step 0
+    # v0.22 per-feature ablation — same edits as targeted, but only one
+    # of the two. Answers: synergistic or additive?
+    "targeted-f26737-only": targeted_f26737_only_policy,
+    "targeted-f23803-only": targeted_f23803_only_policy,
 }
 
 # Per-policy system prompt overrides. Empty string = use the default prompt.

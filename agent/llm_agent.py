@@ -325,6 +325,16 @@ class SAEAgent:
         else:
             success = bool(total_reward > 0)
         self.hud.task_done(success)
+        # v0.22: capture strict_success alongside lenient. ShopGymEnv computes
+        # both verifiers in _check_verifier and exposes strict_success().
+        # WebEnv (qualitative tasks) doesn't, so strict_success stays None.
+        strict_success: bool | None = None
+        try:
+            getter = getattr(self.env, "strict_success", None)
+            if callable(getter):
+                strict_success = getter()
+        except Exception:
+            pass
         return {
             "run_id": run_id,
             "task_id": task["id"],
@@ -332,5 +342,6 @@ class SAEAgent:
             "steps": step_idx + 1,
             "total_reward": total_reward,
             "success": success,
+            "strict_success": strict_success,
             "log_path": str(logger.path),
         }
