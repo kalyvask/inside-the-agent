@@ -187,13 +187,37 @@ class SAEAgent:
                         for e in plan.edits
                     ])
 
-                # Generate (with steering if policy populated the plan)
-                result = self.brain(
-                    prompt=prompt,
-                    edits=plan.to_dict(),
-                    max_new_tokens=self.cfg.max_new_tokens,
-                    temperature=self.cfg.temperature,
-                )
+                # v0.7-B: if the policy marked this step as a noise-control step
+                # (matched-norm random perturbation in raw residual space), call
+                # the dedicated noise endpoint instead of steer_act. Before this
+                # fix, noise_control_policy stashed _noise_active on the plan
+                # but the agent loop never read it — every "noise" run was
+                # effectively a baseline run with a noise label.
+                noise_active = bool(getattr(plan, "_noise_active", False))
+                if noise_active:
+                    if plan.edits:
+                        # Defensive: noise mode is supposed to be independent of
+                        # feature-level edits. Log a warning so this doesn't
+                        # silently mix conditions.
+                        self.hud.steering_applied([
+                            {"feature_id": -1, "label": "noise_mode_with_feature_edits_WARNING",
+                             "delta": 0.0, "source": "noise"}
+                        ])
+                    result = self.brain(
+                        prompt=prompt,
+                        mode="noise",
+                        noise_seed=int(getattr(plan, "_noise_seed", seed)),
+                        noise_norm=float(getattr(plan, "_noise_norm", 6.0)),
+                        max_new_tokens=self.cfg.max_new_tokens,
+                        temperature=self.cfg.temperature,
+                    )
+                else:
+                    result = self.brain(
+                        prompt=prompt,
+                        edits=plan.to_dict(),
+                        max_new_tokens=self.cfg.max_new_tokens,
+                        temperature=self.cfg.temperature,
+                    )
 
                 action = parse_action(result["response"])
                 history.append(action)

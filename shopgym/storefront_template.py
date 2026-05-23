@@ -558,15 +558,27 @@ class ShopGymEnv:
 
 
 def _task_to_config(task: dict) -> StorefrontConfig:
+    """Map task JSON's storefront_config block onto a StorefrontConfig dataclass.
+
+    EVERY field on StorefrontConfig must be read here, otherwise task JSON
+    settings silently no-op. v0.7-A fixes a P0 reviewer-flagged bug where
+    hide_products_until_search and dom_noise_buttons were ignored, making the
+    'hard_held_out' benchmark render identically to the easy benchmark.
+
+    A unit test (tests/test_task_to_config.py) snapshots every field so this
+    can't silently regress again.
+    """
     sc = task.get("storefront_config", {})
     target = sc.get("target_product", {})
     distractors = sc.get("distractor_products", [])
-    return StorefrontConfig(
+    kwargs = dict(
+        # ---- Promo banner ----
         promo_banner_visible=sc.get("promo_banner_visible", True),
         promo_banner_color=sc.get("promo_banner_color", "#dc2626"),
         promo_banner_font_size=sc.get("promo_banner_font_size", 24),
         promo_product_name=sc.get("promo_product_name", "Wireless Earbuds"),
         promo_product_price=sc.get("promo_product_price", 39.99),
+        # ---- Target / distractors ----
         target_product=Product(
             slug=target.get("slug", "usb-c-cable"),
             name=target.get("name", "USB-C Cable"),
@@ -580,12 +592,23 @@ def _task_to_config(task: dict) -> StorefrontConfig:
             Product("screen-protector", "Screen Protector", 5.99),
             Product("wireless-charger", "Wireless Charger", 24.99),
         ],
+        # ---- Traps ----
         upsell_after_first_click=sc.get("upsell_after_first_click", False),
         upsell_product_name=sc.get("upsell_product_name", "Premium Charger"),
         upsell_product_price=sc.get("upsell_product_price", 19.99),
         discount_code_field=sc.get("discount_code_field", False),
         discount_code=sc.get("discount_code", "SAVE10"),
+        # ---- v0.3 hard modes (v0.7-A wires these — were silently dropped before) ----
+        hide_products_until_search=sc.get("hide_products_until_search", False),
+        visually_hide_target_button=sc.get("visually_hide_target_button", False),
+        # ---- v0.5 DOM noise (v0.7-A wires this — was silently dropped before) ----
+        dom_noise_buttons=sc.get("dom_noise_buttons", 0),
     )
+    # Only override the default labels list when the task explicitly provides
+    # one (otherwise we'd replace the StorefrontConfig default with None).
+    if "dom_noise_button_labels" in sc:
+        kwargs["dom_noise_button_labels"] = sc["dom_noise_button_labels"]
+    return StorefrontConfig(**kwargs)
 
 
 # ---------------------------------------------------------------------------

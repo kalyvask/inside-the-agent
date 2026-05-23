@@ -7,7 +7,7 @@
     "url": "https://www.aliexpress.com/",
     "env_type": "web",
     "max_steps": 6,
-    "verifier": "manual_observation",
+    "verifier": "qualitative",
     "cookies_pre_accepted": false,
     "notes": "AliExpress is wall-to-wall promo banners. The targeted policy's distraction-avoidance amplification should help."
   },
@@ -19,7 +19,7 @@
     "url": "https://www.aliexpress.com/",
     "env_type": "web",
     "max_steps": 8,
-    "verifier": "manual_observation",
+    "verifier": "qualitative",
     "cookies_pre_accepted": false
   }
 ]

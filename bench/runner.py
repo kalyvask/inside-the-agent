@@ -47,6 +47,20 @@ def _make_brain_call():
     def call(prompt: str, edits: dict | None = None, mode: str = "act", **kwargs):
         if mode == "read":
             return server.read_features.remote(prompt, top_k=kwargs.get("top_k", 20))
+        if mode == "noise":
+            # v0.7-B: route the noise_control policy through the matched-norm
+            # noise endpoint. The targeted residual delta has |Δ| ≈ 6, so the
+            # noise vector is drawn isotropically and rescaled to that L2 norm
+            # at the same position the targeted policy modifies.
+            return server.steer_act_with_noise.remote(
+                prompt=prompt,
+                noise_seed=int(kwargs.get("noise_seed", 0)),
+                noise_norm=float(kwargs.get("noise_norm", 6.0)),
+                max_new_tokens=kwargs.get("max_new_tokens", 96),
+                temperature=kwargs.get("temperature", 0.2),
+                top_k=kwargs.get("top_k", 20),
+                position_mode=kwargs.get("position_mode", "all"),
+            )
         return server.steer_act.remote(
             prompt=prompt,
             edits=edits or {},
@@ -212,8 +226,35 @@ def main(
             f.write(json.dumps(r) + "\n")
     console.print(f"Wrote {len(results)} results to {out_file}")
 
-    success_rate = sum(r["success"] for r in results) / len(results)
-    console.print(f"[bold]Success rate ({policy}):[/bold] {success_rate:.2%}")
+    # v0.7-C: separate quantitative from qualitative results before reporting.
+    # WebEnv tasks have verifier="manual_observation" / "qualitative" and always
+    # return reward=0.0 — they're meant for live exploratory demos, not for
+    # evidence. Reporting a 0.00% success rate on those is misleading because
+    # the 0% reflects "no verifier wired", not "agent failed".
+    QUALITATIVE_VERIFIERS = {"manual", "manual_observation", "qualitative"}
+    task_by_id = {t["id"]: t for t in task_list}
+    quantitative = [
+        r for r in results
+        if task_by_id.get(r["task_id"], {}).get("verifier", "") not in QUALITATIVE_VERIFIERS
+    ]
+    qualitative_count = len(results) - len(quantitative)
+    if quantitative:
+        success_rate = sum(r["success"] for r in quantitative) / len(quantitative)
+        console.print(
+            f"[bold]Success rate ({policy}, quantitative n={len(quantitative)}):[/bold] "
+            f"{success_rate:.2%}"
+        )
+    else:
+        console.print(
+            f"[yellow]No quantitative tasks in this run "
+            f"(all {len(results)} were qualitative / manual_observation). "
+            f"Inspect trajectories under data/trajectories/ instead.[/yellow]"
+        )
+    if qualitative_count:
+        console.print(
+            f"[dim]Skipped {qualitative_count} qualitative-only result(s) "
+            f"from the success-rate aggregate.[/dim]"
+        )
 
 
 if __name__ == "__main__":
