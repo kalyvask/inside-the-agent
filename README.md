@@ -30,6 +30,23 @@ Wilson 95% CIs. All numbers regenerated from `data/results/*.jsonl` via [`python
 
 ![Headline chart](artifacts/headline.png)
 
+### Action quality: valid vs executed (v0.24-F diagnostic)
+
+A first-class diagnostic the reviewer flagged: success rate alone hides a gap between "model emitted well-formed JSON" and "Playwright actually dispatched the action." A targeted-steered model that emits more confident-looking but harder-to-dispatch selectors looks the same on `valid_action` but worse on `executed`.
+
+| Policy | n steps | valid_action | executed | parse-but-no-exec |
+|---|---:|---:|---:|---:|
+| `baseline` | 600 | 100.0% | 100.0% | 0 |
+| `prompt-only` | 600 | 100.0% | 85.5% | 87 |
+| `failure-mining` | 599 | 90.0% | 83.6% | 38 |
+| `noise` | 600 | 99.8% | 48.3% | 309 |
+| **`targeted`** | **600** | **100.0%** | **36.3%** | **382** |
+| `random` | 600 | 100.0% | 32.5% | 405 |
+| `wrong-sign` | 600 | 99.0% | 24.0% | 450 |
+| `dynamic` | 600 | 100.0% | 22.7% | 464 |
+
+Targeted hits 100% valid_action but only 36.3% executed. The intervention is producing well-formed actions that Playwright can't dispatch (often because the selector pattern doesn't exist in the real DOM, or the click target is occluded). That gap is part of the cost, and a future policy that shrinks it without losing success is a clear next-generation target. We treat `executed` as a gating diagnostic for any future policy claim.
+
 ### The category-specific story (this is the real headline)
 
 The targeted edits don't lift uniformly — the **mechanism is category-specific**. Breaking the 60 trials per policy out by task category:
@@ -48,7 +65,20 @@ Three honest findings:
 2. **Targeted transfers cross-domain to hallucination tasks.** 0% → 67% on a category we never calibrated against. Suppressing UI-selection vocabulary stops the agent from inventing buttons that don't exist. Evidence of cross-distribution generalization.
 3. **Targeted *hurts* on planning.** 33% → 17%, worse than baseline. The features that block "click the wrong thing" also block "click the right thing" when multi-step navigation needs legitimate clicks. **Mechanistically consistent** — the logit lens predicts this failure.
 
-**Prompt-only beats targeted overall (73% vs 57%)** by doing well across all three categories, not by being better on any individual one. The methods are mechanistically different — prompt-only modifies *input tokens*, targeted modifies the *residual stream* at layer 19. They both work; they tell different stories.
+### When does SAE steering beat prompt-only?
+
+Prompt-only wins on average; SAE steering wins inside its calibration domain. The two interventions are mechanistically different and they tell different stories.
+
+| Category | prompt-only | targeted | who wins | margin |
+|---|---:|---:|---|---|
+| promo | 83% | 79% | prompt-only (barely) | +4 pp |
+| hallucination | 67% | 67% | tie | 0 pp |
+| planning | 67% | 17% | prompt-only | +50 pp |
+
+- **Prompt-only modifies the input tokens** ("Avoid promotional banners; use search."). It works because the model follows instructions and the instruction happens to be correct across all three categories.
+- **Targeted modifies the residual stream at layer 19** by ±6 on two SAE features. It works on promo and hallucination because those features encode "click this option" UI-selection vocabulary, which is the trap. On planning, the same features encode the legitimate clicks the agent needs to navigate, so suppressing them backfires.
+
+The combination (prompt-only AND SAE steering simultaneously) is the obvious next experiment and is on the roadmap. SAE steering is not a replacement for prompt engineering; it is a runtime intervention surface at a layer of representation prompts cannot directly access, with category-specific causal effects you can read and write live.
 
 ### How to read these numbers honestly
 
