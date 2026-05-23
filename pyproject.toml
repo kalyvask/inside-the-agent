@@ -43,6 +43,8 @@ dependencies = [
     # Logging + storage
     "boto3>=1.35.0",   # for Cloudflare R2 (S3-compatible)
     "jsonlines>=4.0.0",
+    "requests>=2.31.0",       # used by agent/hud_publisher.py
+    "matplotlib>=3.8.0",      # used by bench/analysis.py --plot
 ]
 
 [project.optional-dependencies]

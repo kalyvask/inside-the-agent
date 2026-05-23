@@ -14,6 +14,7 @@ from .dynamic import dynamic_policy
 from .random_policy import random_policy
 from .wrong_sign import wrong_sign_policy
 from .targeted import targeted_policy
+from .prompt_only_control import prompt_only_policy, PROMPT_PREFIX as PROMPT_ONLY_PREFIX
 
 POLICY_REGISTRY = {
     "baseline": None,
@@ -22,6 +23,12 @@ POLICY_REGISTRY = {
     "random": random_policy,
     "wrong-sign": wrong_sign_policy,
     "targeted": targeted_policy,  # empirically validated by step0_calibration
+    "prompt-only": prompt_only_policy,  # v0.4-D: prompt-prefix-only control
+}
+
+# Per-policy system prompt overrides. Empty string = use the default prompt.
+POLICY_PROMPT_PREFIX = {
+    "prompt-only": PROMPT_ONLY_PREFIX,
 }
 
 __all__ = ["POLICY_REGISTRY", "static_policy", "dynamic_policy", "random_policy", "wrong_sign_policy"]

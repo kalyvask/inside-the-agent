@@ -22,7 +22,7 @@ verify:
 	python -m verify.sae_smoke
 
 POLICY ?= baseline
-TASKS ?= bench/tasks/held_out.json
+TASKS ?= shopgym/tasks/held_out.json
 TRIALS ?= 3
 
 bench:

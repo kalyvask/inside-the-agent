@@ -24,6 +24,7 @@ from agent.trajectory import (
     TrajectoryLogger,
     make_run_id,
 )
+from policies import POLICY_PROMPT_PREFIX
 from sae.steering_controller import SteeringController
 
 
@@ -118,9 +119,13 @@ class SAEAgent:
             for step_idx in range(self.cfg.max_steps):
                 self.hud.step_started(run_id, task["id"], step_idx)
 
-                # Build prompt
+                # Build prompt. Policies may inject a system-prompt prefix
+                # (used by the prompt-only control to compare "tell the model
+                # in words" against "tell the model in feature space").
+                prompt_prefix = POLICY_PROMPT_PREFIX.get(policy_name, "")
+                instruction = (prompt_prefix + task["instruction"]) if prompt_prefix else task["instruction"]
                 prompt = build_chat_prompt(
-                    goal=task["instruction"],
+                    goal=instruction,
                     page_summary=obs["page_summary"],
                     history=history,
                 )
