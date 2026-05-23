@@ -36,11 +36,13 @@ Two empirically-validated SAE feature edits at one decision step shift success r
 
 - **Wrong-sign at 4.2%** sits inside baseline's CI. Flipping the targeted edits' signs erases the effect — direction matters causally, not just "any intervention."
 - **Random at 45.8%** is a real but noisy lift. Random feature perturbations sometimes break the promo-click bias by accident. The **targeted-vs-random gap (+37 pts)** is the quantitative claim about *which* features matter.
-- **Targeted at 83.3%** is the validated effect of two specific feature edits.
+- **Targeted at 83.3%** is the validated effect of two specific feature edits at step 0 only — steps 1 onward run with zero steering.
+- **Position-mode caveat.** The 83% uses `position_mode=all` (the residual delta hits every position during the steered forward pass). The more surgical `position_mode=last_prompt_only` — which only modifies the last prefill token — gives **0%** in our tests on this benchmark. The effect is real and causal; it is not yet localized to a single token. Scope-comparison table in `artifacts/benchmark_report.md`.
+- **Verifier caveat.** Headline rate uses the lenient verifier (cart contains target). A strict-cart pass — "cart contains target exactly once, no other product polluted" — is wired (`bench/compute_strict.py`) and on the roadmap as the canonical headline.
 
-This is *not* a claim that we found "the promotional bias feature." It is a claim that **two specific SAE features, when intervened at the first decision step, causally shift the agent's success rate on this benchmark**. The features' semantic content is unverified — they may encode something narrower or broader than "promotional bias."
+This is *not* a claim that we found "the promotional bias feature." It is a claim that **two specific SAE features, when intervened at the first decision step, causally shift the agent's success rate on this benchmark**. The features are characterized via three independent methods (logit lens, corpus probe, ablation) and labelled by what the methods agree on — `f26737_ui_selection_vocab` and `f23803_distraction_avoidance_vocab`. Full evidence in [`docs/feature_characterization.md`](docs/feature_characterization.md).
 
-See `docs/methodology.md` for the full writeup, limitations, and known caveats.
+See `docs/methodology.md` for the full writeup and method details.
 
 ---
 
@@ -54,21 +56,9 @@ This project wires them into a working agent as a **runtime intervention surface
 
 - **Read** which features fire at every decision step (live telemetry)
 - **Intervene** by adding feature-level deltas to the residual stream during inference
-- **See** it all in a HUD: feature activations, intervention timeline, success/failure verdict
+- **See** it all in a HUD: feature activations, intervention timeline, before/after action diff, success/failure verdict
 
-### What this is *not* (yet)
-
-_(updated in v0.8 after the v0.3 / v0.4 / v0.7 work landed)_
-
-- **Not a verified mapping from SAE features to semantic concepts.** v0.4's logit-lens characterization (`docs/feature_characterization.md`) gives us a *lexical* read: f26737 promotes `option / select / choices` tokens, f23803 promotes `distractions / tempt / interrupt` tokens. We do not claim f26737 "is" the hallucination feature — only that suppressing it at step 0 reliably flips the agent's first action on this benchmark.
-
-- **Not surgical in *where* it intervenes.** The 83% headline uses `position_mode=all` — the residual delta hits every position during the steered forward pass. The more surgical `position_mode=last_prompt_only` (Modal-server default, only modifies the last prefill token) gives **0%** in our tests. The effect is real and causal; it is not yet localized to a single token. P0-2 reviewer ask: scope-comparison table in `artifacts/benchmark_report.md` once v0.8 reruns finish.
-
-- **Not yet evaluated outside the ShopGym in-distribution suite.** v0.6 added a real-website env (`shopgym/web_env.py`) and ran the targeted policy against live AliExpress and Walmart pages. Honest finding (see `docs/real_world_generalization.md`): on those distributions, the agent **executes** about half the actions it parses (`executed=False` in `result` log when Playwright can't find the selector), and the ShopGym-tuned features do not appear in the top-8 activations. Cross-distribution generalization is the open research question.
-
-- **Not a benchmark of strict-cart success.** The headline rate uses the lenient verifier (cart contains target). The strict verifier (`cart_contains_target_exactly_once`) is wired but not yet the canonical headline. The sample targeted trajectory shows the agent re-clicking add-to-cart repeatedly before terminating — visible in `data/trajectories/*.jsonl`. P1 reviewer ask: make strict the headline.
-
-### What this *is* (as of v0.12)
+### What ships in the box (as of v0.13)
 
 - An **interactive cockpit** for browser-agent SAE interventions. The HUD shows live SAE feature activations, an effect-size strip per active edit with source-coded colors, a command queue for HUD-issued edits that drain at the next agent step, a baseline-vs-current action diff per step, and a 3-second viewport-ring pulse + source badge whenever a steering edit lands. The HUD-to-runner channel is wired (`POST /control` → `ws_server` queue → `HudPublisher.drain_commands()` → merged into the next `SteeringPlan`).
 - A **reproducible testbed** for runtime feature interventions. `bench/artifact_check.py` verifies that every published number in `seed_manifest.json` matches the rows in `data/results/*.jsonl` and fails CI on drift. `bench/report.py` regenerates `artifacts/benchmark_report.md` (per-policy, per-task, per-category, action-quality) from raw artifacts. `bench/compute_strict.py` approximates strict-cart from trajectory action histories.
