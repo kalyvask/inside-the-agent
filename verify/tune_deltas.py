@@ -101,7 +101,9 @@ def differs(baseline: str, steered: str) -> bool:
 
 
 def _connect():
-    BrainServer = modal.Cls.from_name("inside-the-agent", "BrainServer")
+    import os
+    app_name = os.environ.get("BRAIN_APP_NAME", "inside-the-agent")
+    BrainServer = modal.Cls.from_name(app_name, "BrainServer")
     return BrainServer()
 
 
@@ -144,7 +146,9 @@ def find_best_magnitude(
 def main():
     server = _connect()
 
-    yaml_path = Path("sae/features.yaml")
+    # FEATURES_OUT_PATH env var so the 70B run can target a separate yaml.
+    import os
+    yaml_path = Path(os.environ.get("FEATURES_OUT_PATH", "sae/features.yaml"))
     catalog = yaml.safe_load(yaml_path.read_text()) or {}
 
     # Get one baseline response we can compare against. Same prompt is used

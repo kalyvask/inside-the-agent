@@ -95,7 +95,9 @@ def parse_action(raw: str) -> dict:
 
 
 def _connect():
-    BrainServer = modal.Cls.from_name("inside-the-agent", "BrainServer")
+    import os
+    app_name = os.environ.get("BRAIN_APP_NAME", "inside-the-agent")
+    BrainServer = modal.Cls.from_name(app_name, "BrainServer")
     return BrainServer()
 
 
@@ -125,7 +127,9 @@ def categorize_action(action: dict) -> str:
 
 def main():
     server = _connect()
-    catalog_path = Path("sae/features.yaml")
+    # FEATURES_OUT_PATH env var so the 70B run can read a separate yaml.
+    import os
+    catalog_path = Path(os.environ.get("FEATURES_OUT_PATH", "sae/features.yaml"))
     raw = yaml.safe_load(catalog_path.read_text()) or {}
     catalog = []
     for category, entries in raw.items():

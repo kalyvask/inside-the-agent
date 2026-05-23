@@ -125,7 +125,9 @@ What is your next action and why? Respond in one short sentence."""
 
 
 def _connect():
-    BrainServer = modal.Cls.from_name("inside-the-agent", "BrainServer")
+    import os
+    app_name = os.environ.get("BRAIN_APP_NAME", "inside-the-agent")
+    BrainServer = modal.Cls.from_name(app_name, "BrainServer")
     return BrainServer()
 
 
@@ -298,7 +300,11 @@ def main():
                 f"confidence={entry['confidence']}"
             )
 
-    out_path = "sae/features.yaml"
+    # FEATURES_OUT_PATH env var override so cross-scale runs (BRAIN_APP_NAME=
+    # inside-the-agent-70b) can write to a separate file rather than clobbering
+    # the 8B labels in sae/features.yaml.
+    import os
+    out_path = os.environ.get("FEATURES_OUT_PATH", "sae/features.yaml")
     write_features_yaml(dict(entries_by_category), out_path)
 
     # Summary table
