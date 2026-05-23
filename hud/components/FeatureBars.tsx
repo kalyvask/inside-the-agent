@@ -3,14 +3,19 @@
 import { useEffect, useState } from "react";
 import type { FeaturePoint } from "@/lib/ws";
 
-type Category = "risk" | "behavioral" | "epistemic" | "task" | "other";
+// v0.16 (reviewer P0 fix): only categorize features we have evidence
+// for; everything else gets an explicit `[unlabelled]` tag rather than
+// being silently lumped into "other" with a gray bar that looks
+// indistinguishable from a tagged "other".
+
+type Category = "risk" | "behavioral" | "epistemic" | "task" | "unlabelled";
 
 const CATEGORY_COLORS: Record<Category, string> = {
   risk:       "bg-red-500",
   behavioral: "bg-blue-500",
   epistemic:  "bg-amber-500",
   task:       "bg-emerald-500",
-  other:      "bg-zinc-600",
+  unlabelled: "bg-zinc-700",
 };
 
 const CATEGORY_LABEL_COLORS: Record<Category, string> = {
@@ -18,16 +23,31 @@ const CATEGORY_LABEL_COLORS: Record<Category, string> = {
   behavioral: "text-blue-300",
   epistemic:  "text-amber-300",
   task:       "text-emerald-300",
-  other:      "text-zinc-400",
+  unlabelled: "text-zinc-500",
 };
 
-function inferCategory(label: string): Category {
-  const l = (label || "").toLowerCase();
-  if (/(promot|impuls|distract)/.test(l)) return "risk";
-  if (/(halluc|confab|uncertain)/.test(l)) return "epistemic";
-  if (/(goal|task)/.test(l)) return "task";
+// Display-name shortener: f26737_ui_selection_vocab -> "f26737 selection vocab"
+// so labels fit without truncating. Same idea as effect-size labels.
+function shortName(label: string, id: number): string {
+  if (!label) return `feature ${id}`;
+  // strip "fN_" prefix and any "_vocab" suffix the catalog uses
+  const stripped = label
+    .replace(/^f\d+_/, "")
+    .replace(/_vocab$/, "")
+    .replace(/_/g, " ");
+  return `f${id} ${stripped}`;
+}
+
+function inferCategory(f: FeaturePoint): Category {
+  if (f.category) return (f.category as Category);
+  const l = (f.label || "").toLowerCase();
+  // Only assign a category when there's clear textual evidence.
+  if (!l) return "unlabelled";
+  if (/(promot|impuls|distract|fail_mode)/.test(l)) return "risk";
+  if (/(halluc|confab|uncertain|ui_selection|selection_vocab)/.test(l)) return "epistemic";
+  if (/(goal|task|distraction_avoidance)/.test(l)) return "task";
   if (/(plan|deliber)/.test(l)) return "behavioral";
-  return "other";
+  return "unlabelled";
 }
 
 export default function FeatureBars({
@@ -55,20 +75,28 @@ export default function FeatureBars({
   return (
     <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-200px)]">
       {animatedFeatures.slice(0, 12).map((f) => {
-        const cat = (f.category as Category) || inferCategory(f.label);
+        const cat = inferCategory(f);
         const isHighlighted = highlightedIds.includes(f.id);
+        const isLabelled = cat !== "unlabelled";
+        const display = isLabelled ? shortName(f.label, f.id) : `feature ${f.id}`;
         return (
           <div
             key={f.id}
             className={`flex items-center gap-2 text-xs transition-all duration-200 ${
               isHighlighted ? "ring-2 ring-yellow-400 rounded px-1 py-0.5 bg-zinc-800/40" : ""
             }`}
+            title={
+              `id=${f.id}\n` +
+              `label=${f.label || "(none)"}\n` +
+              `category=${cat}\n` +
+              `activation=${f.activation.toFixed(3)}`
+            }
           >
-            <span
-              className={`w-44 truncate font-mono ${CATEGORY_LABEL_COLORS[cat]}`}
-              title={`${f.label || `feature ${f.id}`}  (${cat})`}
-            >
-              {f.label || `feature ${f.id}`}
+            <span className={`w-44 truncate font-mono ${CATEGORY_LABEL_COLORS[cat]}`}>
+              {display}
+              {!isLabelled && (
+                <span className="ml-1 text-[9px] text-zinc-600 uppercase">[unknown]</span>
+              )}
             </span>
             <div className="flex-1 bg-zinc-800 rounded h-5 overflow-hidden">
               <div
@@ -90,8 +118,8 @@ export default function FeatureBars({
       })}
 
       {/* Legend */}
-      <div className="mt-3 pt-3 border-t border-zinc-800 flex gap-3 text-xs">
-        {(["risk", "behavioral", "epistemic", "task"] as Category[]).map((c) => (
+      <div className="mt-3 pt-3 border-t border-zinc-800 flex flex-wrap gap-3 text-xs">
+        {(["risk", "behavioral", "epistemic", "task", "unlabelled"] as Category[]).map((c) => (
           <div key={c} className="flex items-center gap-1">
             <div className={`w-3 h-3 rounded ${CATEGORY_COLORS[c]}`} />
             <span className={CATEGORY_LABEL_COLORS[c]}>{c}</span>

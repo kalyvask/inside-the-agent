@@ -9,6 +9,9 @@ type Props = {
   positionMode?: "all" | "all_prompt" | "last_prompt_only";
   seed?: number;
   steeringEndpoint?: "steer_act" | "steer_act_with_noise";
+  // v0.16 reviewer P0: model + run status
+  modelName?: string;     // defaults to "Llama 3.1-8B + Goodfire SAE l19"
+  runStatus?: "idle" | "running" | "done" | "failed";
 };
 
 const POLICY_STYLES: Record<string, { bg: string; label: string }> = {
@@ -34,6 +37,13 @@ const POSITION_MODE_NOTE: Record<string, string> = {
   last_prompt_only:  "surgical — last prefill token",
 };
 
+const RUN_STATUS_STYLES: Record<NonNullable<Props["runStatus"]>, string> = {
+  idle:    "bg-zinc-700 text-zinc-300",
+  running: "bg-emerald-700 text-emerald-100 animate-pulse",
+  done:    "bg-blue-700 text-blue-100",
+  failed:  "bg-red-800 text-red-100",
+};
+
 export default function DemoBanner({
   taskId,
   policy,
@@ -42,6 +52,8 @@ export default function DemoBanner({
   positionMode,
   seed,
   steeringEndpoint,
+  modelName,
+  runStatus,
 }: Props) {
   if (!taskId && !policy) {
     return (
@@ -81,6 +93,14 @@ export default function DemoBanner({
               endpoint: noise
             </span>
           )}
+          {runStatus && (
+            <span
+              className={`px-2 py-1 rounded uppercase tracking-wider shrink-0 ${RUN_STATUS_STYLES[runStatus]}`}
+              title="run status: running while agent is taking steps, done on task_done, failed on error, idle when nothing has started"
+            >
+              ● {runStatus}
+            </span>
+          )}
           <span className="text-zinc-500 shrink-0">·</span>
           <span className="text-zinc-400 shrink-0">task=</span>
           <span className="text-zinc-200 truncate">{taskId}</span>
@@ -91,6 +111,11 @@ export default function DemoBanner({
               <span className="text-zinc-200 tabular-nums shrink-0">{seed}</span>
             </>
           )}
+          <span className="text-zinc-500 shrink-0">·</span>
+          <span className="text-zinc-400 shrink-0">model=</span>
+          <span className="text-zinc-200 truncate" title={modelName}>
+            {modelName || "Llama 3.1-8B + Goodfire SAE l19"}
+          </span>
         </div>
         <div className="flex items-center gap-2 text-zinc-400 shrink-0">
           {step !== undefined && (

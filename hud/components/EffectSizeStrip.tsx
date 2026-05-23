@@ -47,6 +47,20 @@ export default function EffectSizeStrip({ edits, maxAbs = 8.0 }: Props) {
     );
   }
 
+  // v0.16: reviewer flagged `f26737_ui_selection_voc...` truncation as
+  // unreadable. Shorten label to the form `f<id> <key word>`.
+  function shortLabel(label: string, fid: number): string {
+    if (!label) return `f${fid}`;
+    // strip "fN_" prefix, "_vocab" suffix, replace underscores with spaces,
+    // then keep the first two semantic words for compactness.
+    const stripped = label
+      .replace(/^f\d+_/, "")
+      .replace(/_vocab$/, "")
+      .replace(/_/g, " ");
+    const words = stripped.split(/\s+/).slice(0, 2).join(" ");
+    return `f${fid} ${words}`;
+  }
+
   return (
     <div className="flex flex-col gap-1.5">
       {edits.map((e, i) => {
@@ -59,10 +73,10 @@ export default function EffectSizeStrip({ edits, maxAbs = 8.0 }: Props) {
           <div
             key={`${e.feature_id}-${i}`}
             className="grid grid-cols-[10rem_1fr_3rem] items-center gap-2 text-xs"
-            title={`source=${src}  Δ=${e.delta.toFixed(2)}`}
+            title={`${e.label || `feature ${e.feature_id}`}  source=${src}  Δ=${e.delta.toFixed(2)}`}
           >
             <span className={`truncate font-mono ${labelColor}`}>
-              {e.label || `f${e.feature_id}`}
+              {shortLabel(e.label || "", e.feature_id)}
             </span>
             {/* Bipolar bar: centered on zero, grows left or right */}
             <div className="relative h-3 bg-zinc-800 rounded overflow-hidden">

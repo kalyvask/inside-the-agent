@@ -11,6 +11,7 @@ import DemoBanner from "@/components/DemoBanner";
 import EffectSizeStrip from "@/components/EffectSizeStrip";
 import CommandQueue from "@/components/CommandQueue";
 import BeforeAfterDiff from "@/components/BeforeAfterDiff";
+import CurrentAction from "@/components/CurrentAction";
 import {
   connectWS,
   type AgentEvent,
@@ -62,6 +63,14 @@ export default function Page() {
   const [agentLive, setAgentLive] = useState(false);
   const [lastStepAt, setLastStepAt] = useState<number>(0);
 
+  // v0.16: explicit run lifecycle for the DemoBanner status badge.
+  const [runStatus, setRunStatus] = useState<"idle" | "running" | "done" | "failed">("idle");
+
+  // v0.16: most-recent action_chosen event so the CurrentAction strip
+  // always has something to display.
+  const [lastAction, setLastAction] = useState<AgentEvent | undefined>();
+  const [lastExecuted, setLastExecuted] = useState<boolean | null>(null);
+
   // v0.14: heartbeat decay — if no step_started for 30s and the agent
   // hasn't sent task_done either, treat the run as stale (process
   // killed, network glitch, etc.) so SteeringControls doesn't claim
@@ -91,9 +100,9 @@ export default function Page() {
           setHighlightedIds([]);
           setCurrentEdits([]);
           setInterventionPulse(null);
-          // Reset the baseline cache only if the new run is for a different
-          // task — otherwise we want to keep replaying baseline_action events
-          // we already buffered.
+          setLastAction(undefined);
+          setLastExecuted(null);
+          setRunStatus(ev.task_id ? "running" : "idle");
           break;
         case "policy_meta":
           if (ev.policy) setPolicy(ev.policy);
@@ -116,8 +125,32 @@ export default function Page() {
           setStep(ev.step);
           setAgentLive(true);
           setLastStepAt(Date.now());
-          // New step: any edits that didn't get cleared by a matching
-          // steering_applied stay in pending — they'll apply this step.
+          setRunStatus("running");
+          // v0.16: at every new step, any pending HUD commands still in
+          // "queued" state graduate to "applied" because the agent's
+          // drain_commands() pulled them on this step.
+          setPending((prev) =>
+            prev.map((c) =>
+              c.state === "queued"
+                ? { ...c, state: "applied", applied_at: Date.now() }
+                : c
+            )
+          );
+          // 2s later, "applied" entries graduate to "expired" so the
+          // user can see consumption finish.
+          setTimeout(() => {
+            setPending((prev) =>
+              prev.map((c) =>
+                c.state === "applied"
+                  ? { ...c, state: "expired", expired_at: Date.now() }
+                  : c
+              )
+            );
+          }, 2000);
+          // 7s after queue → drop expired entries entirely.
+          setTimeout(() => {
+            setPending((prev) => prev.filter((c) => c.state !== "expired"));
+          }, 7000);
           break;
         case "features_read":
           setFeatures(ev.features || []);
@@ -148,14 +181,19 @@ export default function Page() {
           break;
         case "action_chosen":
           setTrajectory((prev) => [...prev, ev]);
+          setLastAction(ev);
           break;
         case "env_updated":
           if (ev.screenshot_path) setScreenshot(ev.screenshot_path);
+          // v0.16: env_updated carries the post-step observation. Some
+          // future versions of HudPublisher could thread executed; for
+          // now we read it off the last step's trajectory if it lands.
           break;
         case "task_done":
           setVerdictSuccess(ev.success ?? false);
           setVerdictVisible(true);
           setAgentLive(false);
+          setRunStatus(ev.success ? "done" : "failed");
           break;
       }
     });
@@ -163,7 +201,8 @@ export default function Page() {
   }, []);
 
   // When user clicks a steering preset, register it in the local queue. The
-  // queue clears when a matching steering_applied event arrives.
+  // queue state transitions: queued -> applied (on next step_started) ->
+  // expired (2s later) -> removed (7s after queue).
   const onSteeringQueued = (edits: SteeringEdit[]) => {
     if (!edits?.length) {
       // Reset case — clear pending too.
@@ -178,6 +217,7 @@ export default function Page() {
         delta: e.delta,
         label: e.label,
         queued_at: now,
+        state: "queued" as const,
       })),
     ]);
   };
@@ -198,6 +238,7 @@ export default function Page() {
         positionMode={positionMode}
         seed={seed}
         steeringEndpoint={steeringEndpoint}
+        runStatus={runStatus}
       />
 
       {/* v0.10 demo-fit layout: viewport widened to col-span 8 and Row 1
@@ -259,6 +300,16 @@ export default function Page() {
                 {interventionPulse.edits.length === 1 ? "edit" : "edits"}
               </span>
             )}
+          </div>
+          {/* v0.16: current-action strip — sits ABOVE the screenshot so
+              the audience reads "what the agent just did" alongside
+              "what the page looks like" without scanning side panels. */}
+          <div className="mb-2 shrink-0">
+            <CurrentAction
+              lastAction={lastAction}
+              step={step}
+              executed={lastExecuted}
+            />
           </div>
           <div className="flex-1 min-h-0 overflow-hidden relative">
             <BrowserViewport screenshotPath={screenshot} />
@@ -348,24 +399,60 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Row 2 right: before/after diff (narrowed 5 -> 3) */}
+        {/* Row 2 right: before/after diff — only shown when there IS a
+            baseline cache. Reviewer P0: "never show an empty key panel"
+            on the demo. For real-web tasks (qualitative verifier, no
+            baseline cache) we replace it with a Trajectory log so the
+            slot doesn't go to waste. */}
         <section className="col-span-3 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0">
-          <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0">
-            Before / after diff
-            {baselineByStep.size > 0 && (
-              <span className="ml-2 text-[10px] text-zinc-500">
-                {baselineByStep.size} cached
-              </span>
-            )}
-          </h2>
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            <BeforeAfterDiff
-              baselineByStep={baselineByStepMemo}
-              currentTrajectory={trajectory}
-              currentStep={step}
-              currentPolicy={policy}
-            />
-          </div>
+          {baselineByStep.size > 0 ? (
+            <>
+              <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0">
+                Before / after diff
+                <span className="ml-2 text-[10px] text-zinc-500">
+                  {baselineByStep.size} cached
+                </span>
+              </h2>
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <BeforeAfterDiff
+                  baselineByStep={baselineByStepMemo}
+                  currentTrajectory={trajectory}
+                  currentStep={step}
+                  currentPolicy={policy}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0">
+                Trajectory ({trajectory.length} steps)
+              </h2>
+              <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1">
+                {trajectory.length === 0 ? (
+                  <div className="text-xs text-zinc-500 italic py-2">
+                    Actions will appear here as the agent steps. (No
+                    baseline cache for this task → Before/After diff is
+                    hidden. To enable: run
+                    <code className="text-zinc-400 mx-1">--policy baseline</code>
+                    on the same task first.)
+                  </div>
+                ) : (
+                  trajectory.map((ev, i) => (
+                    <div
+                      key={i}
+                      className="text-xs font-mono text-zinc-300 px-1.5 py-0.5 rounded bg-zinc-800/40"
+                    >
+                      <span className="text-zinc-500 mr-2">{ev.step ?? "?"}</span>
+                      <span className="truncate">
+                        {ev.action?.action}{" "}
+                        {ev.action?.target?.slice?.(0, 40) || ""}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </section>
       </div>
 

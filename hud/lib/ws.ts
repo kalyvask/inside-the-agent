@@ -51,15 +51,29 @@ export type AgentEvent = {
   steering_endpoint?: "steer_act" | "steer_act_with_noise";
 };
 
-// v0.7-D: locally-queued steering command before delivery to runner.
-// Held in HUD client state so users see what they queued before the next
-// agent step drains it. Cleared when a matching steering_applied event
-// arrives from the agent with source="hud".
+// v0.7-D / v0.16: HUD-issued steering command tracked through a
+// 3-state lifecycle so the user can see exactly where each click landed.
+// Reviewer P0 fix: the v0.7-D queue conflated "queued" (waiting for
+// agent) with "applied" (already in effect) with "expired" (drained
+// and gone). Now each entry carries its own state and lives long
+// enough to be readable.
+//
+//   queued  : HUD POSTed to /control, agent has not pulled it yet.
+//   applied : agent drained it AND emitted steering_applied with
+//             source="hud". This entry lives 2 more seconds visually
+//             before transitioning to expired.
+//   expired : the one-shot has been consumed. Render in gray and
+//             auto-remove after 5 more seconds.
+export type CommandLifecycleState = "queued" | "applied" | "expired";
+
 export type PendingCommand = {
   feature_id: number;
   delta: number;
   label: string;
   queued_at: number;  // epoch ms
+  state: CommandLifecycleState;
+  applied_at?: number;
+  expired_at?: number;
 };
 
 export function connectWS(handler: (ev: AgentEvent) => void): () => void {
