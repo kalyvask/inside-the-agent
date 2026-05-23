@@ -251,6 +251,10 @@ python -m agent.ws_server
 # Terminal 2 — Next.js HUD frontend (long-lived)
 cd hud && NEXT_PUBLIC_WS_URL=ws://localhost:8765/feed npm run dev
 # Open http://localhost:3000
+#
+# Note (Windows): `npm run build` (production) shares `.next/` with `npm run dev`.
+# Stop the dev server first if you need to run a production build locally.
+# CI is unaffected; `next build` runs in a fresh checkout with no dev server.
 
 # Terminal 3 — one-command live demo
 python record_demo.py
