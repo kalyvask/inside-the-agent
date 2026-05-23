@@ -72,9 +72,13 @@ export default function FeatureBars({
     return <div className="text-zinc-500 text-sm">No features yet</div>;
   }
 
+  // v0.17b: cap default rows to 8 so the right rail stops feeling like
+  // an oversized box. Reviewer: "cap to 6-8 rows."
+  const visibleFeatures = animatedFeatures.slice(0, 8);
+
   return (
     <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-200px)]">
-      {animatedFeatures.slice(0, 12).map((f) => {
+      {visibleFeatures.map((f) => {
         const cat = inferCategory(f);
         const isHighlighted = highlightedIds.includes(f.id);
         const isLabelled = cat !== "unlabelled";

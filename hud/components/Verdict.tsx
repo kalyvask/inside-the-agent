@@ -26,38 +26,33 @@ export default function Verdict({ visible, success, taskId, totalSteps, policy }
 
   if (!show || success === null) return null;
 
+  // v0.17b: compact bottom-right toast instead of a full-screen modal.
+  // Reviewer asked the verdict to annotate the browser, not cover the
+  // product grid that caused success/failure.
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"
-      style={{ animation: "verdictIn 0.6s ease-out" }}
+      className={`fixed bottom-3 right-3 z-40 px-3 py-2 rounded-md border text-xs font-mono backdrop-blur-sm pointer-events-none ${
+        success
+          ? "bg-emerald-950/85 border-emerald-700/60 text-emerald-200"
+          : "bg-red-950/85 border-red-800/60 text-red-200"
+      }`}
+      style={{ animation: "verdictSlide 0.35s ease-out" }}
     >
       <style jsx>{`
-        @keyframes verdictIn {
-          0%   { opacity: 0; transform: scale(0.6); }
-          70%  { opacity: 1; transform: scale(1.05); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes verdictPulse {
-          0%, 100% { box-shadow: 0 0 60px currentColor; }
-          50%      { box-shadow: 0 0 120px currentColor; }
+        @keyframes verdictSlide {
+          0%   { opacity: 0; transform: translateY(8px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <div
-        className={`text-center px-12 py-10 rounded-xl border-4 backdrop-blur-md ${
-          success
-            ? "bg-emerald-900/50 border-emerald-400 text-emerald-300"
-            : "bg-red-900/50 border-red-400 text-red-300"
-        }`}
-        style={{ animation: "verdictPulse 2s ease-in-out infinite" }}
-      >
-        <div className="text-8xl mb-3 font-bold">
-          {success ? "✓" : "✗"}
-        </div>
-        <div className="text-4xl font-bold mb-2 tracking-wider">
-          {success ? "SUCCESS" : "FAILURE"}
-        </div>
-        <div className="text-sm uppercase tracking-widest text-zinc-300">
-          {taskId} · {policy} · {totalSteps} steps
+      <div className="flex items-center gap-2">
+        <span className="text-lg leading-none">{success ? "✓" : "✗"}</span>
+        <div className="leading-tight">
+          <div className="font-bold uppercase tracking-wider">
+            {success ? "success" : "failure"}
+          </div>
+          <div className="text-[10px] opacity-70">
+            {policy} · {taskId} · {totalSteps ?? "?"} steps
+          </div>
         </div>
       </div>
     </div>

@@ -260,19 +260,22 @@ export default function Page() {
           className={
             "col-span-8 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0 relative " +
             "transition-all duration-300 " +
+            // v0.17b: thin ring, no heavy glow. Pulse during the 3s
+            // intervention window so the audience still notices it, but
+            // it doesn't read as a global warning state.
             (interventionPulse
               ? {
-                  targeted: "ring-4 ring-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]",
-                  static: "ring-4 ring-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]",
-                  dynamic: "ring-4 ring-amber-400 shadow-[0_0_45px_rgba(251,191,36,0.55)]",
-                  hud: "ring-4 ring-yellow-300 shadow-[0_0_45px_rgba(253,224,71,0.55)]",
-                  noise: "ring-4 ring-sky-400 shadow-[0_0_45px_rgba(56,189,248,0.55)]",
-                  "wrong-sign": "ring-4 ring-purple-400 shadow-[0_0_45px_rgba(192,132,252,0.55)]",
-                  random: "ring-4 ring-orange-400 shadow-[0_0_45px_rgba(251,146,60,0.55)]",
-                  "prompt-only": "ring-4 ring-blue-400 shadow-[0_0_45px_rgba(96,165,250,0.55)]",
-                  "failure_mining": "ring-4 ring-rose-400 shadow-[0_0_45px_rgba(251,113,133,0.55)]",
-                }[interventionPulse.source] || "ring-4 ring-zinc-400"
-              : "")
+                  targeted: "ring-1 ring-emerald-400/70",
+                  static: "ring-1 ring-emerald-400/70",
+                  dynamic: "ring-1 ring-amber-400/70",
+                  hud: "ring-1 ring-yellow-300/80",
+                  noise: "ring-1 ring-sky-400/70",
+                  "wrong-sign": "ring-1 ring-purple-400/70",
+                  random: "ring-1 ring-orange-400/70",
+                  "prompt-only": "ring-1 ring-blue-400/70",
+                  "failure_mining": "ring-1 ring-rose-400/70",
+                }[interventionPulse.source] || "ring-1 ring-zinc-500"
+              : "ring-1 ring-zinc-800")
           }
         >
           <div className="flex items-center justify-between mb-2 shrink-0">
@@ -313,30 +316,16 @@ export default function Page() {
           </div>
           <div className="flex-1 min-h-0 overflow-hidden relative">
             <BrowserViewport screenshotPath={screenshot} />
-            {/* v0.15: idle callout. Sits ON TOP of the viewport when no
-                agent is live — biggest visual cue in the cockpit, points
-                the user at the Start Agent Run button. */}
+            {/* v0.17b: tiny corner watermark instead of a centered modal.
+                Reviewer asked: annotate the browser, don't cover it. */}
             {!agentLive && !verdictVisible && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="bg-zinc-900/85 border border-emerald-600/60 rounded-lg px-6 py-4 text-center backdrop-blur-sm">
-                  <div className="text-emerald-400 text-lg font-mono mb-1">
-                    Click ▶ START AGENT RUN to begin
-                  </div>
-                  <div className="text-zinc-400 text-xs">
-                    Steering presets queue, but only land when an agent is live.
-                  </div>
-                </div>
+              <div className="absolute bottom-1.5 right-1.5 px-2 py-1 rounded bg-zinc-900/70 border border-zinc-800 text-[10px] font-mono text-zinc-500 pointer-events-none backdrop-blur-sm">
+                idle — click ▶ start agent run
               </div>
             )}
-            {/* v0.15: live status strip — step counter + the "INTERVENTION"
-                badge moved here so both are visible without scrolling the
-                header. */}
             {agentLive && step !== undefined && (
-              <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none">
-                <div className="bg-zinc-900/85 px-3 py-1.5 rounded-full text-xs font-mono text-emerald-300 border border-emerald-700/40 backdrop-blur-sm">
-                  ● step {step + 1}{totalSteps ? ` / ${totalSteps}` : ""} live
-                  <span className="text-zinc-400"> — next decision in &lt; 7s, click a preset to inject</span>
-                </div>
+              <div className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-zinc-900/70 border border-emerald-800/40 text-[10px] font-mono text-emerald-300 pointer-events-none backdrop-blur-sm">
+                ● step {step + 1}{totalSteps ? `/${totalSteps}` : ""} live
               </div>
             )}
           </div>
