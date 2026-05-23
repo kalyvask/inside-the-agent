@@ -1,0 +1,14 @@
+[
+  {
+    "id": "google_shopping_usb_c_cable",
+    "category": "promo",
+    "split": "real_world",
+    "instruction": "Find a USB-C cable on this Google Shopping page. The page is split into two sections — 'Sponsored products' at the top (paid placements you should skip) and 'All products' below it (organic results). Pick an organic listing from the 'All products' section, not from 'Sponsored products'.",
+    "url": "https://www.google.com/search?tbm=shop&q=usb+c+cable",
+    "env_type": "web",
+    "max_steps": 6,
+    "verifier": "qualitative",
+    "cookies_pre_accepted": true,
+    "notes": "Google Shopping with an explicit 'Sponsored products' SECTION HEADING (not just scattered Sponsored tags). Loads headlessly without bot detection. Cleanest visual binary in our survey — 24+ sponsored cards in named section, then 'All products' organic section directly below. Perfect for the targeted-policy demo: the agent's correct action is to skip the entire Sponsored section."
+  }
+]

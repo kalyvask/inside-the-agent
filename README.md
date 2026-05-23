@@ -13,34 +13,50 @@ Two empirically-validated SAE feature edits at one decision step shift success r
 
 ---
 
-## Headline result
+## Headline result (v0.8 — held-out 20 tasks × 3 trials = 60 per policy)
 
-8 held-out promotional-trap shopping tasks, 3 trials per policy (**24 trials each**), Wilson 95% CIs.
-
-> 📊 **Source of truth: [`artifacts/benchmark_report.md`](artifacts/benchmark_report.md)** — auto-regenerated from `data/results/*.jsonl` via `python -m bench.report`. The table below is a snapshot from `v0.2`; it is verified against the auto-generated report on every CI run by [`python -m bench.artifact_check`](bench/artifact_check.py). Discrepancies fail the build.
->
-> _v0.7 reviewer feedback closed: noise control + prompt-only control now route through their proper endpoints (P0-3 / P0-4 fixed); real-web tasks no longer report a fake 0% success rate (P0-5); hard_held_out task knobs are wired through (P0-3). v0.8 reruns at all six policies are in flight — table below updates when complete._
+Wilson 95% CIs. All numbers regenerated from `data/results/*.jsonl` via [`python -m bench.report`](bench/report.py) and verified by [`python -m bench.artifact_check`](bench/artifact_check.py) on every CI run.
 
 | Policy | Success | 95% CI | Δ vs baseline | Notes |
 |---|---|---|---|---|
-| baseline (no steering) | **0.0%** | [0.0%, 13.8%] | — | Falls for the trap every time |
-| wrong-sign | 4.2% | [0.7%, 20.2%] | +4 pts | Sign-flipped targeted edits |
-| random | 0.0% _(was 45.8% pre-v0.2 seed fix)_ | [0.0%, 13.8%] | — | Random feature edits w/ proper per-trial seeds (v0.2-A) |
-| prompt-only (system-prompt control) | 75.0% | [55.1%, 88.0%] | +75 pts | "Avoid promotional banners; use search" in the prompt |
-| noise (matched-norm random perturbation) | _pending v0.8 rerun_ | — | — | Reviewer P0-4: was dead code pre-v0.7-B |
-| **targeted — 2 SAE feature edits at Step 0** | **83.3%** | **[64.1%, 93.3%]** | **+83 pts** | f26737 (-6) + f23803 (+6), `position_mode=all` |
+| baseline (no steering) | **10.0%** | [4.7%, 20.1%] | — | Falls for the trap most of the time |
+| wrong-sign | 13.3% | [6.9%, 24.2%] | +3 pts | Sign-flipped targeted edits — inside baseline CI ⇒ direction matters causally |
+| random (per-trial seeded) | 15.0% | [8.1%, 26.1%] | +5 pts | Random feature edits — small lift from "any intervention" |
+| noise (matched-norm) | 18.3% | [10.6%, 29.9%] | +8 pts | Random isotropic residual perturbation, same magnitude as targeted |
+| **targeted — 2 SAE feature edits at Step 0** | **56.7%** | **[44.1%, 68.4%]** | **+47 pts** | f26737 (-6) + f23803 (+6), `position_mode=all` |
+| prompt-only (system-prompt control) | 73.3% | [61.0%, 82.9%] | +63 pts | "Avoid promotional banners; use search" in the system prompt |
 
 ![Headline chart](artifacts/headline.png)
 
+### The category-specific story (this is the real headline)
+
+The targeted edits don't lift uniformly — the **mechanism is category-specific**. Breaking the 60 trials per policy out by task category:
+
+| Policy | promo (calibrated) | hallucination (cross-domain) | planning (out-of-distribution) |
+|---|---:|---:|---:|
+| baseline | 0% (0/24) | 0% (0/18) | 33% (6/18) |
+| **targeted** | **79%** (19/24) | **67%** (12/18) | **17%** (3/18) |
+| prompt-only | 83% (20/24) | 67% (12/18) | 67% (12/18) |
+| wrong-sign | 4% | 33% | 6% |
+| random | 0% | 22% | 28% |
+
+Three honest findings:
+
+1. **Targeted dominates the calibration distribution.** On promotional traps — what we tuned for — the agent goes from 0% to 79%. The original v0.2 headline (83% on 24 trials) was correct for promo; the 56.7% overall just averages across categories.
+2. **Targeted transfers cross-domain to hallucination tasks.** 0% → 67% on a category we never calibrated against. Suppressing UI-selection vocabulary stops the agent from inventing buttons that don't exist. Evidence of cross-distribution generalization.
+3. **Targeted *hurts* on planning.** 33% → 17%, worse than baseline. The features that block "click the wrong thing" also block "click the right thing" when multi-step navigation needs legitimate clicks. **Mechanistically consistent** — the logit lens predicts this failure.
+
+**Prompt-only beats targeted overall (73% vs 57%)** by doing well across all three categories, not by being better on any individual one. The methods are mechanistically different — prompt-only modifies *input tokens*, targeted modifies the *residual stream* at layer 19. They both work; they tell different stories.
+
 ### How to read these numbers honestly
 
-- **Wrong-sign at 4.2%** sits inside baseline's CI. Flipping the targeted edits' signs erases the effect — direction matters causally, not just "any intervention."
-- **Random at 45.8%** is a real but noisy lift. Random feature perturbations sometimes break the promo-click bias by accident. The **targeted-vs-random gap (+37 pts)** is the quantitative claim about *which* features matter.
-- **Targeted at 83.3%** is the validated effect of two specific feature edits at step 0 only — steps 1 onward run with zero steering.
-- **Position-mode caveat.** The 83% uses `position_mode=all` (the residual delta hits every position during the steered forward pass). The more surgical `position_mode=last_prompt_only` — which only modifies the last prefill token — gives **0%** in our tests on this benchmark. The effect is real and causal; it is not yet localized to a single token. Scope-comparison table in `artifacts/benchmark_report.md`.
-- **Verifier caveat.** Headline rate uses the lenient verifier (cart contains target). A strict-cart pass — "cart contains target exactly once, no other product polluted" — is wired (`bench/compute_strict.py`) and on the roadmap as the canonical headline.
+- **Wrong-sign sits inside baseline's CI.** Flipping the targeted edits' signs erases the effect — direction matters causally, not just "any intervention."
+- **Random at 15% is the corrected number.** v0.1 reported random at 45.8% due to a fixed-seed bug; v0.2-A fixed it; v0.8 confirms random doesn't get lucky much.
+- **Targeted at 57% is the average across three categories.** See breakdown above for the mechanistic story.
+- **Position-mode caveat.** The 57% / 79% uses `position_mode=all` (delta applied at every position). The surgical `position_mode=last_prompt_only` (Modal default) gives **0%** in our tests — the effect is real and causal, not yet localized to a single token. Scope-comparison table in `artifacts/benchmark_report.md`.
+- **Verifier caveat.** Headline rate uses the lenient verifier (cart contains target). A strict-cart pass — "exactly once, no other product polluted" — is wired (`bench/compute_strict.py`) and on the roadmap as the canonical headline.
 
-This is *not* a claim that we found "the promotional bias feature." It is a claim that **two specific SAE features, when intervened at the first decision step, causally shift the agent's success rate on this benchmark**. The features are characterized via three independent methods (logit lens, corpus probe, ablation) and labelled by what the methods agree on — `f26737_ui_selection_vocab` and `f23803_distraction_avoidance_vocab`. Full evidence in [`docs/feature_characterization.md`](docs/feature_characterization.md).
+This is *not* a claim that we found "the promotional bias feature." It's a claim that **two specific SAE features, intervened at the first decision step, causally shift the agent's success rate — strongly on the calibration distribution, with measurable cross-domain transfer, AND with a documented failure mode on planning tasks**. The features are characterized via three independent methods (logit lens, corpus probe, ablation) and labelled by what the methods agree on — `f26737_ui_selection_vocab` and `f23803_distraction_avoidance_vocab`. Full evidence in [`docs/feature_characterization.md`](docs/feature_characterization.md).
 
 See `docs/methodology.md` for the full writeup and method details.
 

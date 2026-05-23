@@ -5,7 +5,11 @@
     "task_limit": 8,
     "trials_per_task": 3,
     "total_runs_per_policy": 24,
-    "trial_seeds": [0, 1, 2]
+    "trial_seeds": [
+      0,
+      1,
+      2
+    ]
   },
   "model": {
     "backbone": "meta-llama/Llama-3.1-8B-Instruct",
@@ -25,23 +29,42 @@
     },
     "targeted": {
       "edits": [
-        {"feature_id": 26737, "delta": -6.0, "label": "f26737_invented_action_supp"},
-        {"feature_id": 23803, "delta": 6.0, "label": "f23803_goal_anchor"}
+        {
+          "feature_id": 26737,
+          "delta": -6.0,
+          "label": "f26737_invented_action_supp"
+        },
+        {
+          "feature_id": 23803,
+          "delta": 6.0,
+          "label": "f23803_goal_anchor"
+        }
       ],
       "applied_at": "step_0_only",
       "validated_by": "verify/step0_calibration.py"
     },
     "wrong-sign": {
       "edits": [
-        {"feature_id": 26737, "delta": 6.0, "label": "f26737_invented_action_supp"},
-        {"feature_id": 23803, "delta": -6.0, "label": "f23803_goal_anchor"}
+        {
+          "feature_id": 26737,
+          "delta": 6.0,
+          "label": "f26737_invented_action_supp"
+        },
+        {
+          "feature_id": 23803,
+          "delta": -6.0,
+          "label": "f23803_goal_anchor"
+        }
       ],
       "applied_at": "step_0_only",
       "purpose": "direction-flip control"
     },
     "random": {
       "n_features": 2,
-      "magnitude_range": [-6.0, 6.0],
+      "magnitude_range": [
+        -6.0,
+        6.0
+      ],
       "applied_at": "step_0_only",
       "seed_recipe": "random.Random(f'random_policy:{trial_seed}')",
       "purpose": "feature-identity control; different features per trial",
@@ -49,12 +72,226 @@
     }
   },
   "headline_results": {
-    "as_of": "v0.2 — random_policy seed bug fixed, L0 verified",
+    "as_of": "v0.8 \u2014 refreshed 2026-05-23 01:25 UTC",
     "policy_success_rates": {
-      "baseline":   {"successes": 0,  "trials": 24, "rate": 0.000, "wilson_ci_95": [0.000, 0.138]},
-      "wrong-sign": {"successes": 1,  "trials": 24, "rate": 0.042, "wilson_ci_95": [0.007, 0.202]},
-      "random":     {"successes": 11, "trials": 24, "rate": 0.458, "wilson_ci_95": [0.279, 0.649], "note": "PENDING rerun with fixed seeds"},
-      "targeted":   {"successes": 20, "trials": 24, "rate": 0.833, "wilson_ci_95": [0.641, 0.933]}
+      "baseline": {
+        "successes": 6,
+        "trials": 60,
+        "rate": 0.1,
+        "wilson_ci_95": [
+          0.047,
+          0.201
+        ]
+      },
+      "wrong-sign": {
+        "successes": 8,
+        "trials": 60,
+        "rate": 0.133,
+        "wilson_ci_95": [
+          0.069,
+          0.242
+        ]
+      },
+      "random": {
+        "successes": 9,
+        "trials": 60,
+        "rate": 0.15,
+        "wilson_ci_95": [
+          0.081,
+          0.261
+        ]
+      },
+      "targeted": {
+        "successes": 34,
+        "trials": 60,
+        "rate": 0.567,
+        "wilson_ci_95": [
+          0.441,
+          0.684
+        ]
+      },
+      "noise": {
+        "successes": 11,
+        "trials": 60,
+        "rate": 0.183,
+        "wilson_ci_95": [
+          0.106,
+          0.299
+        ]
+      },
+      "prompt-only": {
+        "successes": 44,
+        "trials": 60,
+        "rate": 0.733,
+        "wilson_ci_95": [
+          0.61,
+          0.829
+        ]
+      },
+      "static": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "targeted_cf": {
+        "successes": 1,
+        "trials": 1,
+        "rate": 1.0,
+        "wilson_ci_95": [
+          0.207,
+          1
+        ]
+      },
+      "targeted_ebay": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "targeted_ebay_deals": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "targeted_ebay_v11": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "targeted_hud": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "targeted_walmart": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "targeted_walmart_search": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "targeted_walmart_warm": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      }
+    },
+    "policy_success_rates_by_scope": {
+      "cf": {
+        "successes": 1,
+        "trials": 1,
+        "rate": 1.0,
+        "wilson_ci_95": [
+          0.207,
+          1
+        ]
+      },
+      "ebay": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "ebay_deals": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "ebay_v11": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "hud": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "walmart": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "walmart_search": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "walmart_warm": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "all": {
+        "successes": 34,
+        "trials": 60,
+        "rate": 0.567,
+        "wilson_ci_95": [
+          0.441,
+          0.684
+        ]
+      }
     }
   },
   "caveats": [
