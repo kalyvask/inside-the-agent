@@ -5,7 +5,6 @@ import BrowserViewport from "@/components/BrowserViewport";
 import FeatureBars from "@/components/FeatureBars";
 import SteeringControls from "@/components/SteeringControls";
 import InterventionTimeline from "@/components/InterventionTimeline";
-import TrajectoryLog from "@/components/TrajectoryLog";
 import Verdict from "@/components/Verdict";
 import SteeringFlash from "@/components/SteeringFlash";
 import DemoBanner from "@/components/DemoBanner";
@@ -147,7 +146,7 @@ export default function Page() {
   const baselineByStepMemo = useMemo(() => baselineByStep, [baselineByStep]);
 
   return (
-    <main className="h-screen flex flex-col">
+    <main className="h-screen flex flex-col overflow-hidden">
       <DemoBanner
         taskId={taskId}
         policy={policy}
@@ -158,27 +157,41 @@ export default function Page() {
         steeringEndpoint={steeringEndpoint}
       />
 
-      <div className="grid grid-cols-12 gap-2 flex-1 p-2 overflow-hidden auto-rows-min">
-        {/* Row 1 left: viewport spans 2 rows */}
-        <section className="col-span-7 row-span-2 bg-zinc-900 rounded p-2 overflow-hidden">
-          <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400">Browser viewport</h2>
-          <BrowserViewport screenshotPath={screenshot} />
+      {/* v0.8-C demo-fit layout: two equal rows that together fill the
+          screen below the banner. Trajectory log was removed — its
+          information is fully captured by Before/After Diff plus the
+          BrowserViewport screenshots. */}
+      <div
+        className="grid gap-2 flex-1 p-2 overflow-hidden min-h-0"
+        style={{
+          gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
+          gridTemplateRows: "minmax(0, 1.1fr) minmax(0, 0.9fr)",
+        }}
+      >
+        {/* Row 1 left: viewport (taller) */}
+        <section className="col-span-7 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0">
+          <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400 shrink-0">Browser viewport</h2>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <BrowserViewport screenshotPath={screenshot} />
+          </div>
         </section>
 
         {/* Row 1 right: features */}
-        <section className="col-span-5 bg-zinc-900 rounded p-2 overflow-hidden">
-          <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400">Active features</h2>
-          <FeatureBars features={features} highlightedIds={highlightedIds} />
+        <section className="col-span-5 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0">
+          <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400 shrink-0">Active features</h2>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <FeatureBars features={features} highlightedIds={highlightedIds} />
+          </div>
         </section>
 
-        {/* Row 2 right: steering controls + queue (stacked) */}
-        <section className="col-span-5 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col gap-3">
-          <div>
-            <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400">Steering controls</h2>
+        {/* Row 2 left: steering controls + queue stacked */}
+        <section className="col-span-4 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col gap-2 min-h-0">
+          <div className="shrink-0">
+            <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400">Steering controls</h2>
             <SteeringControls onApply={onSteeringQueued} />
           </div>
-          <div className="border-t border-zinc-800 pt-2">
-            <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400">
+          <div className="border-t border-zinc-800 pt-2 flex-1 min-h-0 overflow-hidden flex flex-col">
+            <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0">
               Command queue
               {pending.length > 0 && (
                 <span className="ml-2 px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 text-[10px]">
@@ -186,30 +199,36 @@ export default function Page() {
                 </span>
               )}
             </h2>
-            <CommandQueue pending={pending} onCancel={cancelPending} />
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <CommandQueue pending={pending} onCancel={cancelPending} />
+            </div>
           </div>
         </section>
 
-        {/* Row 3: effect size + intervention timeline + trajectory + diff */}
-        <section className="col-span-4 bg-zinc-900 rounded p-2 overflow-hidden">
-          <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400">
-            Effect size
-            {currentEdits.length > 0 && (
-              <span className="ml-2 text-[10px] text-zinc-500">
-                step {step !== undefined ? step + 1 : "—"}
-              </span>
-            )}
-          </h2>
-          <EffectSizeStrip edits={currentEdits} />
+        {/* Row 2 middle: effect size + intervention log stacked */}
+        <section className="col-span-3 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col gap-2 min-h-0">
+          <div className="shrink-0">
+            <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400">
+              Effect size
+              {currentEdits.length > 0 && (
+                <span className="ml-2 text-[10px] text-zinc-500">
+                  step {step !== undefined ? step + 1 : "—"}
+                </span>
+              )}
+            </h2>
+            <EffectSizeStrip edits={currentEdits} />
+          </div>
+          <div className="border-t border-zinc-800 pt-2 flex-1 min-h-0 overflow-hidden flex flex-col">
+            <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0">Intervention log</h2>
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <InterventionTimeline events={interventions} />
+            </div>
+          </div>
         </section>
 
-        <section className="col-span-3 bg-zinc-900 rounded p-2 overflow-hidden">
-          <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400">Intervention log</h2>
-          <InterventionTimeline events={interventions} />
-        </section>
-
-        <section className="col-span-5 bg-zinc-900 rounded p-2 overflow-hidden">
-          <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400">
+        {/* Row 2 right: before/after diff (the money panel) */}
+        <section className="col-span-5 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0">
+          <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0">
             Before / after diff
             {baselineByStep.size > 0 && (
               <span className="ml-2 text-[10px] text-zinc-500">
@@ -217,18 +236,14 @@ export default function Page() {
               </span>
             )}
           </h2>
-          <BeforeAfterDiff
-            baselineByStep={baselineByStepMemo}
-            currentTrajectory={trajectory}
-            currentStep={step}
-            currentPolicy={policy}
-          />
-        </section>
-
-        {/* Row 4: trajectory full-width */}
-        <section className="col-span-12 bg-zinc-900 rounded p-2 overflow-hidden">
-          <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400">Trajectory</h2>
-          <TrajectoryLog events={trajectory} />
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <BeforeAfterDiff
+              baselineByStep={baselineByStepMemo}
+              currentTrajectory={trajectory}
+              currentStep={step}
+              currentPolicy={policy}
+            />
+          </div>
         </section>
       </div>
 
