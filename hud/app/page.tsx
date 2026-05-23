@@ -217,7 +217,7 @@ export default function Page() {
             vs hud-issued edits are visually distinguishable. */}
         <section
           className={
-            "col-span-8 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0 " +
+            "col-span-8 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0 relative " +
             "transition-all duration-300 " +
             (interventionPulse
               ? {
@@ -260,8 +260,34 @@ export default function Page() {
               </span>
             )}
           </div>
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden relative">
             <BrowserViewport screenshotPath={screenshot} />
+            {/* v0.15: idle callout. Sits ON TOP of the viewport when no
+                agent is live — biggest visual cue in the cockpit, points
+                the user at the Start Agent Run button. */}
+            {!agentLive && !verdictVisible && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-zinc-900/85 border border-emerald-600/60 rounded-lg px-6 py-4 text-center backdrop-blur-sm">
+                  <div className="text-emerald-400 text-lg font-mono mb-1">
+                    Click ▶ START AGENT RUN to begin
+                  </div>
+                  <div className="text-zinc-400 text-xs">
+                    Steering presets queue, but only land when an agent is live.
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* v0.15: live status strip — step counter + the "INTERVENTION"
+                badge moved here so both are visible without scrolling the
+                header. */}
+            {agentLive && step !== undefined && (
+              <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none">
+                <div className="bg-zinc-900/85 px-3 py-1.5 rounded-full text-xs font-mono text-emerald-300 border border-emerald-700/40 backdrop-blur-sm">
+                  ● step {step + 1}{totalSteps ? ` / ${totalSteps}` : ""} live
+                  <span className="text-zinc-400"> — next decision in &lt; 7s, click a preset to inject</span>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
