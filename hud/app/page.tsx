@@ -79,6 +79,17 @@ export default function Page() {
     () => new Map()
   );
 
+  // v0.23: latency map (step -> ms between step_started and action_chosen).
+  // Used by CurrentAction to render a "⌛ 2.4s" credibility badge that
+  // proves the cockpit is streaming a real Modal brain call, not a cached
+  // replay.
+  const [stepStartedAt, setStepStartedAt] = useState<Map<number, number>>(
+    () => new Map()
+  );
+  const [latencyByStep, setLatencyByStep] = useState<Map<number, number>>(
+    () => new Map()
+  );
+
   // v0.14: heartbeat decay — if no step_started for 30s and the agent
   // hasn't sent task_done either, treat the run as stale (process
   // killed, network glitch, etc.) so SteeringControls doesn't claim
@@ -111,6 +122,8 @@ export default function Page() {
           setLastAction(undefined);
           setLastExecuted(null);
           setCounterfactualByStep(new Map());
+          setStepStartedAt(new Map());
+          setLatencyByStep(new Map());
           setRunStatus(ev.task_id ? "running" : "idle");
           break;
         case "policy_meta":
@@ -147,6 +160,18 @@ export default function Page() {
           setAgentLive(true);
           setLastStepAt(Date.now());
           setRunStatus("running");
+          // v0.23: record the wall-clock when this step started so we
+          // can compute latency on action_chosen. Use the event's own
+          // timestamp if present (more accurate — avoids HUD-client
+          // clock skew vs ws_server clock); fall back to local now.
+          if (typeof ev.step === "number") {
+            const ts = (ev.timestamp ?? Date.now() / 1000) * 1000;
+            setStepStartedAt((prev) => {
+              const next = new Map(prev);
+              next.set(ev.step!, ts);
+              return next;
+            });
+          }
           // v0.16: at every new step, any pending HUD commands still in
           // "queued" state graduate to "applied" because the agent's
           // drain_commands() pulled them on this step.
@@ -203,6 +228,26 @@ export default function Page() {
         case "action_chosen":
           setTrajectory((prev) => [...prev, ev]);
           setLastAction(ev);
+          // v0.23: compute latency = ts(action_chosen) - ts(step_started)
+          // and stash per-step. The CurrentAction strip renders the
+          // ⌛ badge based on this.
+          if (typeof ev.step === "number") {
+            const actionTs = (ev.timestamp ?? Date.now() / 1000) * 1000;
+            setStepStartedAt((prev) => {
+              const startTs = prev.get(ev.step!);
+              if (startTs != null) {
+                const dt = actionTs - startTs;
+                if (dt >= 0 && dt < 600000) {
+                  setLatencyByStep((m) => {
+                    const next = new Map(m);
+                    next.set(ev.step!, dt);
+                    return next;
+                  });
+                }
+              }
+              return prev;
+            });
+          }
           break;
         case "env_updated":
           if (ev.screenshot_path) setScreenshot(ev.screenshot_path);
@@ -344,6 +389,9 @@ export default function Page() {
                 step !== undefined
                   ? counterfactualByStep.get(step)
                   : undefined
+              }
+              latencyMs={
+                step !== undefined ? latencyByStep.get(step) : undefined
               }
             />
           </div>

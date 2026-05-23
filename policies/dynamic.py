@@ -31,12 +31,19 @@ hard-codes the IDs that were identified via failure mining + contrast.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from sae.steering_controller import SteeringPlan
 
 
 # Failure-mining features: each fires in 100% of baseline failures at the
 # failure step. Watched per-step; suppressed if their activation is above
 # this threshold AT THIS STEP.
+#
+# v0.23: thresholds can be OVERRIDDEN from policies/dynamic_thresholds.json
+# if that file exists (produced by verify/learn_dynamic_thresholds.py).
+# Hand-set defaults remain the fallback.
 WATCH_FEATURES = {
     50853: {"threshold": 0.40, "delta": -4.0, "label": "f50853_fail_mode_a"},
     19079: {"threshold": 0.40, "delta": -4.0, "label": "f19079_fail_mode_b"},
@@ -45,6 +52,32 @@ WATCH_FEATURES = {
     # Contrast-discovered promo bias feature from sae/features.yaml.
     34048: {"threshold": 0.50, "delta": -3.0, "label": "f34048_promotional_bias"},
 }
+
+
+def _load_learned_thresholds() -> None:
+    """v0.23: replace WATCH_FEATURES[*]['threshold'] with values learned
+    by verify/learn_dynamic_thresholds.py if that JSON output exists. No-op
+    on missing file; per-feature no-op if the file lacks a usable entry."""
+    p = Path(__file__).parent / "dynamic_thresholds.json"
+    if not p.exists():
+        return
+    try:
+        learned = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    for fid_str, info in learned.items():
+        try:
+            fid = int(fid_str)
+        except ValueError:
+            continue
+        if fid not in WATCH_FEATURES:
+            continue
+        thr = info.get("threshold")
+        if isinstance(thr, (int, float)) and 0 < thr < 5:
+            WATCH_FEATURES[fid]["threshold"] = float(thr)
+
+
+_load_learned_thresholds()
 
 # If overall goal-tracking activation drops below this, amplify the
 # distraction-avoidance feature (we don't have a labelled goal-tracking

@@ -129,7 +129,7 @@ That second story is **mechanistically grounded** rather than label-asserted. It
 1. **Logit lens is approximate.** It measures *direct* effects of the feature direction on the unembedding, ignoring multi-layer downstream interactions. Features can have effects the logit lens misses.
 2. **Corpus is small (40 prompts).** Naturalistic activation probing on tens of thousands of prompts would tighten the labels.
 3. **Cluster identity is not established.** We assert that f26737's neighbors {f62830, f58839, f55688} encode related concepts; we have not actually verified this.
-4. **No external corroboration.** Neuronpedia and other public feature explorers may have data on these features; we have not cross-referenced.
+4. **Limited external corroboration.** v0.23 checked Neuronpedia for cross-reference and found that **it does not host Goodfire's layer-19 Llama-3.1-8B SAE**. The only Llama-3.1-8B-IT SAE on Neuronpedia is `andyrdt/saes-llama-3.1-8b-instruct/resid_post_layer_11` — a different SAE trained on **layer 11** (we use layer 19), so feature indices do not transfer. On that SAE, feature 26737 is described as "statistical mixture modeling vocabulary," not UI-selection — confirming that SAE feature indices are not portable across different SAEs trained on the same base model. The portable thing is the *behavioral effect of the lexical cluster* we identified, not the index itself.
 5. **The 100%-failure cluster is not understood.** The strongest data signal for "where failure happens" has not yet yielded an interpretable feature.
 
 ## What I'd build next (v0.5)

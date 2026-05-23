@@ -24,12 +24,12 @@ type Props = {
   /** Whether the env actually dispatched the action (from v0.8 executed flag). */
   executed?: boolean | null;
   /** v0.18: what the model would have done at this step on the IDENTICAL
-   * prompt WITHOUT the steering edits. Emitted by the agent via a twin
-   * brain call (edits={}) whenever the policy intervened. Renders below
-   * the actual action as a counterfactual line so the audience sees the
-   * causal answer to "is the steering doing anything?". Absent when no
-   * intervention happened this step. */
+   * prompt WITHOUT the steering edits. */
   counterfactualAction?: any;
+  /** v0.23: ms between step_started and action_chosen for the current step.
+   * Shown as "2.4s" credibility marker — proves the agent is actually
+   * doing work, not just replaying a cache. */
+  latencyMs?: number;
 };
 
 function formatAction(action: any): string {
@@ -68,11 +68,18 @@ function actionsDiffer(a: any, b: any): boolean {
   return false;
 }
 
+function formatLatency(ms?: number): string {
+  if (ms == null || !isFinite(ms) || ms < 0) return "";
+  if (ms < 1000) return `${ms.toFixed(0)}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
 export default function CurrentAction({
   lastAction,
   step,
   executed,
   counterfactualAction,
+  latencyMs,
 }: Props) {
   if (!lastAction || !lastAction.action) {
     return (
@@ -113,6 +120,17 @@ export default function CurrentAction({
         <span className="flex-1 min-w-0 truncate text-zinc-100" title={actionText}>
           {actionText}
         </span>
+        {/* v0.23: latency badge — shows the brain-call wallclock between
+            step_started and action_chosen events. Proves the cockpit is
+            streaming real Modal work, not replaying a static cache. */}
+        {latencyMs != null && (
+          <span
+            className="shrink-0 px-2 py-0.5 rounded border border-zinc-700 bg-zinc-900/60 text-zinc-400 text-[10px] tabular-nums"
+            title={`Wallclock between step_started and action_chosen events: ${latencyMs.toFixed(0)}ms. Includes brain forward pass + JSON parse.`}
+          >
+            ⌛ {formatLatency(latencyMs)}
+          </span>
+        )}
         <span
           className={`shrink-0 px-2 py-0.5 rounded border text-[10px] ${execBadge.bg} ${execBadge.text}`}
           title={
