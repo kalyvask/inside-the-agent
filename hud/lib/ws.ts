@@ -87,13 +87,40 @@ export function connectWS(handler: (ev: AgentEvent) => void): () => void {
     return () => clearInterval(id);
   }
 
-  const ws = new WebSocket(url);
-  ws.onmessage = (msg) => {
-    try {
-      handler(JSON.parse(msg.data));
-    } catch (e) {
-      console.error("Bad WS message:", e);
-    }
+  // v0.7-D: auto-reconnect. When the agent run finishes, the ws_server
+  // subprocess gets torn down by the runner's context manager; the HUD's
+  // socket closes. Without retry the HUD would go dark forever. With
+  // retry, the next agent run respawns ws_server and the HUD picks up
+  // the new connection within ~1.5s.
+  let ws: WebSocket | null = null;
+  let closed = false;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function open() {
+    if (closed) return;
+    ws = new WebSocket(url!);
+    ws.onmessage = (msg) => {
+      try {
+        handler(JSON.parse(msg.data));
+      } catch (e) {
+        console.error("Bad WS message:", e);
+      }
+    };
+    ws.onclose = () => {
+      ws = null;
+      if (!closed) {
+        reconnectTimer = setTimeout(open, 1500);
+      }
+    };
+    ws.onerror = () => {
+      // Don't spam the console; onclose will fire and trigger the retry.
+    };
+  }
+
+  open();
+  return () => {
+    closed = true;
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    ws?.close();
   };
-  return () => ws.close();
 }

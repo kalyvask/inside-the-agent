@@ -240,7 +240,18 @@ def main(
     env_type = _infer_env_type(task_list)
     env = _make_env(headless=not headed, env_type=env_type)
     policy_fn = POLICY_REGISTRY[policy]
-    publisher = HudPublisher(enabled=hud)
+    # v0.7-D: --hud (foreground) implies BOTH spawn-server AND publishing.
+    # HUD_PUBLISH=1 env (background reruns connecting to a separately-started
+    # ws_server) implies publishing only. Either path enables HudPublisher;
+    # explicit HUD_PUBLISH=0 disables both regardless of --hud.
+    env_pub = os.environ.get("HUD_PUBLISH")
+    if env_pub == "0":
+        publish_enabled = False
+    elif env_pub == "1":
+        publish_enabled = True
+    else:
+        publish_enabled = hud
+    publisher = HudPublisher(enabled=publish_enabled)
 
     # Wrap brain_call to also pass the position_mode argument by default.
     _raw_brain = brain_call
