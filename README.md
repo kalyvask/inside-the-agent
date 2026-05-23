@@ -68,15 +68,39 @@ _(updated in v0.8 after the v0.3 / v0.4 / v0.7 work landed)_
 
 - **Not a benchmark of strict-cart success.** The headline rate uses the lenient verifier (cart contains target). The strict verifier (`cart_contains_target_exactly_once`) is wired but not yet the canonical headline. The sample targeted trajectory shows the agent re-clicking add-to-cart repeatedly before terminating — visible in `data/trajectories/*.jsonl`. P1 reviewer ask: make strict the headline.
 
-### What this *is* (as of v0.8)
+### What this *is* (as of v0.12)
 
-- An **interactive cockpit** for browser-agent SAE interventions. The HUD shows live feature activations, an effect-size strip per active edit, a command queue for HUD-issued edits that drain at the next agent step, and a baseline-vs-current action diff per step. The HUD-to-runner channel is wired (`POST /control` → `ws_server` queue → `HudPublisher.drain_commands()` → merged into the next `SteeringPlan`).
-- A **reproducible testbed** for runtime feature interventions. `bench/artifact_check.py` verifies that every published number in `seed_manifest.json` matches the row in `data/results/*.jsonl`. `bench/report.py` regenerates the headline table from raw artifacts. CI gates the consistency.
-- A working bridge between **Goodfire's open SAE** and a Playwright-driven shopping agent, with controlled-noise + prompt-only + wrong-sign + random + matched-norm-noise controls.
+- An **interactive cockpit** for browser-agent SAE interventions. The HUD shows live SAE feature activations, an effect-size strip per active edit with source-coded colors, a command queue for HUD-issued edits that drain at the next agent step, a baseline-vs-current action diff per step, and a 3-second viewport-ring pulse + source badge whenever a steering edit lands. The HUD-to-runner channel is wired (`POST /control` → `ws_server` queue → `HudPublisher.drain_commands()` → merged into the next `SteeringPlan`).
+- A **reproducible testbed** for runtime feature interventions. `bench/artifact_check.py` verifies that every published number in `seed_manifest.json` matches the rows in `data/results/*.jsonl` and fails CI on drift. `bench/report.py` regenerates `artifacts/benchmark_report.md` (per-policy, per-task, per-category, action-quality) from raw artifacts. `bench/compute_strict.py` approximates strict-cart from trajectory action histories.
+- A working bridge between **Goodfire's open SAE** and a Playwright-driven shopping agent, with **9 policies**: baseline, static, adaptive-dynamic (watches failure-mining features per step), random (per-trial-seeded), wrong-sign (direction-flip ablation), targeted (2 contrast-derived features at step 0), prompt-only (system-prompt control), noise (matched-norm random residual perturbation), and failure-mining (4 data-derived features that fire in 100% of baseline failures).
+- A **live segment on real public sites**. `shopgym/web_env.py` is a generic Playwright env that the agent uses the same way it uses ShopGym. Validated on eBay /deals (works headlessly) and AliExpress; Walmart documented as bot-walled (PerimeterX fingerprints beyond cookies). The v0.8 `executed: bool` field on every step surfaces the honest gap between "model emitted valid JSON" and "Playwright actually clicked something."
 
-## Demo (3-minute video)
+## Demo (live cockpit on real eBay)
 
-The recipe to produce the demo video lives in [`docs/recording_guide.md`](docs/recording_guide.md). It uses the trajectory replayer (no Modal calls during recording) and the polished HUD components built specifically for the video.
+One terminal command launches the whole live demo:
+
+```bash
+# In one terminal (start once, leave running):
+python -m agent.ws_server                # localhost:8765
+cd hud && NEXT_PUBLIC_WS_URL=ws://localhost:8765/feed npm run dev   # localhost:3000
+
+# Open the HUD in your browser, then:
+python record_demo.py
+# That's the whole demo. It clears HUD state, warms the Modal brain,
+# does a 3-second countdown so you can hit "record" in OBS / Win+G,
+# then fires the targeted policy on shopgym/tasks/real_ebay.json.
+```
+
+The HUD viewport will show eBay's /deals page → search results → results filters. At step 0, the targeted policy's `f26737=-6` and `f23803=+6` edits fire, the viewport gets a 3-second emerald pulse + ring + "⚡ INTERVENTION · targeted · 2 edits" badge, and the Effect Size strip shows both bipolar bars. The agent then submits the search and starts drilling into results.
+
+Replay an offline trajectory instead (no Modal calls during recording):
+
+```bash
+python -m verify.replay_trajectory \
+  data/trajectories/promo_held_001_seed_0_targeted.jsonl --slow
+```
+
+Full runbook + 60-second talk track: [`docs/live_demo.md`](docs/live_demo.md). Recording recipe: [`docs/recording_guide.md`](docs/recording_guide.md).
 
 ## Architecture
 
@@ -146,31 +170,49 @@ python -m verify.tune_deltas
 # Step-0 calibration to find features that flip the first decision
 python -m verify.step0_calibration
 
-# Full 4-policy benchmark on 8 held-out tasks × 3 trials (~90 min)
-for p in baseline random wrong-sign targeted; do
-  python -m bench.runner --policy $p --tasks shopgym/tasks/held_out.json \\
-    --trials 3 --limit 8
-done
+# Full 9-policy benchmark on the 20-task held-out suite × 3 trials
+python -m bench.rerun_p0           # baseline / targeted / wrong-sign / random / noise / prompt-only
+python -m bench.rerun_v0_9_extra   # failure-mining / dynamic (v0.9 additions)
+python -m bench.rerun_p0_2_scope   # targeted at last_prompt_only + all_prompt (scope comparison)
 
-# Chart + Wilson CIs + failure-mode mining
-python -m bench.analysis --plot
+# One-shot orchestrator that runs everything above + regenerates artifacts:
+python -m bench.v0_8_finalize
+
+# Inspect / verify the artifacts
+python -m bench.artifact_check     # CI gate: verifies manifest matches data/results
+python -m bench.report             # regenerates artifacts/benchmark_report.md
+python -m bench.compute_strict     # approximate strict-cart from action history
 ```
 
-### Watch the HUD live (for recording)
+### Watch the HUD live (for the demo)
 
-In separate terminals:
+Three terminals:
 
 ```bash
-# Terminal 1
+# Terminal 1 — WebSocket bridge (long-lived)
 python -m agent.ws_server
 
-# Terminal 2
+# Terminal 2 — Next.js HUD frontend (long-lived)
 cd hud && NEXT_PUBLIC_WS_URL=ws://localhost:8765/feed npm run dev
 # Open http://localhost:3000
 
-# Terminal 3 — replay a saved trajectory
+# Terminal 3 — one-command live demo
+python record_demo.py
+# Or: python record_demo.py --task shopgym/tasks/held_out.json --pause 6.0
+
+# Or replay an offline trajectory (no Modal cost):
 python -m verify.replay_trajectory \\
   data/trajectories/promo_held_001_seed_0_targeted.jsonl --slow
+```
+
+### Warm a real-website session (only if you hit bot detection)
+
+```bash
+# Opens a real Chrome window. Click through any CAPTCHA / cookies,
+# then ask your AI assistant to "go save" — it creates the sentinel
+# file and the script writes data/<site>_storage_state.json.
+python warm_session.py --url https://www.walmart.com/ \
+    --out data/walmart_storage_state.json --channel chrome
 ```
 
 ## Repository layout
@@ -178,27 +220,112 @@ python -m verify.replay_trajectory \\
 ```
 inside-the-agent/
 ├── modal_deploy/         brain-server (Modal app, Llama + Goodfire SAE)
-│   ├── app.py            primary: Llama 3.1-8B + Goodfire SAE l19
-│   └── app_gemma.py      fallback: Gemma 2-9B + Gemma Scope (not gated)
-├── sae/                  loader, feature reader, steering controller
+│   ├── app.py            primary: Llama 3.1-8B + Goodfire SAE l19, with
+│   │                     steer_act / steer_act_with_noise / read_features /
+│   │                     feature_logit_lens / feature_decoder_similarity /
+│   │                     sae_validation endpoints
+│   └── app_gemma.py      fallback: Gemma 2-9B + Gemma Scope (not gated).
+│                         Runbook: docs/cross_model_path.md
+├── sae/                  loader, steering controller, feature catalog
+│   └── features.yaml     v0.4 logit-lens + v0.9 failure-mining labels
 ├── agent/                trajectory schema, prompts, agent loop, HUD publisher
-├── policies/             baseline / random / wrong-sign / static / dynamic / targeted
-├── shopgym/              deterministic storefronts + 30 tasks
-├── bench/                runner, verifiers, analysis with Wilson CIs
-├── hud/                  Next.js HUD with feature bars, verdict overlay, steering flash
-├── verify/               5-test verification, feature discovery, tuning, calibration, replayer
-├── docs/                 methodology paper, demo script, recording guide
-└── data/                 trajectories, results, charts (gitignored)
+│   ├── llm_agent.py      core loop: read features → policy → steer → act
+│   ├── hud_publisher.py  events to ws_server (policy_meta, baseline_action,
+│   │                     step_started, features_read, steering_applied,
+│   │                     action_chosen, env_updated, task_done)
+│   └── ws_server.py      FastAPI bridge — /feed (WS) /publish /control
+│                         /control/pending /clear /screenshots /health
+├── policies/             9 policies in POLICY_REGISTRY:
+│                         baseline · static · dynamic (adaptive) ·
+│                         random · wrong-sign · targeted · prompt-only ·
+│                         noise · failure-mining
+├── shopgym/              deterministic storefronts (templated) + WebEnv
+│   ├── storefront_template.py  ShopGym env + verifier hookup
+│   ├── web_env.py              generic Playwright env for real sites
+│   └── tasks/                  held_out.json (20 tasks: 8 promo + 6 halluc
+│                               + 6 planning), real_ebay.json, real_walmart.json,
+│                               real_aliexpress.json
+├── bench/
+│   ├── runner.py               main CLI: --policy --tasks --hud --pause --position-mode
+│   ├── rerun_p0.py             sequential rerun of all 6 main policies
+│   ├── rerun_v0_9_extra.py     failure-mining + dynamic
+│   ├── rerun_p0_2_scope.py     targeted at last_prompt_only + all_prompt
+│   ├── v0_8_finalize.py        chains all reruns + report regen + manifest refresh
+│   ├── artifact_check.py       CI gate: verifies manifest ↔ jsonl consistency
+│   ├── report.py               regenerates artifacts/benchmark_report.md
+│   ├── compute_strict.py       approximate strict-cart from action histories
+│   └── verifiers.py            lenient + strict + upsell verifiers
+├── hud/                  Next.js cockpit on localhost:3000
+│   ├── app/page.tsx            layout + event handlers
+│   └── components/             DemoBanner (policy + scope + seed badges),
+│                               BrowserViewport, FeatureBars,
+│                               SteeringControls, CommandQueue, EffectSizeStrip,
+│                               InterventionTimeline, BeforeAfterDiff,
+│                               Verdict, SteeringFlash
+├── verify/               feature discovery + verification tooling:
+│                         sae_smoke, sae_validation, feature_drill,
+│                         feature_characterize (logit lens),
+│                         tune_deltas, step0_calibration, feature_ablations,
+│                         replay_trajectory
+├── docs/                 methodology, feature_characterization, demo_script,
+│                         live_demo, real_world_generalization,
+│                         cross_model_path, recording_guide, data_splits
+├── tests/                46 unit tests (action parser, trajectory schema,
+│                         verifiers, task config, noise routing, executed
+│                         tracking, ...)
+├── notebooks/            explore_demo_pages.py (12-site survey)
+├── artifacts/            committed subset of data/: seed_manifest.json,
+│                         headline.png, benchmark_report.md, strict_rates.json,
+│                         sample_trajectory_*.jsonl
+├── record_demo.py        one-command live demo launcher (clear + warm + countdown + fire)
+├── warm_session.py       headed-Chrome cookie warm-up for bot-walled sites
+└── data/                 trajectories, results, baselines, screenshots (gitignored)
 ```
 
-## Open questions / future work
+## Roadmap
 
-_(v0.9 status: items 1, 2, and 4 are now wired and measurable. Item 3 has a runbook.)_
+### Immediate (this week — demo polish)
 
-1. **Failure-mode features.** _Built in v0.9._ Mining surfaced 4 features (50853, 19079, 39820, 44602) that fire in 100% of baseline failures. The `failure-mining` policy (`policies/failure_mining.py`) suppresses all four at step 0. Headline rate vs. `targeted` (contrast-derived) is in `artifacts/benchmark_report.md` after the next rerun. The claim under test: is failure mining a stronger discovery method than contrast?
-2. **Cross-domain.** _Wired in v0.9._ `held_out.json` has 20 tasks split across 3 categories — promotional (8), hallucination (6), planning (6). The new "Cross-domain breakdown" section in `artifacts/benchmark_report.md` shows per-policy success rate per category. Open question: does targeted (calibrated on promo) lift on hallucination + planning, or only its own training distribution?
-3. **Cross-model.** Results are specific to Llama 3.1-8B + Goodfire's layer-19 SAE. Gemma 2-9B + Gemma Scope is scaffolded in `modal_deploy/app_gemma.py`; **one-day runbook in [`docs/cross_model_path.md`](docs/cross_model_path.md)**. Estimated $10-15 Modal compute + ~3 hours of attended work.
-4. **Dynamic steering.** _Rewritten in v0.9._ `policies/dynamic.py` now watches the 4 failure-mining features + the promo-bias feature at every step, intervenes only when an activation crosses its threshold, and amplifies a goal-anchor feature when the model appears "drifty" (no top feature firing above 0.20). Tests against `targeted` (fixed step-0) head-to-head — does the adaptive variant match or beat with fewer interventions?
+1. **Main rerun + auto-finalize** _(running now, ~2h)_. `bench/rerun_p0.py` is replacing the stale v0.2 artifact rows. `bench/v0_8_finalize.py` auto-chains scope reruns + report regen + manifest refresh + artifact_check.
+2. **Regenerate `artifacts/headline.png`** from the new numbers — current chart is v0.2.
+3. **Refresh README headline table** with v0.7+ rates (random=0% after seed fix, noise + prompt-only rows added).
+4. **Flip `artifact_check` from soft-fail to hard-fail in CI** once the artifact rows are consistent.
+5. **Record the live cockpit clip** via `python record_demo.py` + screen capture.
+
+### Short-term (1-2 weeks — close P1 reviewer items)
+
+6. **Strict-cart as canonical headline.** Reviewer P1: lenient verifier hides repeated add-to-cart pollution. Run a strict pass that captures `cart_contains_target_exactly_once` alongside lenient.
+7. **Per-feature ablation studies.** `f26737` alone vs `f23803` alone vs combined — closes the "is the effect synergistic or additive?" question.
+8. **Sponsored-vs-organic decision** on a search-results page. Needs the real-site selector flake addressed first (LLM emits `search-result-N` patterns that don't exist in real DOMs).
+9. **HUD: latency badge per step** — credibility marker, ~30 min of plumbing existing timestamps.
+10. **HUD: counterfactual baseline diff.** Currently uses a cache from a prior baseline run; live counterfactual = call brain twice/step (with + without edits), shows true per-step divergence. Doubles brain cost.
+
+### Medium-term (next month — strengthen the science)
+
+11. **Cross-model Gemma replication.** Scaffolded in `modal_deploy/app_gemma.py`; runbook in [`docs/cross_model_path.md`](docs/cross_model_path.md). ~$15 Modal + 3 hours attended. Closes the biggest reviewer ask: *"is the result Llama-specific or general?"*
+12. **Larger corpus probe.** v0.4 corpus is 40 prompts; streaming 1k+ prompts from a public dataset would tighten the labels for `f26737` and `f23803`.
+13. **Failure-mining feature semantic characterization.** `f50853 / f19079 / f39820 / f44602` are still tagged `fail_mode_a/b/c/d` — their logit lens returned code symbols, not English clusters. Try attention-pattern analysis + a bigger corpus to see whether they're causal or symptomatic.
+14. **Cross-reference with Neuronpedia.** Other public SAE explorers may have richer data on our features; haven't checked.
+15. **HUD trajectory replay mode.** Browse `data/trajectories/*.jsonl` offline, scrub through past runs in the cockpit without rerunning the agent.
+
+### Long-term (months — research direction)
+
+16. **Multi-domain expansion.** Beyond promo / halluc / planning — add forms, comparison shopping, multi-step planning suites. Test whether targeted generalizes across task types.
+17. **Dynamic policy v2.** Current adaptive thresholds (0.40 for failure-mining features) are hand-set. Learn thresholds from a validation split.
+18. **Compositional steering.** Pair `f26737` with each of its decoder-neighbors (cosine sim > 0.5) — does the steering effect amplify? Tests whether feature clusters or single features carry the meaning.
+19. **Reusable testbed.** Package the runner + HUD + brain-server contract so others can plug in their SAE + their model. The wedge per reviewer P2: *"reproducible testbed for runtime feature interventions in browser agents, with live telemetry and controllable steering."*
+20. **Failure causality vs correlation.** The 4 failure-mining features fire in 100% of failures — but a heartbeat fires in 100% of car accidents. The `failure-mining` policy (v0.9) tests whether suppressing them actually rescues behavior, separating the causal from correlational story.
+
+### Status of the 4 original "Open questions"
+
+The four open questions from earlier reviewer feedback are now wired and measurable in the codebase:
+
+| Original ask | Status | Where |
+|---|---|---|
+| Failure-mode features as steering targets | ✅ built (`failure-mining` policy + catalog labels) | `policies/failure_mining.py` |
+| Cross-domain (hallucination + planning) | ✅ wired | per-category section in `artifacts/benchmark_report.md` |
+| Cross-model (Gemma 2-9B + Gemma Scope) | 📘 runbook ready | `docs/cross_model_path.md` |
+| Dynamic steering (not just step 0) | ✅ rewritten | `policies/dynamic.py` watches failure features per step |
 
 ## Built on
 
