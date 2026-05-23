@@ -15,6 +15,7 @@ from .random_policy import random_policy
 from .wrong_sign import wrong_sign_policy
 from .targeted import targeted_policy
 from .prompt_only_control import prompt_only_policy, PROMPT_PREFIX as PROMPT_ONLY_PREFIX
+from .noise_control import noise_control_policy
 
 POLICY_REGISTRY = {
     "baseline": None,
@@ -24,6 +25,7 @@ POLICY_REGISTRY = {
     "wrong-sign": wrong_sign_policy,
     "targeted": targeted_policy,  # empirically validated by step0_calibration
     "prompt-only": prompt_only_policy,  # v0.4-D: prompt-prefix-only control
+    "noise": noise_control_policy,     # v0.5-B: matched-norm residual noise
 }
 
 # Per-policy system prompt overrides. Empty string = use the default prompt.

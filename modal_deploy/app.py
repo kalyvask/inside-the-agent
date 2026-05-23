@@ -286,6 +286,139 @@ class BrainServer:
         }
 
     @modal.method()
+    def sae_validation(self, prompts: list = None, n_random_features: int = 100):
+        """
+        Full SAE sanity suite. Addresses reviewer's "every feature ID is on sand"
+        critique by giving concrete numbers for encoder/decoder correctness.
+
+        Returns:
+          mean_l0:            active features per token (expected ~91)
+          mean_reconstruction_error: ||x - sae.decode(sae.encode(x))|| / ||x||
+                              (should be small; <0.5 is good)
+          decoder_norms:      distribution of ||W_dec[i]||, min/max/median
+          encoder_norms:      distribution of ||W_enc[i]||
+          wrong_layer_l0:     L0 when we encode layer 0 activations through the
+                              layer-19 SAE. Should be much higher (random-like)
+                              because the SAE is mis-applied. Sanity check.
+          known_prompt_top_feature:  for a "the cat sat on the mat" prompt,
+                              report the top feature ID (deterministic sanity)
+        """
+        import torch
+        from collections import defaultdict
+
+        if prompts is None:
+            prompts = [
+                "The cat sat on the mat.",
+                "Quantum entanglement is a phenomenon.",
+                "Click the buy now button.",
+                "Plan three steps before acting.",
+                "The page shows a promotional banner.",
+                "Goal: buy a USB-C cable. Stay focused.",
+                "Hello, how are you today?",
+                "Translate this sentence to French.",
+            ]
+
+        # 1. L0 + reconstruction on captured activations
+        l0_values = []
+        recon_errors = []
+        for prompt in prompts:
+            self._reset_capture()
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+            with torch.no_grad():
+                self.model(**inputs)
+            if not self._captured_activations:
+                continue
+            # Use ALL positions across the prompt for distribution
+            acts = self._captured_activations[-1][0]  # (seq, d_in)
+            with torch.no_grad():
+                features = self.sae.encode(acts)
+                x_hat = self.sae.decode(features)
+            # L0 = avg active per token (>0.01)
+            l0 = (features > 0.01).float().sum(dim=-1).mean().item()
+            l0_values.append(l0)
+            # Reconstruction error per token
+            err = (acts - x_hat).norm(dim=-1) / acts.norm(dim=-1).clamp(min=1e-6)
+            recon_errors.append(err.mean().item())
+
+        mean_l0 = sum(l0_values) / max(1, len(l0_values))
+        mean_recon = sum(recon_errors) / max(1, len(recon_errors))
+
+        # 2. Decoder + encoder norms
+        with torch.no_grad():
+            dec_norms = self.sae.W_dec.norm(dim=-1)  # (d_features,)
+            enc_norms = self.sae.W_enc.norm(dim=0)   # (d_features,)
+        dec_stats = {
+            "min": float(dec_norms.min().item()),
+            "max": float(dec_norms.max().item()),
+            "median": float(dec_norms.median().item()),
+            "mean": float(dec_norms.mean().item()),
+            "std": float(dec_norms.std().item()),
+        }
+        enc_stats = {
+            "min": float(enc_norms.min().item()),
+            "max": float(enc_norms.max().item()),
+            "median": float(enc_norms.median().item()),
+            "mean": float(enc_norms.mean().item()),
+            "std": float(enc_norms.std().item()),
+        }
+
+        # 3. Layer-hook sanity: encode layer-0 activations through the L19 SAE
+        # If our SAE is correctly trained for L19, applying it to L0 should
+        # produce nonsensical features (much higher L0 because activations
+        # are out-of-distribution for the SAE encoder).
+        target_layer_0 = self.model.model.layers[0]
+        layer0_capture = []
+
+        def capture0(module, input, output):
+            layer0_capture.append(output[0].detach())
+            return output
+
+        h = target_layer_0.register_forward_hook(capture0)
+        try:
+            self._reset_capture()
+            inputs = self.tokenizer(prompts[0], return_tensors="pt").to(self.device)
+            with torch.no_grad():
+                self.model(**inputs)
+        finally:
+            h.remove()
+
+        wrong_layer_l0 = None
+        if layer0_capture:
+            acts0 = layer0_capture[-1][0]
+            with torch.no_grad():
+                features0 = self.sae.encode(acts0)
+            wrong_layer_l0 = (features0 > 0.01).float().sum(dim=-1).mean().item()
+
+        # 4. Deterministic top-feature on a fixed prompt
+        sanity_prompt = "The cat sat on the mat."
+        self._reset_capture()
+        inputs = self.tokenizer(sanity_prompt, return_tensors="pt").to(self.device)
+        with torch.no_grad():
+            self.model(**inputs)
+        sanity_top = []
+        if self._captured_activations:
+            last_act = self._captured_activations[-1][0, -1, :]
+            with torch.no_grad():
+                f = self.sae.encode(last_act.unsqueeze(0)).squeeze(0)
+            top = torch.topk(f, 5)
+            sanity_top = [
+                {"feature_id": int(top.indices[i].item()),
+                 "activation": float(top.values[i].item())}
+                for i in range(5)
+            ]
+
+        return {
+            "mean_l0_per_token": mean_l0,
+            "expected_l0_from_card": 91,
+            "mean_reconstruction_relative_error": mean_recon,
+            "decoder_norms": dec_stats,
+            "encoder_norms": enc_stats,
+            "wrong_layer_l0_layer_0": wrong_layer_l0,
+            "sanity_top_features_cat_prompt": sanity_top,
+            "n_prompts": len(prompts),
+        }
+
+    @modal.method()
     def feature_decoder_similarity(self, feature_ids: list, top_k: int = 10):
         """
         For each feature, return its nearest decoder-vector neighbors by cosine
@@ -331,6 +464,87 @@ class BrainServer:
             "top_features": self._top_k_features(top_k),
             "prompt": prompt,
         }
+
+    @modal.method()
+    def steer_act_with_noise(
+        self,
+        prompt: str,
+        noise_seed: int = 0,
+        noise_norm: float = 6.0,
+        max_new_tokens: int = 128,
+        temperature: float = 0.2,
+        top_k: int = TOP_K_DEFAULT,
+        position_mode: str = "last_prompt_only",
+        clamp_min: float = -100.0,
+        clamp_max: float = 100.0,
+    ):
+        """
+        v0.5: matched-norm noise control. Adds a random Gaussian vector to the
+        residual stream at the same position the targeted policy modifies,
+        scaled to the same L2 norm. If targeted beats this noise control,
+        specific directions matter — not just the magnitude of perturbation.
+
+        Returns the same shape as steer_act so the runner can drop it in.
+        """
+        import torch
+
+        self._reset_capture()
+        self._remove_steering()
+
+        # Build the noise vector in residual space (d_in).
+        d_in = self.sae.d_in
+        gen = torch.Generator(device="cpu").manual_seed(int(noise_seed))
+        noise = torch.randn(d_in, generator=gen).to(self.device).to(torch.bfloat16)
+        noise = noise / noise.norm() * float(noise_norm)
+
+        # Reuse the steering machinery by directly injecting this delta.
+        # We piggy-back on _install_steering's per-position dispatch.
+        target_layer = self.model.model.layers[SAE_LAYER_INDEX]
+        call_count = [0]
+        delta_activation = noise
+
+        def steering_hook(module, input, output):
+            hidden = output[0]
+            call_count[0] += 1
+            is_prefill = call_count[0] == 1
+            if position_mode == "all":
+                new_hidden = hidden + delta_activation
+            elif position_mode == "all_prompt":
+                new_hidden = hidden + delta_activation if is_prefill else hidden
+            elif position_mode == "last_prompt_only":
+                if is_prefill:
+                    new_hidden = hidden.clone()
+                    new_hidden[:, -1, :] = new_hidden[:, -1, :] + delta_activation
+                else:
+                    new_hidden = hidden
+            else:
+                new_hidden = hidden
+            new_hidden = torch.clamp(new_hidden, clamp_min, clamp_max)
+            return (new_hidden,) + output[1:]
+
+        self._steering_handle = target_layer.register_forward_hook(steering_hook)
+
+        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+        with torch.no_grad():
+            output_ids = self.model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                do_sample=temperature > 0,
+                pad_token_id=self.tokenizer.eos_token_id,
+            )
+        response = self.tokenizer.decode(
+            output_ids[0, inputs["input_ids"].shape[1]:],
+            skip_special_tokens=True,
+        )
+        result = {
+            "response": response,
+            "top_features": self._top_k_features(top_k),
+            "noise_norm": float(noise_norm),
+            "noise_seed": int(noise_seed),
+        }
+        self._remove_steering()
+        return result
 
     @modal.method()
     def steer_act(

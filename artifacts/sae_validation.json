@@ -1,0 +1,43 @@
+{
+  "mean_l0_per_token": 71.11741161346436,
+  "expected_l0_from_card": 91,
+  "mean_reconstruction_relative_error": 0.5654296875,
+  "decoder_norms": {
+    "min": 0.0,
+    "max": 1.6640625,
+    "median": 1.015625,
+    "mean": 0.75,
+    "std": 0.51171875
+  },
+  "encoder_norms": {
+    "min": 0.0,
+    "max": 3.328125,
+    "median": 1.1328125,
+    "mean": 0.90625,
+    "std": 0.640625
+  },
+  "wrong_layer_l0_layer_0": 3374.25,
+  "sanity_top_features_cat_prompt": [
+    {
+      "feature_id": 51341,
+      "activation": 2.296875
+    },
+    {
+      "feature_id": 13556,
+      "activation": 1.109375
+    },
+    {
+      "feature_id": 41352,
+      "activation": 1.09375
+    },
+    {
+      "feature_id": 13018,
+      "activation": 0.9375
+    },
+    {
+      "feature_id": 35836,
+      "activation": 0.8125
+    }
+  ],
+  "n_prompts": 8
+}

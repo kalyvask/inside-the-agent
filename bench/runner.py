@@ -32,10 +32,16 @@ app = typer.Typer(add_completion=False)
 
 
 def _make_brain_call():
-    """Returns a callable wrapping the Modal brain-server's steer_act endpoint."""
+    """Returns a callable wrapping the Modal brain-server's steer_act endpoint.
+
+    Respects BRAIN_APP_NAME env var so the same runner can target either the
+    Llama (inside-the-agent) or the Gemma fallback (inside-the-agent-gemma).
+    """
+    import os
     import modal
 
-    BrainServer = modal.Cls.from_name("inside-the-agent", "BrainServer")
+    app_name = os.environ.get("BRAIN_APP_NAME", "inside-the-agent")
+    BrainServer = modal.Cls.from_name(app_name, "BrainServer")
     server = BrainServer()
 
     def call(prompt: str, edits: dict | None = None, mode: str = "act", **kwargs):
