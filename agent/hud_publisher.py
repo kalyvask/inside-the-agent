@@ -55,6 +55,14 @@ class HudPublisher:
     def step_started(self, run_id: str, task_id: str, step: int):
         self._task_id = task_id
         self._step = step
+        # On the very first step, emit a demo_banner to clear any verdict from
+        # a previous run and seed the HUD with task metadata.
+        if step == 0:
+            self._publish(
+                "demo_banner",
+                run_id=run_id,
+                task_id=task_id,
+            )
         self._publish("step_started", run_id=run_id)
 
     def features_read(self, features: list[dict]):

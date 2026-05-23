@@ -53,6 +53,7 @@ def _make_brain_call():
             max_new_tokens=kwargs.get("max_new_tokens", 96),
             temperature=kwargs.get("temperature", 0.2),
             top_k=kwargs.get("top_k", 20),
+            position_mode=kwargs.get("position_mode", "all"),
         )
 
     return call
@@ -131,6 +132,13 @@ def main(
     hud: bool = typer.Option(False, help="Spin up ws_server + publish events to HUD"),
     headed: bool = typer.Option(False, "--headed", help="Show the Playwright browser window (default headless)"),
     pause: float = typer.Option(0.0, help="Seconds to pause between agent steps (visible run = 1.5)"),
+    position_mode: str = typer.Option(
+        "all",
+        help="Where the steering hook applies the residual delta. "
+             "'all' = every position (v0.1 default, what produces the 83% headline). "
+             "'last_prompt_only' = only the last token of prefill (v0.5 surgical default; gives 0% in our tests). "
+             "'all_prompt' = all prompt positions, no generated tokens.",
+    ),
 ):
     if policy not in POLICY_REGISTRY:
         console.print(f"[red]Unknown policy: {policy}. Available: {list(POLICY_REGISTRY)}[/red]")
@@ -148,8 +156,14 @@ def main(
     policy_fn = POLICY_REGISTRY[policy]
     publisher = HudPublisher(enabled=hud)
 
+    # Wrap brain_call to also pass the position_mode argument by default.
+    _raw_brain = brain_call
+    def brain_call_with_mode(prompt, edits=None, mode="act", **kw):
+        kw.setdefault("position_mode", position_mode)
+        return _raw_brain(prompt=prompt, edits=edits, mode=mode, **kw)
+
     agent = SAEAgent(
-        brain_call=brain_call,
+        brain_call=brain_call_with_mode,
         env=env,
         policy=policy_fn,
         feature_catalog=catalog,

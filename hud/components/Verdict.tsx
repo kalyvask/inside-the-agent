@@ -16,6 +16,11 @@ export default function Verdict({ visible, success, taskId, totalSteps, policy }
   useEffect(() => {
     if (visible) {
       setShow(true);
+      // Auto-fade after 8s so a stale verdict doesn't block the next run.
+      const t = setTimeout(() => setShow(false), 8000);
+      return () => clearTimeout(t);
+    } else {
+      setShow(false);
     }
   }, [visible]);
 
