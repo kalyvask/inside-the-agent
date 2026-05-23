@@ -101,6 +101,21 @@ class HudPublisher:
         exists for the current step."""
         self._publish("baseline_action", step=step, action=action)
 
+    def counterfactual_action(self, step: int, action: dict, prompt_hash: str = ""):
+        """v0.18: live counterfactual emitted at any step where the policy
+        applied steering edits. We call brain TWICE on the IDENTICAL prompt
+        — once with edits, once without — and publish the un-steered
+        prediction here. The HUD renders it alongside the actual action so
+        the audience sees the direct causal answer to 'is the steering
+        doing anything?'. The prompts are bit-identical (same hash) so the
+        comparison is clean — only the residual-stream edit differs."""
+        self._publish(
+            "counterfactual_action",
+            step=step,
+            action=action,
+            prompt_hash=prompt_hash,
+        )
+
     def features_read(self, features: list[dict]):
         self._publish("features_read", features=features)
 

@@ -29,6 +29,7 @@ export type AgentEvent = {
     | "demo_banner"
     | "policy_meta"
     | "baseline_action"
+    | "counterfactual_action"
     | "ping";
   task_id?: string;
   step?: number;

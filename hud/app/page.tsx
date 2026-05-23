@@ -71,6 +71,13 @@ export default function Page() {
   const [lastAction, setLastAction] = useState<AgentEvent | undefined>();
   const [lastExecuted, setLastExecuted] = useState<boolean | null>(null);
 
+  // v0.18: counterfactual action map (step -> un-steered action). Filled
+  // by counterfactual_action events the agent emits whenever it intervened
+  // at that step. The CurrentAction strip renders the comparison.
+  const [counterfactualByStep, setCounterfactualByStep] = useState<Map<number, any>>(
+    () => new Map()
+  );
+
   // v0.14: heartbeat decay — if no step_started for 30s and the agent
   // hasn't sent task_done either, treat the run as stale (process
   // killed, network glitch, etc.) so SteeringControls doesn't claim
@@ -102,6 +109,7 @@ export default function Page() {
           setInterventionPulse(null);
           setLastAction(undefined);
           setLastExecuted(null);
+          setCounterfactualByStep(new Map());
           setRunStatus(ev.task_id ? "running" : "idle");
           break;
         case "policy_meta":
@@ -115,6 +123,18 @@ export default function Page() {
           if (typeof ev.step === "number" && ev.action) {
             // Functional Map update so React picks up the change.
             setBaselineByStep((prev) => {
+              const next = new Map(prev);
+              next.set(ev.step!, ev.action);
+              return next;
+            });
+          }
+          break;
+        case "counterfactual_action":
+          // v0.18: agent did a twin brain call with edits={} on the
+          // same prompt as the steered call. Capture for the CurrentAction
+          // side-by-side render.
+          if (typeof ev.step === "number" && ev.action) {
+            setCounterfactualByStep((prev) => {
               const next = new Map(prev);
               next.set(ev.step!, ev.action);
               return next;
@@ -312,6 +332,11 @@ export default function Page() {
               lastAction={lastAction}
               step={step}
               executed={lastExecuted}
+              counterfactualAction={
+                step !== undefined
+                  ? counterfactualByStep.get(step)
+                  : undefined
+              }
             />
           </div>
           <div className="flex-1 min-h-0 overflow-hidden relative">

@@ -70,17 +70,27 @@ def test_noise_policy_routes_to_noise_endpoint():
     )
     agent.run({"id": "noise_smoke", "instruction": "do nothing"}, seed=42, policy_name="noise")
 
-    # Find the act-step call (mode != read). At step 0 with the noise policy
-    # active, the agent MUST call mode="noise" with our seed + canonical norm.
-    act_calls = [c for c in brain.calls if c["mode"] in ("noise", "act")]
-    assert len(act_calls) == 1, f"expected exactly one act-style call, got {len(act_calls)}"
-    call = act_calls[0]
-    assert call["mode"] == "noise", \
-        f"noise_control_policy at step 0 must route to mode='noise', got {call['mode']!r}"
-    assert call["noise_seed"] == 42, \
-        f"noise_seed must thread from trial_seed; got {call.get('noise_seed')!r}"
-    assert abs(call["noise_norm"] - NOISE_NORM) < 1e-6, \
-        f"noise_norm must equal NOISE_NORM ({NOISE_NORM}); got {call.get('noise_norm')!r}"
+    # At step 0 with the noise policy active, the agent MUST call
+    # mode="noise" with our seed + canonical norm.
+    noise_calls = [c for c in brain.calls if c["mode"] == "noise"]
+    assert len(noise_calls) == 1, \
+        f"noise policy must call mode='noise' exactly once at step 0, got {len(noise_calls)}"
+    noise_call = noise_calls[0]
+    assert noise_call["noise_seed"] == 42, \
+        f"noise_seed must thread from trial_seed; got {noise_call.get('noise_seed')!r}"
+    assert abs(noise_call["noise_norm"] - NOISE_NORM) < 1e-6, \
+        f"noise_norm must equal NOISE_NORM ({NOISE_NORM}); got {noise_call.get('noise_norm')!r}"
+
+    # v0.18: when intervention happens (noise IS an intervention), the
+    # agent ALSO makes a counterfactual call with edits={} on the same
+    # prompt to render the "without edit" side-by-side. That's a SECOND
+    # mode='act' call.
+    act_calls = [c for c in brain.calls if c["mode"] == "act"]
+    assert len(act_calls) == 1, \
+        f"v0.18 counterfactual: noise-step should trigger exactly one " \
+        f"mode='act' twin call (edits={{}}), got {len(act_calls)}"
+    assert act_calls[0]["edits"] == {}, \
+        "v0.18 counterfactual call must use empty edits"
 
 
 def test_baseline_policy_still_routes_to_act():

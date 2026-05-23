@@ -223,6 +223,42 @@ class SAEAgent:
                 history.append(action)
                 self.hud.action_chosen(action)
 
+                # v0.18: live counterfactual. When the policy applied
+                # steering edits (or used the noise endpoint), make an
+                # extra brain call on the IDENTICAL prompt with edits={}
+                # to capture the un-steered prediction. The two outputs
+                # share the prompt bit-for-bit; only the residual-stream
+                # delta differs. Renders in the HUD as "without steering
+                # the model would have done X".
+                #
+                # Cost: +1 brain call only at steering steps. For the
+                # targeted policy that's step 0 only — so 7 calls per
+                # 6-step trial instead of 12 (8% more). For dynamic /
+                # noise it's wherever steering fires.
+                #
+                # Skip if there was no intervention this step — no
+                # counterfactual is meaningful when nothing was changed.
+                intervened = bool(plan.edits) or noise_active
+                if intervened:
+                    try:
+                        cf_result = self.brain(
+                            prompt=prompt,
+                            edits={},                              # un-steered
+                            max_new_tokens=self.cfg.max_new_tokens,
+                            temperature=self.cfg.temperature,
+                        )
+                        cf_action = parse_action(cf_result["response"])
+                        self.hud.counterfactual_action(
+                            step=step_idx,
+                            action=cf_action,
+                            prompt_hash=StepLog.hash_prompt(prompt),
+                        )
+                    except Exception as e:
+                        # Counterfactual is a nicety, not a hard
+                        # requirement. Never let a failure here kill
+                        # the agent run.
+                        print(f"[counterfactual] brain call failed: {e}")
+
                 # Execute
                 next_obs, reward, env_done = self.env.step(action)
                 total_reward += reward
