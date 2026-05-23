@@ -70,6 +70,7 @@ BASE_MODEL_ID = "meta-llama/Llama-3.3-70B-Instruct"
 SAE_REPO_ID = "Goodfire/Llama-3.3-70B-Instruct-SAE-l50"
 SAE_LAYER_INDEX = 50  # 70B has 80 layers vs 8B's 32, so "middle-ish" is at 40-50
 SAE_FILENAME_CANDIDATES = [
+    "Llama-3.3-70B-Instruct-SAE-l50.pt",   # verified 2026-05-23 via HF API
     "Llama-3.3-70B-Instruct-SAE-l50.pth",
     "Llama-3.3-70B-Instruct-SAE-l50.safetensors",
     "params.pth",

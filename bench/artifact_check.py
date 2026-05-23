@@ -109,10 +109,16 @@ def main() -> int:
         rows = _load_jsonl(jsonl_path)
         problems = []
 
+        # Per-policy expected trial count: the manifest claim wins over the
+        # benchmark-level total. This lets single-trial real-site captures
+        # (manifest claims trials=1) coexist with the 60-trial benchmark
+        # without false-positive row-count mismatches.
+        policy_expected = claim.get("trials", expected_trials)
+
         if len(rows) == 0:
             problems.append("MISSING")
-        elif len(rows) != expected_trials:
-            problems.append(f"ROWS={len(rows)} !={expected_trials}")
+        elif len(rows) != policy_expected:
+            problems.append(f"ROWS={len(rows)} !={policy_expected}")
 
         field_errors = _ensure_required_fields(rows, jsonl_path)
         if field_errors:
@@ -146,7 +152,7 @@ def main() -> int:
         table.add_row(
             policy,
             str(len(rows)),
-            str(expected_trials),
+            str(policy_expected),
             str(successes),
             f"{actual_rate:.1%}",
             f"{claimed_rate:.1%}" if claimed_rate is not None else "—",

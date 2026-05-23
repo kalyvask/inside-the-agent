@@ -2,14 +2,15 @@
   "manifest_version": "0.2",
   "benchmark": {
     "task_suite": "shopgym/tasks/held_out.json",
-    "task_limit": 8,
+    "task_limit": 20,
     "trials_per_task": 3,
-    "total_runs_per_policy": 24,
+    "total_runs_per_policy": 60,
     "trial_seeds": [
       0,
       1,
       2
-    ]
+    ],
+    "_note": "v0.8: task_limit raised 8->20 and total_runs 24->60 when the held-out suite expanded from 8 promo to 20 tasks (8 promo + 6 hallucination + 6 planning)."
   },
   "model": {
     "backbone": "meta-llama/Llama-3.1-8B-Instruct",
@@ -72,7 +73,7 @@
     }
   },
   "headline_results": {
-    "as_of": "v0.8 \u2014 refreshed 2026-05-23 01:25 UTC",
+    "as_of": "v0.8 \u2014 refreshed 2026-05-23 12:56 UTC",
     "policy_success_rates": {
       "baseline": {
         "successes": 6,
@@ -208,6 +209,42 @@
           0,
           0.793
         ]
+      },
+      "baseline_google_baseline": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "dynamic": {
+        "successes": 6,
+        "trials": 60,
+        "rate": 0.1,
+        "wilson_ci_95": [
+          0.047,
+          0.201
+        ]
+      },
+      "failure-mining": {
+        "successes": 35,
+        "trials": 60,
+        "rate": 0.583,
+        "wilson_ci_95": [
+          0.457,
+          0.699
+        ]
+      },
+      "targeted_google_targeted": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
       }
     },
     "policy_success_rates_by_scope": {
@@ -290,6 +327,33 @@
         "wilson_ci_95": [
           0.441,
           0.684
+        ]
+      },
+      "all_prompt": {
+        "successes": 22,
+        "trials": 60,
+        "rate": 0.367,
+        "wilson_ci_95": [
+          0.256,
+          0.493
+        ]
+      },
+      "google_targeted": {
+        "successes": 0,
+        "trials": 1,
+        "rate": 0.0,
+        "wilson_ci_95": [
+          0,
+          0.793
+        ]
+      },
+      "last_prompt_only": {
+        "successes": 12,
+        "trials": 60,
+        "rate": 0.2,
+        "wilson_ci_95": [
+          0.118,
+          0.318
         ]
       }
     }
