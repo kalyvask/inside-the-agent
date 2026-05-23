@@ -179,6 +179,11 @@ class WebEnv:
                 delta = 600 if direction == "down" else -600
                 self._page.evaluate(f"window.scrollBy(0, {delta})")
                 return True
+            if kind == "submit":
+                # Press Enter on the targeted input — covers search bars
+                # where there's no separate Search button to click.
+                target = action.get("target", "")
+                return self._submit(target)
             if kind == "done":
                 return True
         except Exception:
@@ -204,6 +209,28 @@ class WebEnv:
                 if el.is_visible(timeout=500):
                     el.click(timeout=2000)
                     time.sleep(0.6)
+                    return True
+            except Exception:
+                continue
+        return False
+
+    def _submit(self, target: str) -> bool:
+        """Press Enter on the targeted input (or active input if none given)."""
+        candidates = [
+            target,
+            f"#{target}" if target and not target.startswith("#") else target,
+            f'[name="{target}"]' if target else "",
+            'input[type="search"]',
+            'input[type="text"]',
+        ]
+        for sel in candidates:
+            if not sel:
+                continue
+            try:
+                el = self._page.locator(sel).first
+                if el.is_visible(timeout=500):
+                    el.press("Enter", timeout=2000)
+                    time.sleep(1.2)  # Give the page time to navigate.
                     return True
             except Exception:
                 continue
@@ -272,7 +299,7 @@ class WebEnv:
                 """els => els
                     .filter(e => e.offsetParent !== null)
                     .slice(0, 8)
-                    .map(e => e.tagName + ': ' + (e.innerText || '').trim().slice(0, 80))""",
+                    .map(e => e.tagName + ': ' + (e.innerText || '').trim().replace(/\\s+/g, ' ').slice(0, 80))""",
             )
             if headings:
                 lines.append("HEADINGS:")
@@ -292,7 +319,7 @@ class WebEnv:
                     .slice(0, 20)
                     .map(e => {
                         const id = e.id || e.getAttribute('data-test') || e.getAttribute('data-testid') || '';
-                        const txt = (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().slice(0, 60);
+                        const txt = (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ').slice(0, 60);
                         return JSON.stringify({id: id, text: txt});
                     })""",
             )
@@ -319,7 +346,7 @@ class WebEnv:
                     .slice(0, 8)
                     .map(e => JSON.stringify({
                         id: e.id || e.name || e.getAttribute('data-test') || '',
-                        placeholder: (e.placeholder || e.getAttribute('aria-label') || '').slice(0, 60),
+                        placeholder: (e.placeholder || e.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ').slice(0, 60),
                         type: e.type || 'text'
                     }))""",
             )

@@ -34,18 +34,34 @@ from sae.steering_controller import SteeringController
 
 
 def parse_action(raw: str) -> dict:
-    """Extract the first JSON object from the model's response."""
+    """Extract the first JSON object from the model's response.
+
+    Real-website observations leak control characters (newlines, tabs) into
+    button labels — when the model echoes those back inside a JSON string,
+    strict json.loads fails. We try a clean parse first, then a forgiving
+    pass that escapes raw control chars before re-parsing.
+    """
     raw = raw.strip()
     # Strip possible code fence.
     raw = re.sub(r"^```(json)?", "", raw).strip("`").strip()
-    # Find first {...} block.
-    match = re.search(r"\{[^{}]*\}", raw)
+    # Find first {...} block (allow newlines inside via DOTALL+lazy).
+    match = re.search(r"\{.*?\}", raw, re.DOTALL)
     if not match:
         return {"action": "invalid", "raw": raw}
+    snippet = match.group(0)
     try:
-        return json.loads(match.group(0))
+        return json.loads(snippet)
     except json.JSONDecodeError:
-        return {"action": "invalid", "raw": match.group(0)}
+        pass
+    # Forgiving pass: escape unescaped control chars inside string values, then
+    # collapse whitespace in any string field. JSON spec disallows raw \n/\t
+    # inside strings, but Llama sometimes echoes them.
+    cleaned = re.sub(r"[\n\r\t]+", " ", snippet)
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        return {"action": "invalid", "raw": snippet}
 
 
 # ---------------------------------------------------------------------------

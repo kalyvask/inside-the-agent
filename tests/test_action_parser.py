@@ -40,3 +40,23 @@ def test_done_action():
 def test_extra_whitespace():
     raw = '\n\n  {"action": "scroll", "direction": "down"}  \n'
     assert parse_action(raw)["action"] == "scroll"
+
+
+def test_embedded_newlines_in_target():
+    """Real-website page summaries leak \\n inside button labels — when the
+    model echoes those back into a JSON string value, strict json.loads fails.
+    The forgiving pass should collapse the whitespace and still recover the
+    action."""
+    raw = '{"action": "click", "target": "Search\nopt\n+"}'
+    result = parse_action(raw)
+    assert result["action"] == "click"
+    assert "Search" in result["target"]
+
+
+def test_multiline_json_with_code_fence():
+    """Code-fenced JSON spanning multiple lines should parse — DOTALL on the
+    block extractor handles the newlines between { and }."""
+    raw = '```json\n{"action": "done",\n "reason": "found item"}\n```'
+    result = parse_action(raw)
+    assert result["action"] == "done"
+    assert result["reason"] == "found item"
