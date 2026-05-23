@@ -3,6 +3,33 @@
 # a coherent + behaviorally-distinct output on a USB-C cable agent prompt.
 
 risk:
+# v0.9 failure-mining: these four features each fire above-threshold in
+# 100% of baseline-failure trajectories on the held-out suite. They are
+# the strongest data-driven candidates for "promo-trap representation."
+# Labels are deliberately NEUTRAL (just the feature ID + "fail_mode_X")
+# because we have NOT semantically characterized what circuit they
+# encode — only that they co-occur with failure. Tested as steering
+# targets by the `failure-mining` policy.
+- id: 50853
+  label: f50853_fail_mode_a
+  category: risk
+  discovery: failure_mining
+  fires_in: 100% of baseline failures on held_out.json
+- id: 19079
+  label: f19079_fail_mode_b
+  category: risk
+  discovery: failure_mining
+  fires_in: 100% of baseline failures on held_out.json
+- id: 39820
+  label: f39820_fail_mode_c
+  category: risk
+  discovery: failure_mining
+  fires_in: 100% of baseline failures on held_out.json
+- id: 44602
+  label: f44602_fail_mode_d
+  category: risk
+  discovery: failure_mining
+  fires_in: 100% of baseline failures on held_out.json
 - id: 34048
   label: promotional_bias
   category: risk
@@ -184,8 +211,12 @@ behavioral:
   calibrated_delta: 2.0
   tuning_status: tuned
 task:
+# v0.4 logit-lens characterization replaced the v0.1 contrast label
+# "goal_tracking" with the neutral lexical label below. The feature
+# promotes tokens: distractions, distract, tempt, interrupt,
+# notifications, side, off-topic. See docs/feature_characterization.md.
 - id: 23803
-  label: goal_tracking
+  label: f23803_distraction_avoidance_vocab
   category: task
   top_activation_examples:
   - A storefront page shows various products and a promotion.
@@ -304,7 +335,14 @@ epistemic:
   calibrated_delta: -3.0
   tuning_status: tuned
 - id: 26737
-  label: hallucination
+  # v0.4 logit-lens characterization replaced the v0.1 contrast label
+  # "hallucination" with the neutral lexical label below. The feature
+  # promotes tokens: option, options, select, selection, choices,
+  # radio, checkbox. See docs/feature_characterization.md.
+  # Suppressing this at step 0 (-6) reliably flips the agent's first
+  # action from "click promo banner" to "type in search bar" on the
+  # ShopGym held-out suite — this is the targeted policy's headline.
+  label: f26737_ui_selection_vocab
   category: epistemic
   top_activation_examples:
   - I will click the filter button on this page to sort by price.

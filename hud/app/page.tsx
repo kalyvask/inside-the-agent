@@ -250,18 +250,25 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Row 2 left: steering controls + queue stacked */}
-        <section className="col-span-4 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col gap-2 min-h-0">
+        {/* Row 2 left: steering controls + queue stacked (widened 4 -> 5) */}
+        <section className="col-span-5 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col gap-2 min-h-0">
           <div className="shrink-0">
             <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400">Steering controls</h2>
             <SteeringControls onApply={onSteeringQueued} />
           </div>
           <div className="border-t border-zinc-800 pt-2 flex-1 min-h-0 overflow-hidden flex flex-col">
-            <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0">
-              Command queue
+            <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0 flex items-center gap-2">
+              <span>Command queue</span>
               {pending.length > 0 && (
-                <span className="ml-2 px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 text-[10px]">
+                <span className="px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-300 text-[10px]">
                   {pending.length}
+                </span>
+              )}
+              {/* v0.12: agent-connection hint — if no step_started in the
+                  last 30s and pending > 0, the queue is dormant. */}
+              {pending.length > 0 && step === undefined && (
+                <span className="text-[10px] text-amber-400 normal-case">
+                  ⚠ no agent listening — start one via `python record_demo.py`
                 </span>
               )}
             </h2>
@@ -271,8 +278,8 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Row 2 middle: effect size + intervention log stacked */}
-        <section className="col-span-3 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col gap-2 min-h-0">
+        {/* Row 2 middle: effect size + intervention log stacked (widened 3 -> 4) */}
+        <section className="col-span-4 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col gap-2 min-h-0">
           <div className="shrink-0">
             <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400">
               Effect size
@@ -292,13 +299,13 @@ export default function Page() {
           </div>
         </section>
 
-        {/* Row 2 right: before/after diff (the money panel) */}
-        <section className="col-span-5 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0">
+        {/* Row 2 right: before/after diff (narrowed 5 -> 3) */}
+        <section className="col-span-3 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0">
           <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0">
             Before / after diff
             {baselineByStep.size > 0 && (
               <span className="ml-2 text-[10px] text-zinc-500">
-                vs baseline ({baselineByStep.size} cached steps)
+                {baselineByStep.size} cached
               </span>
             )}
           </h2>
