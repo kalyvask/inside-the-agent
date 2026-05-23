@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import time
+from pathlib import Path
 
 try:
     import requests
@@ -66,7 +67,14 @@ class HudPublisher:
         self._publish("steering_applied", edits=edits)
 
     def env_updated(self, screenshot_path: str):
-        self._publish("env_updated", screenshot_path=screenshot_path)
+        # Convert local Windows path to a ws_server-served URL so the HUD
+        # can load it via http. Mirrors the conversion in replay_trajectory.py.
+        if screenshot_path:
+            filename = Path(screenshot_path).name
+            url = f"{self.url}/screenshots/{filename}"
+        else:
+            url = ""
+        self._publish("env_updated", screenshot_path=url)
 
     def task_done(self, success: bool):
         self._publish("task_done", success=success)
