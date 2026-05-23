@@ -70,3 +70,18 @@ class HudPublisher:
 
     def task_done(self, success: bool):
         self._publish("task_done", success=success)
+
+    def drain_commands(self) -> list[dict]:
+        """v0.3: fetch pending HUD-issued steering commands.
+
+        Returns a list of dicts: [{feature_id, delta, label, source, one_shot}].
+        The ws_server clears them after returning, so each command is
+        delivered to exactly one drain call.
+        """
+        if not self.enabled:
+            return []
+        try:
+            r = requests.get(f"{self.url}/control/pending", timeout=0.5)
+            return r.json().get("commands", [])
+        except Exception:
+            return []

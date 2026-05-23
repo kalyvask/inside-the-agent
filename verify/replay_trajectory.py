@@ -195,9 +195,15 @@ def main(
             action = step.get("model", {}).get("parsed_action", {})
             _publish({"type": "action_chosen", "step": step_idx, "action": action}, ws_url, publish)
 
-            # Env update
+            # Env update — convert local file path to ws_server's /screenshots URL
             screenshot = step.get("observation", {}).get("screenshot_path", "")
-            _publish({"type": "env_updated", "step": step_idx, "screenshot_path": screenshot}, ws_url, publish)
+            if screenshot:
+                # Local path: data/screenshots/<filename>.png → /screenshots/<filename>.png
+                filename = Path(screenshot).name
+                screenshot_url = f"{ws_url}/screenshots/{filename}"
+            else:
+                screenshot_url = ""
+            _publish({"type": "env_updated", "step": step_idx, "screenshot_path": screenshot_url}, ws_url, publish)
 
             time.sleep(step_delay * 0.4)
 

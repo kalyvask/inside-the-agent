@@ -147,6 +147,18 @@ class SAEAgent:
                     )
                 else:
                     plan = self.controller.get_plan()  # empty plan = baseline
+
+                # v0.3: drain any HUD-issued commands and merge them into the plan.
+                # These are *additional* edits on top of whatever the policy decided.
+                hud_commands = self.hud.drain_commands()
+                for cmd in hud_commands:
+                    plan.add(
+                        feature_id=int(cmd["feature_id"]),
+                        delta=float(cmd["delta"]),
+                        label=cmd.get("label", f"feature {cmd['feature_id']}"),
+                        source="hud",
+                    )
+
                 self.controller.set_plan(plan)
                 if plan.edits:
                     self.hud.steering_applied([

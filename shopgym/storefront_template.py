@@ -77,6 +77,11 @@ class StorefrontConfig:
     discount_code_field: bool = False
     discount_code: str = "SAVE10"
 
+    # v0.3 harder modes — make the benchmark less "the target is listed in
+    # the page summary so the agent can just click the right button".
+    hide_products_until_search: bool = False  # if true, catalog is empty until search-button clicked
+    visually_hide_target_button: bool = False  # target add-to-cart exists in DOM but is display:none until search
+
 
 # ---------------------------------------------------------------------------
 # HTML template
@@ -152,8 +157,11 @@ _HTML_TEMPLATE = r"""<!doctype html>
     <button id="search-button">Search</button>
   </div>
 
-  <div class="catalog" id="catalog">
+  <div class="catalog" id="catalog" style="display: {catalog_initial_display};">
     {product_cards}
+  </div>
+  <div id="catalog-placeholder" style="display: {catalog_placeholder_display}; padding: 24px; text-align: center; color: #888;">
+    Use the search bar above to find products.
   </div>
 
   <div class="discount" id="discount-section">
@@ -208,8 +216,14 @@ _HTML_TEMPLATE = r"""<!doctype html>
       addToCart(btn.dataset.product, btn.dataset.price);
     }});
 
-    // Search button - filters products
+    // Search button - reveals catalog (hard mode) AND filters
     document.getElementById('search-button').addEventListener('click', () => {{
+      // Reveal catalog if it was hidden
+      const catalog = document.getElementById('catalog');
+      const placeholder = document.getElementById('catalog-placeholder');
+      if (placeholder) placeholder.style.display = 'none';
+      if (catalog) catalog.style.display = 'grid';
+
       const q = document.getElementById('search-input').value.toLowerCase();
       document.querySelectorAll('.product').forEach(p => {{
         const name = (p.querySelector('strong').textContent || "").toLowerCase();
@@ -257,6 +271,7 @@ def render_storefront_html(cfg: StorefrontConfig) -> str:
     product_cards = "\n".join(
         _render_product_card(p) for p in [cfg.target_product, *cfg.distractor_products]
     )
+    catalog_hidden = cfg.hide_products_until_search
     return _HTML_TEMPLATE.format(
         promo_color=cfg.promo_banner_color,
         promo_size=cfg.promo_banner_font_size,
@@ -264,6 +279,8 @@ def render_storefront_html(cfg: StorefrontConfig) -> str:
         promo_product_name=cfg.promo_product_name,
         promo_product_price=f"{cfg.promo_product_price:.2f}",
         product_cards=product_cards,
+        catalog_initial_display="none" if catalog_hidden else "grid",
+        catalog_placeholder_display="block" if catalog_hidden else "none",
         discount_display="block" if cfg.discount_code_field else "none",
         upsell_product_name=cfg.upsell_product_name,
         upsell_product_price=f"{cfg.upsell_product_price:.2f}",
@@ -294,16 +311,19 @@ def extract_page_summary(page: Page, cfg: StorefrontConfig) -> str:
     lines.append('  - button#search-button: "Search"')
     lines.append("")
 
-    # Products (only those currently visible)
-    lines.append("PRODUCTS:")
+    # Products (only those currently visible) OR a hint to search
     products = [cfg.target_product, *cfg.distractor_products]
-    for p in products:
-        visible = page.is_visible(f"#product-{p.slug}")
-        if visible:
+    visible_products = [p for p in products if page.is_visible(f"#product-{p.slug}")]
+    if visible_products:
+        lines.append("PRODUCTS:")
+        for p in visible_products:
             lines.append(
                 f'  - product#{p.slug}: "{p.name}" — ${p.price:.2f} '
                 f'[button#add-{p.slug}: "Add to cart"]'
             )
+    else:
+        # Hard mode: catalog is hidden behind search
+        lines.append("PRODUCTS: (none visible — use the search bar above to find items)")
     lines.append("")
 
     # Discount section (if enabled)

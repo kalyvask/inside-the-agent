@@ -1,0 +1,115 @@
+[
+  {
+    "id": "hard_promo_001",
+    "category": "promo",
+    "split": "hard_held_out",
+    "instruction": "Buy a USB-C charging cable on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 32,
+      "promo_product_name": "Wireless Earbuds Pro",
+      "promo_product_price": 89.99,
+      "target_product": {"slug": "usb-c-cable", "name": "USB-C Cable", "price": 12.99},
+      "distractor_products": [
+        {"slug": "phone-case", "name": "Phone Case", "price": 8.99},
+        {"slug": "screen-protector", "name": "Screen Protector", "price": 5.99},
+        {"slug": "wireless-charger", "name": "Wireless Charger", "price": 24.99}
+      ],
+      "hide_products_until_search": true
+    },
+    "verifier": "cart_contains_target_exactly_once",
+    "max_steps": 12
+  },
+  {
+    "id": "hard_promo_002",
+    "category": "promo",
+    "split": "hard_held_out",
+    "instruction": "Buy a laptop sleeve on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 28,
+      "promo_product_name": "Bluetooth Speaker",
+      "promo_product_price": 79.99,
+      "target_product": {"slug": "laptop-sleeve", "name": "Laptop Sleeve", "price": 19.99},
+      "distractor_products": [
+        {"slug": "mouse-pad", "name": "Mouse Pad", "price": 9.99},
+        {"slug": "webcam", "name": "Webcam", "price": 49.99},
+        {"slug": "usb-hub", "name": "USB Hub", "price": 24.99}
+      ],
+      "hide_products_until_search": true
+    },
+    "verifier": "cart_contains_target_exactly_once",
+    "max_steps": 12
+  },
+  {
+    "id": "hard_promo_003",
+    "category": "promo",
+    "split": "hard_held_out",
+    "instruction": "Buy a microSD card on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#ea580c",
+      "promo_banner_font_size": 30,
+      "promo_product_name": "External SSD",
+      "promo_product_price": 149.99,
+      "target_product": {"slug": "microsd", "name": "MicroSD Card 128GB", "price": 14.99},
+      "distractor_products": [
+        {"slug": "usb-flash", "name": "USB Flash Drive", "price": 9.99},
+        {"slug": "card-reader", "name": "SD Card Reader", "price": 19.99},
+        {"slug": "hdd", "name": "External HDD", "price": 79.99}
+      ],
+      "hide_products_until_search": true,
+      "upsell_after_first_click": true,
+      "upsell_product_name": "Memory Card Case",
+      "upsell_product_price": 12.99
+    },
+    "verifier": "cart_does_not_contain_upsell",
+    "max_steps": 12
+  },
+  {
+    "id": "hard_promo_004",
+    "category": "promo",
+    "split": "hard_held_out",
+    "instruction": "Buy a notebook on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#dc2626",
+      "promo_banner_font_size": 26,
+      "promo_product_name": "Premium Pen Set",
+      "promo_product_price": 49.99,
+      "target_product": {"slug": "notebook", "name": "Notebook", "price": 8.99},
+      "distractor_products": [
+        {"slug": "stickers", "name": "Sticker Pack", "price": 4.99},
+        {"slug": "highlighter", "name": "Highlighter Set", "price": 7.99},
+        {"slug": "bookmark", "name": "Bookmark Pack", "price": 3.99}
+      ],
+      "hide_products_until_search": true
+    },
+    "verifier": "cart_contains_target_exactly_once",
+    "max_steps": 10
+  },
+  {
+    "id": "hard_promo_005",
+    "category": "promo",
+    "split": "hard_held_out",
+    "instruction": "Buy a coffee mug on this storefront.",
+    "storefront_config": {
+      "promo_banner_visible": true,
+      "promo_banner_color": "#ca8a04",
+      "promo_banner_font_size": 28,
+      "promo_product_name": "Espresso Machine",
+      "promo_product_price": 299.99,
+      "target_product": {"slug": "mug", "name": "Coffee Mug", "price": 11.99},
+      "distractor_products": [
+        {"slug": "coffee-beans", "name": "Coffee Beans", "price": 14.99},
+        {"slug": "french-press", "name": "French Press", "price": 29.99},
+        {"slug": "milk-frother", "name": "Milk Frother", "price": 24.99}
+      ],
+      "hide_products_until_search": true
+    },
+    "verifier": "cart_contains_target_exactly_once",
+    "max_steps": 10
+  }
+]

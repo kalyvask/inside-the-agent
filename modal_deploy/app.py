@@ -121,22 +121,41 @@ class BrainServer:
             self._steering_handle.remove()
             self._steering_handle = None
 
-    def _install_steering(self, edits: dict, clamp_min: float = -100.0, clamp_max: float = 100.0):
+    def _install_steering(
+        self,
+        edits: dict,
+        clamp_min: float = -100.0,
+        clamp_max: float = 100.0,
+        position_mode: str = "last_prompt_only",
+    ):
         """
-        Install a forward hook on layer 19 that applies feature-level deltas to
-        the residual stream. Edits = {feature_id: delta}.
+        Install a forward hook on layer 19 that applies feature-level deltas
+        to the residual stream. Edits = {feature_id: delta}.
 
-        The clamp is a safety rail against runaway activations only; do not set
-        it tighter than Llama's typical residual range (±50-100). Tighter clamps
-        will silently destroy the model's internal state and produce garbled output.
+        position_mode controls WHERE the delta is added:
+          - "last_prompt_only" (default, defensible):
+              Modify only the LAST token of the PREFILL forward pass — i.e.,
+              the residual whose hidden state predicts the first generated
+              token. Subsequent generation steps (KV-cached, seq=1 each) are
+              NOT modified. This is what "Step-0 steering at the decision
+              moment" actually means.
+          - "all_prompt":
+              Modify all positions during prefill; do not modify during
+              generation. Less surgical than "last_prompt_only" but still
+              respects the prompt/generation boundary.
+          - "all":
+              Legacy v0.1 behavior. Modify every position in every forward
+              pass — including all generated tokens. Documented but no longer
+              the default because it overstates the surface of the
+              intervention.
+
+        Returns nothing. The handle is stored on self._steering_handle.
         """
         import torch
 
         self._remove_steering()
         target_layer = self.model.model.layers[SAE_LAYER_INDEX]
 
-        # Precompute the activation-space delta: sum of (delta_i * W_dec[i]).
-        # This avoids per-step encode/decode roundtripping.
         edit_features = list(edits.keys())
         edit_deltas = torch.tensor(
             [edits[f] for f in edit_features],
@@ -147,15 +166,39 @@ class BrainServer:
         W_dec_rows = self.sae.W_dec[edit_features]  # (n_edits, d_in)
         delta_activation = (edit_deltas.unsqueeze(-1) * W_dec_rows).sum(dim=0)  # (d_in,)
 
+        # Closure state to track which forward pass we are on. The first call
+        # in any sequence is the prefill (seq_len = prompt_len); subsequent
+        # calls have seq_len = 1 because the KV cache is in use.
+        call_count = [0]
+
         def steering_hook(module, input, output):
             hidden = output[0]  # (batch, seq, d_in)
-            new_hidden = hidden + delta_activation
-            # Safety clamp wide enough to NOT alter normal residual values.
+            call_count[0] += 1
+            is_prefill = call_count[0] == 1
+
+            if position_mode == "all":
+                new_hidden = hidden + delta_activation
+            elif position_mode == "all_prompt":
+                if is_prefill:
+                    new_hidden = hidden + delta_activation
+                else:
+                    new_hidden = hidden  # no-op for generation tokens
+            elif position_mode == "last_prompt_only":
+                if is_prefill:
+                    # Modify only the residual at the LAST prompt token.
+                    new_hidden = hidden.clone()
+                    new_hidden[:, -1, :] = new_hidden[:, -1, :] + delta_activation
+                else:
+                    new_hidden = hidden  # no-op for generation tokens
+            else:
+                # Unknown mode → safe default of no modification.
+                new_hidden = hidden
+
             new_hidden = torch.clamp(new_hidden, clamp_min, clamp_max)
-            # output is a tuple; replace first element
             return (new_hidden,) + output[1:]
 
         self._steering_handle = target_layer.register_forward_hook(steering_hook)
+        self._steering_call_count = call_count  # so we can read it for telemetry
 
     def _top_k_features(self, top_k: int = TOP_K_DEFAULT):
         """Given captured L19 activations, return top-k SAE features."""
@@ -214,6 +257,7 @@ class BrainServer:
         top_k: int = TOP_K_DEFAULT,
         clamp_min: float = -100.0,
         clamp_max: float = 100.0,
+        position_mode: str = "last_prompt_only",
     ):
         """
         Generate a response with optional steering.
@@ -228,7 +272,7 @@ class BrainServer:
         if edits:
             # Normalize keys to ints
             edits = {int(k): float(v) for k, v in edits.items()}
-            self._install_steering(edits, clamp_min, clamp_max)
+            self._install_steering(edits, clamp_min, clamp_max, position_mode=position_mode)
 
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():

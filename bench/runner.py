@@ -81,10 +81,10 @@ def _load_tasks(path: str, limit: int | None = None) -> list[dict]:
     return tasks
 
 
-def _make_env():
-    """Day 2 will replace this with ShopGymEnv. For Day 1 it's a stub."""
+def _make_env(headless: bool = True):
+    """Construct the ShopGym browser environment."""
     from shopgym import ShopGymEnv
-    return ShopGymEnv(headless=True)
+    return ShopGymEnv(headless=headless)
 
 
 @contextmanager
@@ -123,6 +123,8 @@ def main(
     output: str = typer.Option("data/results", help="Output directory"),
     catalog_path: str = typer.Option("sae/features.yaml", help="Feature catalog YAML"),
     hud: bool = typer.Option(False, help="Spin up ws_server + publish events to HUD"),
+    headed: bool = typer.Option(False, "--headed", help="Show the Playwright browser window (default headless)"),
+    pause: float = typer.Option(0.0, help="Seconds to pause between agent steps (visible run = 1.5)"),
 ):
     if policy not in POLICY_REGISTRY:
         console.print(f"[red]Unknown policy: {policy}. Available: {list(POLICY_REGISTRY)}[/red]")
@@ -136,7 +138,7 @@ def main(
     console.print(f"Loaded {len(task_list)} tasks, policy={policy}, trials={trials}")
 
     brain_call = _make_brain_call()
-    env = _make_env()
+    env = _make_env(headless=not headed)
     policy_fn = POLICY_REGISTRY[policy]
     publisher = HudPublisher(enabled=hud)
 
@@ -145,7 +147,7 @@ def main(
         env=env,
         policy=policy_fn,
         feature_catalog=catalog,
-        config=AgentConfig(),
+        config=AgentConfig(step_pause=pause),
         hud=publisher,
     )
 
