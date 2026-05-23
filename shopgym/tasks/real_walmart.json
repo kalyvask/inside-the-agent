@@ -9,7 +9,6 @@
     "max_steps": 6,
     "verifier": "qualitative",
     "cookies_pre_accepted": true,
-    "storage_state": "data/walmart_storage_state.json",
-    "notes": "Walmart serves a PRESS-AND-HOLD bot CAPTCHA on first headless visit. Pre-warm cookies via: python warm_session.py --url https://www.walmart.com/ --out data/walmart_storage_state.json. The audience never sees the warm-up — it happens before the demo starts."
+    "notes": "Walmart homepage loads cleanly headlessly on most visits. If you hit the PRESS-AND-HOLD CAPTCHA (intermittent), pre-warm cookies: python warm_session.py --url https://www.walmart.com/ --out data/walmart_storage_state.json, then add 'storage_state': 'data/walmart_storage_state.json' to this task config. Homepage has: search bar + hero product carousel + 'Departments' distractor + 'Add' buttons — close to ShopGym's structure."
   }
 ]

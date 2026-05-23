@@ -25,32 +25,28 @@ from shopgym import WebEnv
 
 
 CANDIDATES = [
-    {
-        "slug": "aliexpress_home",
-        "url": "https://www.aliexpress.com/",
-    },
-    {
-        "slug": "aliexpress_search_usbc",
-        "url": "https://www.aliexpress.com/wholesale?SearchText=usb+c+cable",
-    },
-    {
-        "slug": "aliexpress_deals",
-        "url": "https://www.aliexpress.com/p/sales-deals/index.html",
-    },
-    {
-        "slug": "walmart_home",
-        "url": "https://www.walmart.com/",
-        "storage_state": "data/walmart_storage_state.json",
-    },
-    {
-        "slug": "walmart_search_usbc",
-        "url": "https://www.walmart.com/search?q=usb+c+cable",
-        "storage_state": "data/walmart_storage_state.json",
-    },
-    {
-        "slug": "bestbuy_deals",
-        "url": "https://www.bestbuy.com/site/electronics-deals/all-deals/pcmcat1530896412422.c?id=pcmcat1530896412422",
-    },
+    # Known-working from v0.6
+    {"slug": "aliexpress_home", "url": "https://www.aliexpress.com/"},
+
+    # Walmart (only useful if storage_state warmed)
+    {"slug": "walmart_home", "url": "https://www.walmart.com/",
+     "storage_state": "data/walmart_storage_state.json"},
+    {"slug": "walmart_search_usbc",
+     "url": "https://www.walmart.com/search?q=usb+c+cable",
+     "storage_state": "data/walmart_storage_state.json"},
+
+    # New US-recognized retailers to survey (no storage state — pure
+    # headless reachability test, looking for "loads cleanly + has clear
+    # promo-banner distractor + has search bar near top of DOM").
+    {"slug": "target_home", "url": "https://www.target.com/"},
+    {"slug": "target_deals", "url": "https://www.target.com/c/top-deals/-/N-4xrm3"},
+    {"slug": "bestbuy_home", "url": "https://www.bestbuy.com/"},
+    {"slug": "ebay_home", "url": "https://www.ebay.com/"},
+    {"slug": "ebay_deals", "url": "https://www.ebay.com/deals"},
+    {"slug": "macys_home", "url": "https://www.macys.com/"},
+    {"slug": "costco_home", "url": "https://www.costco.com/"},
+    {"slug": "kohls_home", "url": "https://www.kohls.com/"},
+    {"slug": "etsy_home", "url": "https://www.etsy.com/"},
 ]
 
 

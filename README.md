@@ -58,9 +58,21 @@ This project wires them into a working agent as a **runtime intervention surface
 
 ### What this is *not* (yet)
 
-- Not a verified mapping from features to semantic concepts. We use feature IDs in policy code; we do not claim feature 26737 "is" the hallucination feature.
-- Not a fully position-aware steering layer. The hook applies to the entire layer-19 residual stream during the steered forward pass, not just the action-generation token.
-- Not yet an interactive control surface. The HUD shows the model's internals; the sidebar dials are placeholders until a HUD-to-runner command channel is wired in v0.2.
+_(updated in v0.8 after the v0.3 / v0.4 / v0.7 work landed)_
+
+- **Not a verified mapping from SAE features to semantic concepts.** v0.4's logit-lens characterization (`docs/feature_characterization.md`) gives us a *lexical* read: f26737 promotes `option / select / choices` tokens, f23803 promotes `distractions / tempt / interrupt` tokens. We do not claim f26737 "is" the hallucination feature — only that suppressing it at step 0 reliably flips the agent's first action on this benchmark.
+
+- **Not surgical in *where* it intervenes.** The 83% headline uses `position_mode=all` — the residual delta hits every position during the steered forward pass. The more surgical `position_mode=last_prompt_only` (Modal-server default, only modifies the last prefill token) gives **0%** in our tests. The effect is real and causal; it is not yet localized to a single token. P0-2 reviewer ask: scope-comparison table in `artifacts/benchmark_report.md` once v0.8 reruns finish.
+
+- **Not yet evaluated outside the ShopGym in-distribution suite.** v0.6 added a real-website env (`shopgym/web_env.py`) and ran the targeted policy against live AliExpress and Walmart pages. Honest finding (see `docs/real_world_generalization.md`): on those distributions, the agent **executes** about half the actions it parses (`executed=False` in `result` log when Playwright can't find the selector), and the ShopGym-tuned features do not appear in the top-8 activations. Cross-distribution generalization is the open research question.
+
+- **Not a benchmark of strict-cart success.** The headline rate uses the lenient verifier (cart contains target). The strict verifier (`cart_contains_target_exactly_once`) is wired but not yet the canonical headline. The sample targeted trajectory shows the agent re-clicking add-to-cart repeatedly before terminating — visible in `data/trajectories/*.jsonl`. P1 reviewer ask: make strict the headline.
+
+### What this *is* (as of v0.8)
+
+- An **interactive cockpit** for browser-agent SAE interventions. The HUD shows live feature activations, an effect-size strip per active edit, a command queue for HUD-issued edits that drain at the next agent step, and a baseline-vs-current action diff per step. The HUD-to-runner channel is wired (`POST /control` → `ws_server` queue → `HudPublisher.drain_commands()` → merged into the next `SteeringPlan`).
+- A **reproducible testbed** for runtime feature interventions. `bench/artifact_check.py` verifies that every published number in `seed_manifest.json` matches the row in `data/results/*.jsonl`. `bench/report.py` regenerates the headline table from raw artifacts. CI gates the consistency.
+- A working bridge between **Goodfire's open SAE** and a Playwright-driven shopping agent, with controlled-noise + prompt-only + wrong-sign + random + matched-norm-noise controls.
 
 ## Demo (3-minute video)
 
