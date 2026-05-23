@@ -6,6 +6,19 @@ A fully open, reproducible reference implementation of SAE-steered language agen
 
 **Stanford CS153 Frontier Systems final project.** Demo: May 29, 2026.
 
+## Headline result
+
+8 held-out promotional-trap tasks, 3 trials per policy (24 trials each), Wilson 95% CIs:
+
+| Policy | Success | 95% CI | Δ vs baseline |
+|---|---|---|---|
+| baseline (no steering) | **0.0%** | [0.0%, 13.8%] | — |
+| wrong-sign | 4.2% | [0.7%, 20.2%] | +4 pts |
+| random | 45.8% | [27.9%, 64.9%] | +46 pts |
+| **targeted (2 SAE edits, Step 0 only)** | **83.3%** | **[64.1%, 93.3%]** | **+83 pts** |
+
+The wrong-sign control at 4% (in baseline's CI) is the smoking gun: flipping the targeted edits' signs drops performance back to baseline. **Direction matters causally**, not "any intervention helps." See `data/results/headline.png` and `docs/methodology.md` for details.
+
 ## What this is
 
 The agent shops on a deterministic mini-storefront (ShopGym). A live HUD shows which Sparse Autoencoder (SAE) features fire as the agent reasons. A human can apply targeted feature deltas to change behavior in real time, without retraining.

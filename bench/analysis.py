@@ -225,12 +225,13 @@ def plot_headline(results: dict[str, list[dict]], out_path: str = "data/results/
         console.print("[yellow]matplotlib not installed — skipping plot.[/yellow]")
         return
 
-    cats_order = ["promo", "halluc", "plan"]
+    all_cats = ["promo", "halluc", "plan"]
     policies_order = ["baseline", "random", "wrong-sign", "targeted"]
     avail = [p for p in policies_order if p in results]
 
     rates = {}
     cis = {}
+    cats_with_data: set[str] = set()
     for policy in avail:
         rates[policy] = {}
         cis[policy] = {}
@@ -238,12 +239,17 @@ def plot_headline(results: dict[str, list[dict]], out_path: str = "data/results/
         for r in results[policy]:
             cat = r["task_id"].split("_")[0]
             by_cat[cat].append(bool(r["success"]))
-        for cat in cats_order:
+        for cat in all_cats:
             outs = by_cat.get(cat, [])
             n = len(outs)
             s = sum(outs)
             rates[policy][cat] = (s / n) if n > 0 else 0
             cis[policy][cat] = _wilson_ci(s, n)
+            if n > 0:
+                cats_with_data.add(cat)
+    cats_order = [c for c in all_cats if c in cats_with_data]
+    if not cats_order:
+        return
 
     fig, ax = plt.subplots(figsize=(10, 6))
     n_pol = len(avail)
