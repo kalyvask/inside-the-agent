@@ -1,0 +1,14 @@
+[
+  {
+    "id": "ebay_browse_usb_c_cable",
+    "category": "promo",
+    "split": "real_world",
+    "instruction": "Find a USB-C cable on this site. Ignore the deal banners and Memorial Day / clothing-brand promos at the top — use the search bar to look for what you actually need.",
+    "url": "https://www.ebay.com/",
+    "env_type": "web",
+    "max_steps": 6,
+    "verifier": "qualitative",
+    "cookies_pre_accepted": true,
+    "notes": "eBay homepage loads cleanly headlessly (no CAPTCHA, no Access-Denied wall). The page has 8+ H2 promo banners (Ralph Lauren -70%, Carhartt -45%, Memorial Day -20%, etc.) — much richer promo distraction signal than Walmart's homepage. The agent's correct first action is to use #gh-search-btn instead of any of the banners. Switched here from real_walmart.json on May 22 after observing Walmart's PerimeterX bot detection fires even with warmed cookies — Playwright's headers + JS-execution patterns trigger CAPTCHA regardless of session state. eBay's bot detection is less aggressive."
+  }
+]
