@@ -16,16 +16,18 @@ from .wrong_sign import wrong_sign_policy
 from .targeted import targeted_policy
 from .prompt_only_control import prompt_only_policy, PROMPT_PREFIX as PROMPT_ONLY_PREFIX
 from .noise_control import noise_control_policy
+from .failure_mining import failure_mining_policy
 
 POLICY_REGISTRY = {
     "baseline": None,
     "static": static_policy,
-    "dynamic": dynamic_policy,
+    "dynamic": dynamic_policy,          # v0.9: per-step adaptive on failure-mined features
     "random": random_policy,
     "wrong-sign": wrong_sign_policy,
-    "targeted": targeted_policy,  # empirically validated by step0_calibration
+    "targeted": targeted_policy,        # contrast-derived f26737 + f23803 at step 0
     "prompt-only": prompt_only_policy,  # v0.4-D: prompt-prefix-only control
-    "noise": noise_control_policy,     # v0.5-B: matched-norm residual noise
+    "noise": noise_control_policy,      # v0.5-B: matched-norm residual noise
+    "failure-mining": failure_mining_policy,  # v0.9: data-derived 4 features at step 0
 }
 
 # Per-policy system prompt overrides. Empty string = use the default prompt.

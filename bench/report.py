@@ -103,6 +103,64 @@ def _per_policy_section(policies: dict[str, list[dict]]) -> str:
     return "\n".join(lines)
 
 
+def _per_category_section(
+    policies: dict[str, list[dict]], task_categories: dict[str, str]
+) -> str:
+    """v0.9: cross-domain breakdown — split each policy's rate by task category
+    (promotional / hallucination / planning). Answers reviewer's 'cross-domain'
+    open question: does the targeted policy generalize beyond promo traps?
+
+    For each policy, computes successes/n at each category. Empty cell if the
+    policy didn't run any tasks of that category."""
+    if not task_categories:
+        return ""
+    categories = sorted(set(task_categories.values()))
+    if len(categories) <= 1:
+        return ""
+    lines = [f"## Cross-domain breakdown (by task category)\n"]
+    lines.append(
+        "Held-out suite covers three task categories. The targeted policy was "
+        "calibrated on the promotional split. Lift on hallucination + planning "
+        "is the cross-domain generalization claim.\n"
+    )
+    header = "| Policy | " + " | ".join(f"`{c}`" for c in categories) + " |"
+    sep = "|---|" + "|".join("---:" for _ in categories) + "|"
+    lines.append(header)
+    lines.append(sep)
+    for policy, rows in policies.items():
+        row_cells = [f"`{policy}`"]
+        for cat in categories:
+            cat_rows = [r for r in rows
+                        if task_categories.get(r["task_id"]) == cat]
+            if not cat_rows:
+                row_cells.append("—")
+                continue
+            n = len(cat_rows)
+            s = sum(1 for r in cat_rows if r.get("success"))
+            row_cells.append(f"{s}/{n} = {s/n:.0%}")
+        lines.append("| " + " | ".join(row_cells) + " |")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _load_task_categories() -> dict[str, str]:
+    """Map task_id -> category from shopgym/tasks/*.json."""
+    out = {}
+    task_dir = Path("shopgym/tasks")
+    if not task_dir.exists():
+        return out
+    for path in task_dir.glob("*.json"):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        tasks = data if isinstance(data, list) else [data]
+        for t in tasks:
+            if isinstance(t, dict) and t.get("id") and t.get("category"):
+                out[t["id"]] = t["category"]
+    return out
+
+
 def _per_task_section(policies: dict[str, list[dict]]) -> str:
     """Cross-tab: rows are tasks, columns are policies, cells are success rate
     on that (task, policy) cell across trials."""
@@ -252,6 +310,7 @@ def main() -> int:
         )
 
     parts.append(_per_policy_section(policies))
+    parts.append(_per_category_section(policies, _load_task_categories()))
     parts.append(_per_task_section(policies))
     parts.append(_action_quality_section(policies))
     scope = _scope_comparison_section()

@@ -193,10 +193,12 @@ inside-the-agent/
 
 ## Open questions / future work
 
-1. **Failure-mode features.** Mining surfaced 4 features (50853, 19079, 39820, 44602) that fire in 100% of baseline failures. These are stronger candidates for true "promo-trap" representation than what contrast discovery surfaced. Worth testing as steering targets.
-2. **Cross-domain.** Held-out evaluation focused on promotional traps. Hallucination-prone and multi-step planning tasks are part of ShopGym but not yet in the reported benchmark.
-3. **Cross-model.** Results are specific to Llama 3.1-8B + Goodfire's layer-19 SAE. Gemma 2-9B + Gemma Scope is scaffolded in `modal_deploy/app_gemma.py` but not measured.
-4. **Dynamic steering.** Current targeted policy intervenes only at Step 0. A policy that watches feature activations across the trajectory and intervenes only at risky moments would be a stronger general claim.
+_(v0.9 status: items 1, 2, and 4 are now wired and measurable. Item 3 has a runbook.)_
+
+1. **Failure-mode features.** _Built in v0.9._ Mining surfaced 4 features (50853, 19079, 39820, 44602) that fire in 100% of baseline failures. The `failure-mining` policy (`policies/failure_mining.py`) suppresses all four at step 0. Headline rate vs. `targeted` (contrast-derived) is in `artifacts/benchmark_report.md` after the next rerun. The claim under test: is failure mining a stronger discovery method than contrast?
+2. **Cross-domain.** _Wired in v0.9._ `held_out.json` has 20 tasks split across 3 categories — promotional (8), hallucination (6), planning (6). The new "Cross-domain breakdown" section in `artifacts/benchmark_report.md` shows per-policy success rate per category. Open question: does targeted (calibrated on promo) lift on hallucination + planning, or only its own training distribution?
+3. **Cross-model.** Results are specific to Llama 3.1-8B + Goodfire's layer-19 SAE. Gemma 2-9B + Gemma Scope is scaffolded in `modal_deploy/app_gemma.py`; **one-day runbook in [`docs/cross_model_path.md`](docs/cross_model_path.md)**. Estimated $10-15 Modal compute + ~3 hours of attended work.
+4. **Dynamic steering.** _Rewritten in v0.9._ `policies/dynamic.py` now watches the 4 failure-mining features + the promo-bias feature at every step, intervenes only when an activation crosses its threshold, and amplifies a goal-anchor feature when the model appears "drifty" (no top feature firing above 0.20). Tests against `targeted` (fixed step-0) head-to-head — does the adaptive variant match or beat with fewer interventions?
 
 ## Built on
 

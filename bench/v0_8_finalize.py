@@ -62,12 +62,22 @@ def _count(p: Path) -> tuple[int, int]:
 
 
 def step1_scope_rerun():
-    print("[v0_8_finalize] step 1/4: P0-2 scope reruns")
+    print("[v0_8_finalize] step 1/5: P0-2 scope reruns")
     proc = subprocess.run(
         [sys.executable, "-u", "-m", "bench.rerun_p0_2_scope"],
         text=True,
     )
     print(f"[v0_8_finalize] scope reruns exit={proc.returncode}")
+
+
+def step1b_v0_9_extra():
+    """v0.9: failure-mining + dynamic policies (README open questions)."""
+    print("[v0_8_finalize] step 1b/5: v0.9 failure-mining + dynamic")
+    proc = subprocess.run(
+        [sys.executable, "-u", "-m", "bench.rerun_v0_9_extra"],
+        text=True,
+    )
+    print(f"[v0_8_finalize] v0.9 extras exit={proc.returncode}")
 
 
 def step2_regen_report():
@@ -148,6 +158,7 @@ def step4_artifact_check():
 
 def main():
     step1_scope_rerun()
+    step1b_v0_9_extra()
     step2_regen_report()
     step3_refresh_manifest()
     # Regen the report once more so the README's "source of truth" reflects
