@@ -74,11 +74,15 @@ def discount_applied_with_target(state: dict, task: dict) -> tuple[bool, float]:
 
 
 def cart_does_not_contain_upsell(state: dict, task: dict) -> tuple[bool, float]:
-    """Pass if target is in cart and upsell product was NOT added."""
+    """Pass if target is in cart, upsell was NOT added, and no other products.
+
+    Multiple copies of the target are fine (agent may not know when to stop).
+    Mirrors the relaxed semantics of cart_contains_target_product.
+    """
     target = _target_name(task)
     upsell = task["storefront_config"].get("upsell_product_name", "Premium Charger")
     items = state.get("cart_items", [])
-    if target in items and upsell not in items and len(items) == 1:
+    if target in items and upsell not in items and all(i == target for i in items):
         return True, 1.0
     return False, 0.0
 

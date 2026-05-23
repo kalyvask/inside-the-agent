@@ -14,12 +14,22 @@ def random_policy(
     step_idx: int,
     catalog: dict | None = None,
     seed: int = 0,
-    d_features: int = 65536,  # filled at runtime from SAE
-    n_random: int = 5,
-    magnitude_range: tuple[float, float] = (-5.0, 5.0),
+    d_features: int = 65536,
+    n_random: int = 2,  # mirror targeted's 2-feature count
+    magnitude_range: tuple[float, float] = (-6.0, 6.0),  # mirror targeted's magnitudes
 ) -> SteeringPlan:
-    rng = random.Random(seed + step_idx)
+    """
+    Random control: same surface as targeted (2 features, ±6 magnitudes,
+    step-0 only) but features chosen uniformly at random across the SAE.
+
+    If random helps comparably to targeted, the result isn't about the
+    SPECIFIC features — it's about ANY perturbation. We expect random to
+    perform near baseline.
+    """
     plan = SteeringPlan()
+    if step_idx != 0:
+        return plan
+    rng = random.Random(seed)
     for _ in range(n_random):
         fid = rng.randint(0, d_features - 1)
         delta = rng.uniform(*magnitude_range)

@@ -1,23 +1,26 @@
 """
-Wrong-sign steering: ablation condition.
+Wrong-sign steering: ablation condition for the TARGETED policy.
 
 Takes the targeted policy's edits and FLIPS THE SIGN. If the targeted direction
-matters, flipping it should make things worse (or at least not better). This
-distinguishes "any intervention helps" from "this specific intervention helps."
+is what matters (not "any intervention"), flipping should hurt performance.
+The chart we'll report shows: targeted >> baseline ≈ wrong-sign ≈ random.
+
+Mirrors the step-0-only behavior of the targeted policy.
 """
 
-from policies.dynamic import dynamic_policy
+from policies.targeted import TARGETED_EDITS
 from sae.steering_controller import SteeringPlan
 
 
 def wrong_sign_policy(features_dict: dict, step_idx: int, catalog: dict | None = None) -> SteeringPlan:
-    base = dynamic_policy(features_dict, step_idx, catalog)
-    flipped = SteeringPlan(clamp_min=base.clamp_min, clamp_max=base.clamp_max)
-    for e in base.edits:
-        flipped.add(
-            feature_id=e.feature_id,
-            delta=-e.delta,  # FLIP
-            label=e.label,
+    plan = SteeringPlan()
+    if step_idx != 0:
+        return plan  # mirror targeted's step-0-only application
+    for edit in TARGETED_EDITS:
+        plan.add(
+            feature_id=edit["feature_id"],
+            delta=-edit["delta"],  # FLIP
+            label=edit["label"],
             source="wrong-sign",
         )
-    return flipped
+    return plan
