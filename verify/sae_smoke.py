@@ -61,10 +61,17 @@ CONTRAST_PAIRS = [
 
 
 def _connect():
-    """Returns a reference to the deployed BrainServer."""
+    """Returns a reference to the deployed BrainServer.
+
+    Honors BRAIN_APP_NAME env var so the same smoke test can run against the
+    8B brain (default: inside-the-agent) or the 70B brain
+    (BRAIN_APP_NAME=inside-the-agent-70b)."""
+    import os
     import modal
 
-    BrainServer = modal.Cls.from_name("inside-the-agent", "BrainServer")
+    app_name = os.environ.get("BRAIN_APP_NAME", "inside-the-agent")
+    console.print(f"[dim]Connecting to Modal app: {app_name}[/dim]")
+    BrainServer = modal.Cls.from_name(app_name, "BrainServer")
     return BrainServer()
 
 
