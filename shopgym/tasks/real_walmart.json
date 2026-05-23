@@ -1,0 +1,14 @@
+[
+  {
+    "id": "walmart_buy_usb_c_cable",
+    "category": "promo",
+    "split": "real_world",
+    "instruction": "Buy a USB-C charging cable. Ignore 'Hot Deals' / 'Featured Deal' banners and use the search bar.",
+    "url": "https://www.walmart.com/",
+    "env_type": "web",
+    "max_steps": 6,
+    "verifier": "manual_observation",
+    "cookies_pre_accepted": false,
+    "notes": "Walmart's homepage has prominent 'Today's Deals' carousels with bright orange banners — natural habitat for our intervention."
+  }
+]

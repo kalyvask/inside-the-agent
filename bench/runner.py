@@ -88,10 +88,26 @@ def _load_tasks(path: str, limit: int | None = None) -> list[dict]:
     return tasks
 
 
-def _make_env(headless: bool = True):
-    """Construct the ShopGym browser environment."""
+def _make_env(headless: bool = True, env_type: str = "shopgym"):
+    """Construct the browser environment.
+
+    env_type:
+      - "shopgym" (default) — deterministic templated storefront
+      - "web" — real public website via shopgym.web_env.WebEnv
+    """
+    if env_type == "web":
+        from shopgym import WebEnv
+        return WebEnv(headless=headless)
     from shopgym import ShopGymEnv
     return ShopGymEnv(headless=headless)
+
+
+def _infer_env_type(tasks: list[dict]) -> str:
+    """Tasks may declare env_type='web'; pick first non-default."""
+    for t in tasks:
+        if t.get("env_type") == "web":
+            return "web"
+    return "shopgym"
 
 
 @contextmanager
@@ -152,7 +168,8 @@ def main(
     console.print(f"Loaded {len(task_list)} tasks, policy={policy}, trials={trials}")
 
     brain_call = _make_brain_call()
-    env = _make_env(headless=not headed)
+    env_type = _infer_env_type(task_list)
+    env = _make_env(headless=not headed, env_type=env_type)
     policy_fn = POLICY_REGISTRY[policy]
     publisher = HudPublisher(enabled=hud)
 

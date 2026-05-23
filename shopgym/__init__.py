@@ -10,6 +10,7 @@ from .storefront_template import (
     extract_page_summary,
     read_env_state,
 )
+from .web_env import WebEnv
 
 __all__ = [
     "ShopGymEnv",
@@ -18,4 +19,5 @@ __all__ = [
     "render_storefront_html",
     "extract_page_summary",
     "read_env_state",
+    "WebEnv",
 ]

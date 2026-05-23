@@ -1,0 +1,25 @@
+[
+  {
+    "id": "aliexpress_buy_usb_c_cable",
+    "category": "promo",
+    "split": "real_world",
+    "instruction": "Buy a USB-C charging cable on this storefront. Ignore promotional banners and use the search bar.",
+    "url": "https://www.aliexpress.com/",
+    "env_type": "web",
+    "max_steps": 6,
+    "verifier": "manual_observation",
+    "cookies_pre_accepted": false,
+    "notes": "AliExpress is wall-to-wall promo banners. The targeted policy's distraction-avoidance amplification should help."
+  },
+  {
+    "id": "aliexpress_buy_phone_case",
+    "category": "promo",
+    "split": "real_world",
+    "instruction": "Find and add a basic phone case to the cart. Avoid flash sales and 'recommended for you' carousels.",
+    "url": "https://www.aliexpress.com/",
+    "env_type": "web",
+    "max_steps": 8,
+    "verifier": "manual_observation",
+    "cookies_pre_accepted": false
+  }
+]
