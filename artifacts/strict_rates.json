@@ -1,0 +1,62 @@
+{
+  "baseline": {
+    "lenient_successes": 6,
+    "strict_successes": 40,
+    "trials": 60,
+    "strict_rate": 0.6667,
+    "wilson_ci_95": [
+      0.541,
+      0.773
+    ]
+  },
+  "prompt-only": {
+    "lenient_successes": 18,
+    "strict_successes": 21,
+    "trials": 24,
+    "strict_rate": 0.875,
+    "wilson_ci_95": [
+      0.69,
+      0.957
+    ]
+  },
+  "random": {
+    "lenient_successes": 0,
+    "strict_successes": 22,
+    "trials": 24,
+    "strict_rate": 0.9167,
+    "wilson_ci_95": [
+      0.742,
+      0.977
+    ]
+  },
+  "static": {
+    "lenient_successes": 0,
+    "strict_successes": 0,
+    "trials": 1,
+    "strict_rate": 0.0,
+    "wilson_ci_95": [
+      0.0,
+      0.793
+    ]
+  },
+  "targeted": {
+    "lenient_successes": 34,
+    "strict_successes": 39,
+    "trials": 60,
+    "strict_rate": 0.65,
+    "wilson_ci_95": [
+      0.524,
+      0.758
+    ]
+  },
+  "wrong-sign": {
+    "lenient_successes": 1,
+    "strict_successes": 1,
+    "trials": 24,
+    "strict_rate": 0.0417,
+    "wilson_ci_95": [
+      0.007,
+      0.202
+    ]
+  }
+}

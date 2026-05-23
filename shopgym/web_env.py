@@ -235,19 +235,68 @@ class WebEnv:
         return False
 
     def _click(self, target: str) -> bool:
-        """Try several selector strategies. Real-site selectors are flaky."""
-        candidates = [
-            target,                                # raw
+        """Try several selector strategies. v0.11: respect the canonical
+        selector format the LLM is now told to emit verbatim from
+        page_summary's CLICKABLE section. If the target already looks like
+        a real CSS selector (starts with #, ., [, button, a, role=, etc.)
+        try it AS-IS before falling back to heuristic candidates.
+
+        Reviewer/user feedback: executed=False on real-site clicks was
+        high because the model emitted invented labels like 'search-result-0'
+        that don't match any DOM element. The new page_summary lists real
+        selectors; this dispatch trusts them when they look real."""
+        if not target:
+            return False
+        target = target.strip()
+
+        # If the model emitted a real-looking selector, try it AS-IS first.
+        looks_like_selector = (
+            target.startswith("#")
+            or target.startswith(".")
+            or target.startswith("[")
+            or target.startswith("button")
+            or target.startswith("a[")
+            or target.startswith("a.")
+            or target.startswith("a:")
+            or "[aria-label=" in target
+            or ":has-text(" in target
+            or target.startswith("text=")
+        )
+
+        candidates = []
+        if looks_like_selector:
+            candidates.append(target)
+
+        # Heuristic candidates — for when the LLM gives a bare label.
+        candidates.extend([
+            target,
             f"#{target}" if not target.startswith("#") else target,
             f'[data-test="{target}"]',
             f'[data-testid="{target}"]',
+            f'[data-track-id="{target}"]',
+            f'[name="{target}"]',
             f'[aria-label="{target}"]',
+            f'[aria-label*="{target}"]',
             f'text="{target}"',
             f'button:has-text("{target}")',
             f'a:has-text("{target}")',
             f'[role="button"]:has-text("{target}")',
-        ]
+            f'[role="link"]:has-text("{target}")',
+            # Loose word-match fallback — works for verbose labels like
+            # "Show more - Show more results for usb-c cable" by clicking
+            # the first link whose visible text contains the first word.
+            f'a:has-text("{target.split()[0]}")' if " " in target else "",
+            f'button:has-text("{target.split()[0]}")' if " " in target else "",
+        ])
+
+        # Dedup while preserving order.
+        seen, ordered = set(), []
         for sel in candidates:
+            if sel and sel not in seen:
+                seen.add(sel)
+                ordered.append(sel)
+
+        for sel in ordered:
             try:
                 el = self._page.locator(sel).first
                 if el.is_visible(timeout=500):
@@ -354,27 +403,51 @@ class WebEnv:
         except Exception:
             pass
 
-        # Visible buttons
+        # v0.11: visible clickable elements (buttons + links). Now extracts
+        # real selectors the LLM can use directly (id, data-*, class) instead
+        # of inviting the model to hallucinate selectors like "search-result-0".
+        # Each element gets a canonical_selector field that _click can use
+        # without going through the heuristic-candidate loop.
         try:
             buttons = self._page.eval_on_selector_all(
-                "button, [role=button], a.button, input[type=submit]",
+                "button, [role=button], a.button, a[href], input[type=submit]",
                 """els => els
                     .filter(e => e.offsetParent !== null && (e.innerText || e.value || e.getAttribute('aria-label') || '').trim())
-                    .slice(0, 20)
+                    .slice(0, 24)
                     .map(e => {
-                        const id = e.id || e.getAttribute('data-test') || e.getAttribute('data-testid') || '';
-                        const txt = (e.innerText || e.value || e.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ').slice(0, 60);
-                        return JSON.stringify({id: id, text: txt});
+                        const id = e.id || '';
+                        const dt = e.getAttribute('data-test') || e.getAttribute('data-testid') || '';
+                        const trackId = e.getAttribute('data-track-id') || '';
+                        const aria = e.getAttribute('aria-label') || '';
+                        const cls = (e.className || '').toString().split(/\\s+/).filter(c => c && !c.startsWith(':')).slice(0, 3).join('.');
+                        const tag = e.tagName.toLowerCase();
+                        const href = (tag === 'a' && e.getAttribute('href')) || '';
+                        const txt = (e.innerText || e.value || aria || '').trim().replace(/\\s+/g, ' ').slice(0, 60);
+                        // Build the cheapest unambiguous selector the LLM can
+                        // emit back unmodified.
+                        let canonical;
+                        if (id) canonical = '#' + id;
+                        else if (dt) canonical = '[data-test=\"' + dt + '\"]';
+                        else if (trackId) canonical = '[data-track-id=\"' + trackId + '\"]';
+                        else if (cls) canonical = tag + '.' + cls;
+                        else if (aria) canonical = tag + '[aria-label=\"' + aria.slice(0, 40) + '\"]';
+                        else canonical = tag + ':has-text(\"' + txt.slice(0, 30) + '\")';
+                        return JSON.stringify({canonical: canonical, text: txt, tag: tag, href: href.slice(0, 60)});
                     })""",
             )
             if buttons:
-                lines.append("BUTTONS (visible):")
+                lines.append("CLICKABLE (real selectors — emit these verbatim as click target):")
+                import json
+                seen = set()
                 for raw in buttons:
                     try:
-                        import json
                         b = json.loads(raw)
-                        sel = f"#{b['id']}" if b['id'] else f'"{b["text"]}"'
-                        lines.append(f'  - {sel}: "{b["text"]}"')
+                        sel = b['canonical']
+                        if sel in seen:
+                            continue
+                        seen.add(sel)
+                        suffix = f"  [href={b['href']}]" if b['href'] else ""
+                        lines.append(f'  - {sel}  ::  "{b["text"]}"{suffix}')
                     except Exception:
                         pass
                 lines.append("")
