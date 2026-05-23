@@ -30,6 +30,17 @@ async function postEdit(edit: Edit) {
   }
 }
 
+async function postReset() {
+  // A "reset" is a delta=0 marker which the agent's drain treats as a clear.
+  // It also drains any pending queued commands by emptying them server-side.
+  try {
+    const drainUrl = controlUrl().replace(/\/control$/, "/control/pending");
+    await fetch(drainUrl, { method: "GET" });
+  } catch (e) {
+    console.warn("Failed to drain pending commands:", e);
+  }
+}
+
 export default function SteeringControls({
   onApply,
 }: {
@@ -38,33 +49,40 @@ export default function SteeringControls({
   const [active, setActive] = useState<Edit[]>([]);
   const [busy, setBusy] = useState(false);
 
-  const presets: { name: string; edits: Edit[] }[] = [
+  const presets: { name: string; edits: Edit[]; isReset?: boolean }[] = [
     {
-      name: "Suppress f26737",
-      edits: [{ feature_id: 26737, delta: -6, label: "f26737_invented_action_supp" }],
+      name: "Suppress f26737 (UI-selection vocab)",
+      edits: [{ feature_id: 26737, delta: -6, label: "f26737_ui_selection_vocab" }],
     },
     {
-      name: "Amplify f23803",
-      edits: [{ feature_id: 23803, delta: +6, label: "f23803_goal_anchor" }],
+      name: "Amplify f23803 (distraction-avoidance)",
+      edits: [{ feature_id: 23803, delta: +6, label: "f23803_distraction_avoidance_vocab" }],
     },
     {
-      name: "Targeted combo",
+      name: "Targeted combo (both)",
       edits: [
-        { feature_id: 26737, delta: -6, label: "f26737_invented_action_supp" },
-        { feature_id: 23803, delta: +6, label: "f23803_goal_anchor" },
+        { feature_id: 26737, delta: -6, label: "f26737_ui_selection_vocab" },
+        { feature_id: 23803, delta: +6, label: "f23803_distraction_avoidance_vocab" },
       ],
     },
     {
-      name: "Reset",
+      name: "Clear / Reset",
       edits: [],
+      isReset: true,
     },
   ];
 
-  async function applyPreset(p: { name: string; edits: Edit[] }) {
+  async function applyPreset(p: { name: string; edits: Edit[]; isReset?: boolean }) {
     setBusy(true);
-    setActive(p.edits);
-    for (const edit of p.edits) {
-      await postEdit(edit);
+    if (p.isReset) {
+      // Reset: clear local state AND drain any pending commands queued on server.
+      setActive([]);
+      await postReset();
+    } else {
+      setActive(p.edits);
+      for (const edit of p.edits) {
+        await postEdit(edit);
+      }
     }
     onApply?.(p.edits);
     setTimeout(() => setBusy(false), 400);

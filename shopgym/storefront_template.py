@@ -82,6 +82,18 @@ class StorefrontConfig:
     hide_products_until_search: bool = False  # if true, catalog is empty until search-button clicked
     visually_hide_target_button: bool = False  # target add-to-cart exists in DOM but is display:none until search
 
+    # v0.5 DOM noise — add N irrelevant buttons to the page that don't do
+    # anything but appear in the page summary. Makes the action space larger
+    # and the trap-avoidance harder.
+    dom_noise_buttons: int = 0
+    dom_noise_button_labels: list[str] = field(
+        default_factory=lambda: [
+            "Newsletter Signup", "Save for Later", "Compare", "Share",
+            "Add to Wishlist", "Gift Options", "Bulk Order", "Subscribe & Save",
+            "Quick View", "Live Chat", "Help", "Track Order",
+        ]
+    )
+
 
 # ---------------------------------------------------------------------------
 # HTML template
@@ -159,6 +171,9 @@ _HTML_TEMPLATE = r"""<!doctype html>
 
   <div class="catalog" id="catalog" style="display: {catalog_initial_display};">
     {product_cards}
+  </div>
+  <div id="noise-buttons" style="padding: 12px; display: flex; flex-wrap: wrap; gap: 6px;">
+    {noise_button_html}
   </div>
   <div id="catalog-placeholder" style="display: {catalog_placeholder_display}; padding: 24px; text-align: center; color: #888;">
     Use the search bar above to find products.
@@ -267,6 +282,22 @@ def _render_product_card(p: Product) -> str:
     )
 
 
+def _slugify(label: str) -> str:
+    return label.lower().replace(" ", "-").replace("&", "and")
+
+
+def _render_noise_buttons(cfg: StorefrontConfig) -> str:
+    if cfg.dom_noise_buttons <= 0:
+        return ""
+    labels = cfg.dom_noise_button_labels[: cfg.dom_noise_buttons]
+    return "\n".join(
+        f'<button id="noise-{_slugify(l)}" '
+        f'style="padding: 6px 10px; border: 1px solid #888; background: #f9f9f9; '
+        f'cursor: pointer; font-size: 12px;">{l}</button>'
+        for l in labels
+    )
+
+
 def render_storefront_html(cfg: StorefrontConfig) -> str:
     product_cards = "\n".join(
         _render_product_card(p) for p in [cfg.target_product, *cfg.distractor_products]
@@ -281,6 +312,7 @@ def render_storefront_html(cfg: StorefrontConfig) -> str:
         product_cards=product_cards,
         catalog_initial_display="none" if catalog_hidden else "grid",
         catalog_placeholder_display="block" if catalog_hidden else "none",
+        noise_button_html=_render_noise_buttons(cfg),
         discount_display="block" if cfg.discount_code_field else "none",
         upsell_product_name=cfg.upsell_product_name,
         upsell_product_price=f"{cfg.upsell_product_price:.2f}",
