@@ -56,6 +56,26 @@ export default function Page() {
     edits: SteeringEdit[];
   } | null>(null);
 
+  // v0.14: track "agent live" so SteeringControls can flag clicks as no-op
+  // when nothing is listening. Set true on step_started, false on task_done
+  // OR after 30s of no step_started events (heartbeat decay).
+  const [agentLive, setAgentLive] = useState(false);
+  const [lastStepAt, setLastStepAt] = useState<number>(0);
+
+  // v0.14: heartbeat decay — if no step_started for 30s and the agent
+  // hasn't sent task_done either, treat the run as stale (process
+  // killed, network glitch, etc.) so SteeringControls doesn't claim
+  // 'live' indefinitely.
+  useEffect(() => {
+    if (!agentLive) return;
+    const id = setInterval(() => {
+      if (Date.now() - lastStepAt > 30000) {
+        setAgentLive(false);
+      }
+    }, 5000);
+    return () => clearInterval(id);
+  }, [agentLive, lastStepAt]);
+
   useEffect(() => {
     const dispose = connectWS((ev) => {
       switch (ev.type) {
@@ -94,6 +114,8 @@ export default function Page() {
           break;
         case "step_started":
           setStep(ev.step);
+          setAgentLive(true);
+          setLastStepAt(Date.now());
           // New step: any edits that didn't get cleared by a matching
           // steering_applied stay in pending — they'll apply this step.
           break;
@@ -133,6 +155,7 @@ export default function Page() {
         case "task_done":
           setVerdictSuccess(ev.success ?? false);
           setVerdictVisible(true);
+          setAgentLive(false);
           break;
       }
     });
@@ -254,7 +277,7 @@ export default function Page() {
         <section className="col-span-5 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col gap-2 min-h-0">
           <div className="shrink-0">
             <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400">Steering controls</h2>
-            <SteeringControls onApply={onSteeringQueued} />
+            <SteeringControls onApply={onSteeringQueued} agentLive={agentLive} />
           </div>
           <div className="border-t border-zinc-800 pt-2 flex-1 min-h-0 overflow-hidden flex flex-col">
             <h2 className="text-sm font-mono uppercase mb-1 text-zinc-400 shrink-0 flex items-center gap-2">

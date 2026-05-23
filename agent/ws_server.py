@@ -155,6 +155,70 @@ async def clear():
     return {"cleared": cleared}
 
 
+class StartRunRequest(BaseModel):
+    """v0.14: HUD-triggered agent run launch.
+
+    Used by the HUD's "Start agent run" button so a user watching the
+    cockpit can kick a live agent demo without a separate terminal —
+    crucial for steering-controls being meaningful (you can only inject
+    HUD edits into a live agent, not into a static screenshot)."""
+    policy: str = "targeted"
+    task: str = "shopgym/tasks/real_ebay.json"
+    pause: float = 6.0
+    position_mode: str = "all"
+    limit: int = 1
+    trials: int = 1
+    output_suffix: str = "hud"
+
+
+@app.post("/start_run")
+async def start_run(req: StartRunRequest):
+    """Spawn a bench.runner subprocess that publishes events back to this
+    same ws_server. Returns immediately with the spawned PID; the run
+    streams events naturally via the existing /publish path."""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    if not Path(req.task).exists():
+        return {"ok": False, "error": f"task file not found: {req.task}"}
+
+    # Spawn detached so the agent run survives this HTTP request.
+    env = {
+        **os.environ,
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUTF8": "1",
+        "HUD_PUBLISH": "1",
+        "OUTPUT_SUFFIX": req.output_suffix,
+    }
+    cmd = [
+        sys.executable, "-u", "-m", "bench.runner",
+        "--policy", req.policy,
+        "--tasks", req.task,
+        "--trials", str(req.trials),
+        "--limit", str(req.limit),
+        "--pause", str(req.pause),
+        "--position-mode", req.position_mode,
+    ]
+    log_dir = Path("data/hud_runs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"hud_run_{int(time.time())}.log"
+    log_file = log_path.open("w", encoding="utf-8")
+    proc = subprocess.Popen(
+        cmd,
+        env=env,
+        stdout=log_file,
+        stderr=subprocess.STDOUT,
+    )
+    return {
+        "ok": True,
+        "pid": proc.pid,
+        "log_path": str(log_path),
+        "cmd": cmd,
+    }
+
+
 @app.post("/control")
 async def control_post(cmd: SteeringCommand):
     """HUD posts a steering command. Stored until the agent drains it."""

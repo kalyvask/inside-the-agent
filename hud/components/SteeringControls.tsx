@@ -4,12 +4,21 @@ import { useState } from "react";
 
 type Edit = { feature_id: number; delta: number; label: string };
 
-// In dev, the WS URL is ws://localhost:8765/feed. We POST to /control on the
-// same host:port (just swap the scheme).
+// In dev, the WS URL is ws://localhost:8765/feed. We POST to endpoints on the
+// same host:port (just swap the scheme + the path).
 function controlUrl(): string {
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8765/feed";
-  // ws://host:port/feed -> http://host:port/control
   return wsUrl.replace(/^ws/, "http").replace(/\/feed$/, "/control");
+}
+
+function startRunUrl(): string {
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8765/feed";
+  return wsUrl.replace(/^ws/, "http").replace(/\/feed$/, "/start_run");
+}
+
+function clearUrl(): string {
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8765/feed";
+  return wsUrl.replace(/^ws/, "http").replace(/\/feed$/, "/clear");
 }
 
 async function postEdit(edit: Edit) {
@@ -43,11 +52,52 @@ async function postReset() {
 
 export default function SteeringControls({
   onApply,
+  agentLive,
 }: {
   onApply?: (edits: Edit[]) => void;
+  /** Set by the parent page when a recent step_started has been observed.
+   * Used to gray out preset buttons + show the "Start run" cue when no
+   * agent is listening, so the user doesn't click into the void. */
+  agentLive?: boolean;
 }) {
   const [active, setActive] = useState<Edit[]>([]);
   const [busy, setBusy] = useState(false);
+  const [startBusy, setStartBusy] = useState(false);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+
+  async function startAgentRun() {
+    setStartBusy(true);
+    try {
+      // Clear stale buffer first so the new run's demo_banner is what the HUD
+      // sees, not buffered events from a previous run.
+      await fetch(clearUrl(), { method: "POST" });
+      const r = await fetch(startRunUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          policy: "targeted",
+          task: "shopgym/tasks/real_ebay.json",
+          pause: 6.0,           // slow enough for HUD clicks to land
+          position_mode: "all",
+          limit: 1,
+          trials: 1,
+          output_suffix: "hud",
+        }),
+      });
+      if (r.ok) {
+        setStartedAt(Date.now());
+        // Auto-clear the "just started" marker after 2 min — plenty for
+        // any single demo run to complete.
+        setTimeout(() => setStartedAt(null), 120000);
+      } else {
+        console.warn("start_run failed:", await r.text());
+      }
+    } catch (e) {
+      console.warn("start_run threw:", e);
+    } finally {
+      setTimeout(() => setStartBusy(false), 800);
+    }
+  }
 
   const presets: { name: string; edits: Edit[]; isReset?: boolean }[] = [
     {
@@ -90,16 +140,57 @@ export default function SteeringControls({
 
   return (
     <div className="flex flex-col gap-3 text-sm">
+      {/* v0.14: kick a live agent run from inside the HUD so steering clicks
+          actually drive behavior. Default config = targeted on real_ebay.json
+          @ pause=6.0 (long enough for a human to click presets between
+          steps). */}
+      <div className="flex items-center gap-2 pb-2 border-b border-zinc-800">
+        <button
+          disabled={startBusy}
+          onClick={startAgentRun}
+          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-colors ${
+            startBusy
+              ? "bg-zinc-700 text-zinc-500 cursor-wait"
+              : agentLive
+                ? "bg-emerald-700 hover:bg-emerald-600 text-white"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white animate-pulse"
+          }`}
+          title="Spawn `python -m bench.runner --policy targeted --tasks shopgym/tasks/real_ebay.json --pause 6.0 --hud` on the ws_server host"
+        >
+          {startBusy
+            ? "starting…"
+            : agentLive
+              ? "↻ start another agent run"
+              : "▶ start agent run (eBay live)"}
+        </button>
+        {agentLive ? (
+          <span className="text-[10px] text-emerald-400 font-mono">
+            ● agent live — click presets to inject HUD edits
+          </span>
+        ) : (
+          <span className="text-[10px] text-zinc-500 font-mono">
+            no agent listening — start one to make steering clicks land
+          </span>
+        )}
+      </div>
+
       <div className="flex flex-wrap gap-2">
         {presets.map((p) => (
           <button
             key={p.name}
             disabled={busy}
             onClick={() => applyPreset(p)}
+            title={
+              agentLive
+                ? "Click — will apply at the next agent step"
+                : "Will queue, but no agent is listening yet. Click START AGENT RUN above first."
+            }
             className={`px-3 py-1 rounded text-xs transition-colors ${
               busy
                 ? "bg-zinc-700 text-zinc-500 cursor-wait"
-                : "bg-zinc-800 hover:bg-zinc-700 text-zinc-100"
+                : agentLive
+                  ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-100"
+                  : "bg-zinc-800/60 hover:bg-zinc-700 text-zinc-400 opacity-70"
             }`}
           >
             {p.name}
