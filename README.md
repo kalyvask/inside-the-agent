@@ -74,39 +74,58 @@ This project wires them into a working agent as a **runtime intervention surface
 - **Intervene** by adding feature-level deltas to the residual stream during inference
 - **See** it all in a HUD: feature activations, intervention timeline, before/after action diff, success/failure verdict
 
-### What ships in the box (as of v0.13)
+### What ships in the box (as of v0.22)
 
-- An **interactive cockpit** for browser-agent SAE interventions. The HUD shows live SAE feature activations, an effect-size strip per active edit with source-coded colors, a command queue for HUD-issued edits that drain at the next agent step, a baseline-vs-current action diff per step, and a 3-second viewport-ring pulse + source badge whenever a steering edit lands. The HUD-to-runner channel is wired (`POST /control` → `ws_server` queue → `HudPublisher.drain_commands()` → merged into the next `SteeringPlan`).
-- A **reproducible testbed** for runtime feature interventions. `bench/artifact_check.py` verifies that every published number in `seed_manifest.json` matches the rows in `data/results/*.jsonl` and fails CI on drift. `bench/report.py` regenerates `artifacts/benchmark_report.md` (per-policy, per-task, per-category, action-quality) from raw artifacts. `bench/compute_strict.py` approximates strict-cart from trajectory action histories.
-- A working bridge between **Goodfire's open SAE** and a Playwright-driven shopping agent, with **9 policies**: baseline, static, adaptive-dynamic (watches failure-mining features per step), random (per-trial-seeded), wrong-sign (direction-flip ablation), targeted (2 contrast-derived features at step 0), prompt-only (system-prompt control), noise (matched-norm random residual perturbation), and failure-mining (4 data-derived features that fire in 100% of baseline failures).
-- A **live segment on real public sites**. `shopgym/web_env.py` is a generic Playwright env that the agent uses the same way it uses ShopGym. Validated on eBay /deals (works headlessly) and AliExpress; Walmart documented as bot-walled (PerimeterX fingerprints beyond cookies). The v0.8 `executed: bool` field on every step surfaces the honest gap between "model emitted valid JSON" and "Playwright actually clicked something."
+- **Interactive cockpit** for browser-agent SAE interventions. Live SAE feature activations, an effect-size strip per active edit (source-coded colors), a command queue for HUD-issued edits that drain at the next agent step, a baseline-vs-current action diff, a 3-second viewport-ring pulse + source badge whenever a steering edit lands, and a **live counterfactual** at every steering step (`WITHOUT EDIT` row showing what the same model on the same prompt would have done without your intervention).
+- **Trajectory replayer + in-HUD browser** (v0.21). A `▶ REPLAY SAVED` button lists every past `data/trajectories/*.jsonl` and replays it through the same cockpit at controllable speed — zero Modal cost, deterministic playback. Both `▶ TARGETED` and `▷ baseline` run buttons are in the HUD too, so the entire demo flow lives inside the browser.
+- **Reproducible testbed**. `bench/artifact_check.py` verifies that every published number in `seed_manifest.json` matches `data/results/*.jsonl` (fails CI on drift). `bench/report.py` regenerates `artifacts/benchmark_report.md`. `bench/make_chart.py` regenerates `artifacts/headline.png` from raw artifacts. `bench/compute_strict.py` reconstructs strict-cart from action histories; v0.22 also captures strict directly in the runner.
+- **11 controlled policies** in `POLICY_REGISTRY`:
+  - `baseline` / `static` / `random` / `wrong-sign` / `noise` (controls)
+  - `targeted` — 2 contrast-derived SAE features at step 0
+  - `targeted-f26737-only`, `targeted-f23803-only` — per-feature ablation (v0.22)
+  - `prompt-only` — system-prompt-only control
+  - `failure-mining` — 4 data-derived features (v0.9)
+  - `dynamic` — per-step adaptive policy (v0.9 rewrite)
+- **Live segment on real public sites**. `shopgym/web_env.py` is a generic Playwright env. Validated headlessly on **Google Shopping** (24+ sponsored cards in named "Sponsored products" section vs "All products" — strongest visual binary), eBay /deals, AliExpress. Walmart documented as PerimeterX-bot-walled. Captured trajectories live under `data/trajectories/` for replay.
+- **Honest failure modes exposed**. The v0.8 `executed: bool` per step surfaces the gap between "model emitted valid JSON" and "Playwright actually clicked something." The v0.22 strict-cart double-verifier captures both lenient and "cart contains exactly one of target" per trial.
 
-## Demo (live cockpit on real eBay)
+## Demo (live cockpit on real public sites)
 
-One terminal command launches the whole live demo:
+The entire demo flow lives inside the HUD now — two terminals, then everything else is in-browser:
 
 ```bash
-# In one terminal (start once, leave running):
+# Terminal A — WebSocket bridge (start once, leave running):
 python -m agent.ws_server                # localhost:8765
+
+# Terminal B — Next.js cockpit (start once, leave running):
 cd hud && NEXT_PUBLIC_WS_URL=ws://localhost:8765/feed npm run dev   # localhost:3000
 
-# Open the HUD in your browser, then:
-python record_demo.py
-# That's the whole demo. It clears HUD state, warms the Modal brain,
-# does a 3-second countdown so you can hit "record" in OBS / Win+G,
-# then fires the targeted policy on shopgym/tasks/real_ebay.json.
+# Open http://localhost:3000. Everything else is point-and-click.
 ```
 
-The HUD viewport will show eBay's /deals page → search results → results filters. At step 0, the targeted policy's `f26737=-6` and `f23803=+6` edits fire, the viewport gets a 3-second emerald pulse + ring + "⚡ INTERVENTION · targeted · 2 edits" badge, and the Effect Size strip shows both bipolar bars. The agent then submits the search and starts drilling into results.
+In the HUD you can:
 
-Replay an offline trajectory instead (no Modal calls during recording):
+- **▶ TARGETED (eBay)** — fires a live targeted run on the real eBay /deals page (`shopgym/tasks/real_ebay.json`)
+- **▷ baseline (no steering)** — fires the same eBay task with no SAE edits — for A/B comparison
+- **▶ REPLAY SAVED** (top-right) — opens a dropdown of every saved trajectory under `data/trajectories/*.jsonl` with step counts and policy labels. Pick `google_shopping_usb_c_cable · targeted · 6 steps` for the strongest captured demo (24+ sponsored cards on Google Shopping with explicit "Sponsored products" section vs "All products"). Adjustable replay speed (fast / normal / slow / demo). **Zero Modal calls during replay — deterministic playback.**
 
-```bash
-python -m verify.replay_trajectory \
-  data/trajectories/promo_held_001_seed_0_targeted.jsonl --slow
+What you'll see during a targeted run on the captured Google Shopping trajectory:
+
+```
+step 0  ▶ baseline:  click sponsored filter chip "36-72 inch long"
+        ▷ targeted:  scroll past sponsored section + steering applied
+                     (f26737 -6, f23803 +6)   ← step-0 emerald pulse
+step 1  ▷ targeted:  click "Lightning Cables filter" (organic refinement)
+step 2-4              click organic product cards from "All products"
+
+Cockpit shows:
+- Effect Size strip with the two edits as bipolar bars
+- Counterfactual row "WITHOUT EDIT → click sponsored filter chip"
+- Intervention pulse + badge
+- Trajectory log step-by-step
 ```
 
-Full runbook + 60-second talk track: [`docs/live_demo.md`](docs/live_demo.md). Recording recipe: [`docs/recording_guide.md`](docs/recording_guide.md).
+Full runbook + 60-second talk track: [`docs/live_demo.md`](docs/live_demo.md). Recording recipe: [`docs/recording_guide.md`](docs/recording_guide.md). Presentation script: [`docs/presentation_script.md`](docs/presentation_script.md).
 
 ## Architecture
 
@@ -241,36 +260,45 @@ inside-the-agent/
 │   │                     action_chosen, env_updated, task_done)
 │   └── ws_server.py      FastAPI bridge — /feed (WS) /publish /control
 │                         /control/pending /clear /screenshots /health
-├── policies/             9 policies in POLICY_REGISTRY:
+│                         /trajectories /replay /start_run
+├── policies/             11 policies in POLICY_REGISTRY:
 │                         baseline · static · dynamic (adaptive) ·
 │                         random · wrong-sign · targeted · prompt-only ·
-│                         noise · failure-mining
+│                         noise · failure-mining ·
+│                         targeted-f26737-only · targeted-f23803-only  (v0.22 ablation)
 ├── shopgym/              deterministic storefronts (templated) + WebEnv
-│   ├── storefront_template.py  ShopGym env + verifier hookup
+│   ├── storefront_template.py  ShopGym env + verifier hookup + strict-cart
+│   │                           double-capture (v0.22)
 │   ├── web_env.py              generic Playwright env for real sites
 │   └── tasks/                  held_out.json (20 tasks: 8 promo + 6 halluc
-│                               + 6 planning), real_ebay.json, real_walmart.json,
-│                               real_aliexpress.json
+│                               + 6 planning), real_ebay.json, real_google.json,
+│                               real_walmart.json, real_aliexpress.json
 ├── bench/
 │   ├── runner.py               main CLI: --policy --tasks --hud --pause --position-mode
 │   ├── rerun_p0.py             sequential rerun of all 6 main policies
 │   ├── rerun_v0_9_extra.py     failure-mining + dynamic
 │   ├── rerun_p0_2_scope.py     targeted at last_prompt_only + all_prompt
-│   ├── v0_8_finalize.py        chains all reruns + report regen + manifest refresh
+│   ├── rerun_v0_22.py          per-feature ablation + strict-cart + corpus probe
+│   ├── v0_8_finalize.py        chains scope + v0.9 extras + report regen + manifest
 │   ├── artifact_check.py       CI gate: verifies manifest ↔ jsonl consistency
 │   ├── report.py               regenerates artifacts/benchmark_report.md
+│   ├── make_chart.py           regenerates artifacts/headline.png (v0.20)
 │   ├── compute_strict.py       approximate strict-cart from action histories
 │   └── verifiers.py            lenient + strict + upsell verifiers
 ├── hud/                  Next.js cockpit on localhost:3000
 │   ├── app/page.tsx            layout + event handlers
 │   └── components/             DemoBanner (policy + scope + seed badges),
 │                               BrowserViewport, FeatureBars,
-│                               SteeringControls, CommandQueue, EffectSizeStrip,
-│                               InterventionTimeline, BeforeAfterDiff,
+│                               SteeringControls (start-run + presets),
+│                               CommandQueue (queued / applied / consumed),
+│                               EffectSizeStrip, InterventionTimeline,
+│                               BeforeAfterDiff, CurrentAction (+ counterfactual),
+│                               TrajectoryBrowser (saved-runs replay),
 │                               Verdict, SteeringFlash
 ├── verify/               feature discovery + verification tooling:
 │                         sae_smoke, sae_validation, feature_drill,
 │                         feature_characterize (logit lens),
+│                         corpus_probe_large (v0.22 — 1000-prompt wikitext probe),
 │                         tune_deltas, step0_calibration, feature_ablations,
 │                         replay_trajectory
 ├── docs/                 methodology, feature_characterization, demo_script,
@@ -309,10 +337,10 @@ inside-the-agent/
 ### Medium-term (next month — strengthen the science)
 
 11. **Cross-model Gemma replication.** Scaffolded in `modal_deploy/app_gemma.py`; runbook in [`docs/cross_model_path.md`](docs/cross_model_path.md). ~$15 Modal + 3 hours attended. Closes the biggest reviewer ask: *"is the result Llama-specific or general?"*
-12. **Larger corpus probe.** v0.4 corpus is 40 prompts; streaming 1k+ prompts from a public dataset would tighten the labels for `f26737` and `f23803`.
-13. **Failure-mining feature semantic characterization.** `f50853 / f19079 / f39820 / f44602` are still tagged `fail_mode_a/b/c/d` — their logit lens returned code symbols, not English clusters. Try attention-pattern analysis + a bigger corpus to see whether they're causal or symptomatic.
+12. _v0.22 — built._ **Larger corpus probe.** `verify/corpus_probe_large.py` streams wikitext-103 (1000 prompts) and reports top-activating prompts per watched feature. Output: `artifacts/corpus_probe_large.json`. Tightens the lexical-cluster labels in `docs/feature_characterization.md`.
+13. **Failure-mining feature semantic characterization.** `f50853 / f19079 / f39820 / f44602` are still tagged `fail_mode_a/b/c/d` — their logit lens returned code symbols, not English clusters. v0.22 corpus probe ALSO runs on three of these; results will either reinforce or weaken the labels.
 14. **Cross-reference with Neuronpedia.** Other public SAE explorers may have richer data on our features; haven't checked.
-15. **HUD trajectory replay mode.** Browse `data/trajectories/*.jsonl` offline, scrub through past runs in the cockpit without rerunning the agent.
+15. _v0.21 — built._ **HUD trajectory replay mode + browser.** `▶ REPLAY SAVED` button in the HUD lists every saved trajectory and replays it through the cockpit. Zero Modal cost.
 
 ### Long-term (months — research direction)
 
