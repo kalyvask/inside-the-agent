@@ -96,6 +96,16 @@ class BrainServer:
         from huggingface_hub import hf_hub_download
         from sae.sae_loader import load_goodfire_sae
 
+        # H200/Hopper workaround: cuDNN's SDPA backend hits "No execution plans
+        # support the graph" on Llama-3.3-70B BF16. Disabling cuDNN-SDP via
+        # torch.backends.cuda.enable_cudnn_sdp(False) wasn't sufficient — the
+        # path still routes through the broken cuDNN frontend. Force eager
+        # attention so PyTorch uses pure-tensor attention math. Slower
+        # (~1.3-1.8x) but reliable; sae_smoke + benchmark cost dominated by
+        # generation length, not attention kernel choice.
+        torch.backends.cuda.enable_cudnn_sdp(False)
+        print("cuDNN SDP disabled; using attn_implementation=eager (H200 workaround).")
+
         print(f"Loading {BASE_MODEL_ID} in BF16...")
         self.tokenizer = AutoTokenizer.from_pretrained(
             BASE_MODEL_ID, cache_dir="/cache",
@@ -106,8 +116,9 @@ class BrainServer:
         self.model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL_ID,
             torch_dtype=torch.bfloat16,
-            device_map="auto",   # auto-splits across GPUs if multi-GPU
+            device_map="auto",                # auto-splits across GPUs if multi-GPU
             cache_dir="/cache",
+            attn_implementation="eager",      # pure-tensor attention, bypasses SDPA + cuDNN
         )
         self.model.eval()
         self.device = next(self.model.parameters()).device
