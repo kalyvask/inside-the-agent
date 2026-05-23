@@ -313,7 +313,13 @@ def main(
                         _write_baseline_cache(task["id"], Path(r["log_path"]))
                     progress.advance(bar)
 
-    out_file = out_dir / f"{policy}.jsonl"
+    # v0.8: optional filename suffix so P0-2 scope-comparison runs at
+    # last_prompt_only / all_prompt write to dedicated files, e.g.
+    # data/results/targeted_last_prompt_only.jsonl. report.py auto-discovers
+    # those for the scope-comparison section.
+    suffix = os.environ.get("OUTPUT_SUFFIX", "")
+    fname = f"{policy}_{suffix}.jsonl" if suffix else f"{policy}.jsonl"
+    out_file = out_dir / fname
     with out_file.open("w") as f:
         for r in results:
             f.write(json.dumps(r) + "\n")
