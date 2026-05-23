@@ -134,6 +134,27 @@ async def health():
     }
 
 
+@app.post("/clear")
+async def clear():
+    """v0.10: wipe the replay buffer + pending command queue.
+
+    Use case: previous demo's events are buffered (50-event replay on
+    connect) and the HUD shows stale content from an older run when
+    the user refreshes. After /clear, the next HUD connection sees a
+    blank slate until the next agent run publishes a demo_banner."""
+    cleared = {
+        "events": len(State.history),
+        "pending": len(State.pending_commands),
+    }
+    State.history.clear()
+    State.pending_commands.clear()
+    # Tell currently-connected clients to reset their state too.
+    await broadcast({"type": "demo_banner", "task_id": None, "policy": None,
+                     "total_steps": None, "_reset": True,
+                     "timestamp": time.time()})
+    return {"cleared": cleared}
+
+
 @app.post("/control")
 async def control_post(cmd: SteeringCommand):
     """HUD posts a steering command. Stored until the agent drains it."""

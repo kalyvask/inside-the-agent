@@ -46,6 +46,16 @@ export default function Page() {
   const [flashEdits, setFlashEdits] = useState<SteeringEdit[]>([]);
   const [highlightedIds, setHighlightedIds] = useState<number[]>([]);
 
+  // v0.10: intervention pulse — when steering fires, the viewport gets a
+  // visible ring (color-coded by source: emerald for targeted/static,
+  // sky for noise, yellow for hud, purple for wrong-sign, blue for prompt-only,
+  // amber for dynamic). Auto-clears after 3s so consecutive interventions are
+  // visually distinct from each other rather than merging into one glow.
+  const [interventionPulse, setInterventionPulse] = useState<{
+    source: string;
+    edits: SteeringEdit[];
+  } | null>(null);
+
   useEffect(() => {
     const dispose = connectWS((ev) => {
       switch (ev.type) {
@@ -60,6 +70,10 @@ export default function Page() {
           setInterventions([]);
           setHighlightedIds([]);
           setCurrentEdits([]);
+          setInterventionPulse(null);
+          // Reset the baseline cache only if the new run is for a different
+          // task — otherwise we want to keep replaying baseline_action events
+          // we already buffered.
           break;
         case "policy_meta":
           if (ev.policy) setPolicy(ev.policy);
@@ -92,6 +106,12 @@ export default function Page() {
             setHighlightedIds(ev.edits.map((e) => e.feature_id));
             setInterventions((prev) => [...prev, ev]);
             setCurrentEdits(ev.edits);
+            // v0.10: fire the viewport pulse using the first edit's source
+            // (dynamic / targeted / hud / etc.) so the audience sees the
+            // intervention land visually, not just in the side panels.
+            const primarySource = ev.edits[0]?.source || "targeted";
+            setInterventionPulse({ source: primarySource, edits: ev.edits });
+            setTimeout(() => setInterventionPulse(null), 3000);
             // Clear matching pending HUD commands — they've now landed.
             const hudIds = new Set(
               ev.edits
@@ -157,27 +177,73 @@ export default function Page() {
         steeringEndpoint={steeringEndpoint}
       />
 
-      {/* v0.8-C demo-fit layout: two equal rows that together fill the
-          screen below the banner. Trajectory log was removed — its
-          information is fully captured by Before/After Diff plus the
-          BrowserViewport screenshots. */}
+      {/* v0.10 demo-fit layout: viewport widened to col-span 8 and Row 1
+          stretched to 1.35fr so the live page screenshot dominates the
+          frame the audience actually looks at. The intervention pulse
+          (ring + colored glow) makes it visually obvious WHEN a steering
+          edit lands — previously you only saw it in the side panels. */}
       <div
         className="grid gap-2 flex-1 p-2 overflow-hidden min-h-0"
         style={{
           gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
-          gridTemplateRows: "minmax(0, 1.1fr) minmax(0, 0.9fr)",
+          gridTemplateRows: "minmax(0, 1.35fr) minmax(0, 0.65fr)",
         }}
       >
-        {/* Row 1 left: viewport (taller) */}
-        <section className="col-span-7 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0">
-          <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400 shrink-0">Browser viewport</h2>
+        {/* Row 1 left: viewport. Pulse ring fires for 3s on steering_applied.
+            Color encodes the intervention source so dynamic-policy vs targeted
+            vs hud-issued edits are visually distinguishable. */}
+        <section
+          className={
+            "col-span-8 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0 " +
+            "transition-all duration-300 " +
+            (interventionPulse
+              ? {
+                  targeted: "ring-4 ring-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]",
+                  static: "ring-4 ring-emerald-400 shadow-[0_0_45px_rgba(52,211,153,0.55)]",
+                  dynamic: "ring-4 ring-amber-400 shadow-[0_0_45px_rgba(251,191,36,0.55)]",
+                  hud: "ring-4 ring-yellow-300 shadow-[0_0_45px_rgba(253,224,71,0.55)]",
+                  noise: "ring-4 ring-sky-400 shadow-[0_0_45px_rgba(56,189,248,0.55)]",
+                  "wrong-sign": "ring-4 ring-purple-400 shadow-[0_0_45px_rgba(192,132,252,0.55)]",
+                  random: "ring-4 ring-orange-400 shadow-[0_0_45px_rgba(251,146,60,0.55)]",
+                  "prompt-only": "ring-4 ring-blue-400 shadow-[0_0_45px_rgba(96,165,250,0.55)]",
+                  "failure_mining": "ring-4 ring-rose-400 shadow-[0_0_45px_rgba(251,113,133,0.55)]",
+                }[interventionPulse.source] || "ring-4 ring-zinc-400"
+              : "")
+          }
+        >
+          <div className="flex items-center justify-between mb-2 shrink-0">
+            <h2 className="text-sm font-mono uppercase text-zinc-400">Browser viewport</h2>
+            {interventionPulse && (
+              <span
+                className={
+                  "text-[10px] font-mono uppercase px-2 py-0.5 rounded animate-pulse " +
+                  {
+                    targeted: "bg-emerald-900 text-emerald-200",
+                    static: "bg-emerald-900 text-emerald-200",
+                    dynamic: "bg-amber-900 text-amber-200",
+                    hud: "bg-yellow-700 text-yellow-100",
+                    noise: "bg-sky-900 text-sky-200",
+                    "wrong-sign": "bg-purple-900 text-purple-200",
+                    random: "bg-orange-900 text-orange-200",
+                    "prompt-only": "bg-blue-900 text-blue-200",
+                    failure_mining: "bg-rose-900 text-rose-200",
+                  }[interventionPulse.source] || "bg-zinc-800 text-zinc-200"
+                }
+              >
+                ⚡ INTERVENTION · {interventionPulse.source}
+                {" · "}
+                {interventionPulse.edits.length}{" "}
+                {interventionPulse.edits.length === 1 ? "edit" : "edits"}
+              </span>
+            )}
+          </div>
           <div className="flex-1 min-h-0 overflow-hidden">
             <BrowserViewport screenshotPath={screenshot} />
           </div>
         </section>
 
-        {/* Row 1 right: features */}
-        <section className="col-span-5 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0">
+        {/* Row 1 right: features (narrower) */}
+        <section className="col-span-4 bg-zinc-900 rounded p-2 overflow-hidden flex flex-col min-h-0">
           <h2 className="text-sm font-mono uppercase mb-2 text-zinc-400 shrink-0">Active features</h2>
           <div className="flex-1 min-h-0 overflow-y-auto">
             <FeatureBars features={features} highlightedIds={highlightedIds} />
