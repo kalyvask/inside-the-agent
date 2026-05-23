@@ -8,7 +8,8 @@
     "env_type": "web",
     "max_steps": 6,
     "verifier": "manual_observation",
-    "cookies_pre_accepted": false,
-    "notes": "Walmart's homepage has prominent 'Today's Deals' carousels with bright orange banners — natural habitat for our intervention."
+    "cookies_pre_accepted": true,
+    "storage_state": "data/walmart_storage_state.json",
+    "notes": "Walmart serves a PRESS-AND-HOLD bot CAPTCHA on first headless visit. Pre-warm cookies via: python warm_session.py --url https://www.walmart.com/ --out data/walmart_storage_state.json. The audience never sees the warm-up — it happens before the demo starts."
   }
 ]

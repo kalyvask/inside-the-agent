@@ -83,33 +83,70 @@ class WebEnv:
     _task: dict | None = None
     _step_count: int = 0
     _cookies_dismissed: bool = False
+    _current_storage_state: str | None = None
 
     def __post_init__(self):
         self._screenshot_dir = Path(self.screenshot_dir)
         self._screenshot_dir.mkdir(parents=True, exist_ok=True)
 
-    def _ensure_browser(self):
+    def _ensure_browser(self, storage_state: str | None = None):
+        """Lazily start Playwright + Chromium. If storage_state changes between
+        tasks (e.g. demo on Walmart with pre-warmed cookies, then a fresh
+        AliExpress task), tear down the existing context and recreate it with
+        the new state so sites that fingerprint on persistent cookies don't
+        leak across tasks."""
+        need_new_ctx = (
+            self._pw is None
+            or self._current_storage_state != storage_state
+        )
         if self._pw is None:
             self._pw = sync_playwright().start()
             self._browser = self._pw.chromium.launch(
                 headless=self.headless,
                 args=["--disable-blink-features=AutomationControlled"],
             )
-            self._ctx = self._browser.new_context(
+        if need_new_ctx:
+            if self._ctx is not None:
+                try:
+                    self._ctx.close()
+                except Exception:
+                    pass
+            ctx_kwargs = dict(
                 viewport={"width": self.viewport_width, "height": self.viewport_height},
                 user_agent=self.user_agent,
                 locale="en-US",
             )
+            if storage_state:
+                if Path(storage_state).exists():
+                    ctx_kwargs["storage_state"] = storage_state
+                else:
+                    print(
+                        f"[WebEnv] WARNING: storage_state={storage_state!r} not "
+                        f"found — falling back to a fresh context. Run "
+                        f"`python warm_session.py --url <site> --out <path>` "
+                        f"to create one."
+                    )
+            self._ctx = self._browser.new_context(**ctx_kwargs)
             # Stealth touchups: hide webdriver flag from common detectors.
             self._ctx.add_init_script(
                 "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
             )
+            self._current_storage_state = storage_state
 
     def reset(self, task: dict) -> dict:
-        self._ensure_browser()
+        # Tasks can specify storage_state="data/walmart_storage_state.json" to
+        # load pre-warmed cookies (post-CAPTCHA, post-cookie-consent). We
+        # treat the presence of a storage_state file as implicit confirmation
+        # that any landing-page bot challenge has already been solved.
+        storage_state = task.get("storage_state")
+        self._ensure_browser(storage_state=storage_state)
         self._task = task
         self._step_count = 0
-        self._cookies_dismissed = bool(task.get("cookies_pre_accepted", False))
+        # If storage_state was loaded, the cookie-consent flow was completed
+        # during the warm-up; don't re-trigger the heuristic dismiss.
+        self._cookies_dismissed = bool(
+            task.get("cookies_pre_accepted", False) or storage_state
+        )
 
         if self._page is not None:
             try:
