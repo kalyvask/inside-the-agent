@@ -1,0 +1,1 @@
+{"run_id": "promo_cal_001_seed_0_targeted", "task_id": "promo_cal_001", "policy": "targeted", "steps": 12, "total_reward": 1.0, "success": true, "log_path": "data\\trajectories\\promo_cal_001_seed_0_targeted.jsonl"}

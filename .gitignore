@@ -27,8 +27,9 @@ modal_cache/
 *.bin
 hf_cache/
 
-# Data
+# Data (gitignored — artifacts/ is the committed subset)
 data/
+!artifacts/
 notebooks/.ipynb_checkpoints/
 notebooks/*-output.ipynb
 

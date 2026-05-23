@@ -7,7 +7,12 @@ Day 4 work: populate the feature IDs from the verified Day 3 catalog.
 from sae.steering_controller import SteeringPlan
 
 
-def static_policy(features_dict: dict, step_idx: int, catalog: dict | None = None) -> SteeringPlan:
+def static_policy(
+    features_dict: dict,
+    step_idx: int,
+    catalog: dict | None = None,
+    **_,
+) -> SteeringPlan:
     """
     Apply the same intervention every step. Picks one feature per category.
 

@@ -1,42 +1,48 @@
 """
 Targeted policy: empirically validated steering combination for promo-trap
-avoidance.
-
-Discovered via verify/step0_calibration.py — these are the features whose
-intervention flips the agent's Step-0 decision from "click promo button" to
-"type in search bar" while keeping output coherent.
+avoidance, applied at Step 0 only.
 
 Features used (Llama 3.1-8B-Instruct + Goodfire SAE l19):
-  - hallucination f26737 at -6.0  (suppresses "click invented buttons")
-  - goal_tracking f23803 at +6.0  (reinforces "stay on goal")
+  - f26737  delta -6.0   labelled "f26737_invented_action_supp"
+  - f23803  delta +6.0   labelled "f23803_goal_anchor"
 
-These two together are the strongest validated steering for the demo.
-Use as `--policy targeted` in the runner.
+These IDs were validated by verify/step0_calibration.py — they reliably flip
+the agent's Step-0 decision from "click promotional button" to "type in search"
+while preserving output coherence.
+
+NOTE on labels: earlier drafts called these `hallucination` and `goal_tracking`
+based on contrast prompts that weren't strongly verified. Renaming to neutral
+functional IDs until each feature has been independently characterized
+(activation example panel, per-feature ablation studies, decoder-vector
+visualization). They are NOT yet "the hallucination feature" or "the goal-
+tracking feature" — they are features whose suppression / amplification at
+Step 0 causally alters the agent's first action.
 """
 
 from sae.steering_controller import SteeringPlan
 
 
-# Empirically validated step-0 winners.
 TARGETED_EDITS = [
-    {"feature_id": 26737, "delta": -6.0, "label": "hallucination"},
-    {"feature_id": 23803, "delta": +6.0, "label": "goal_tracking"},
+    {"feature_id": 26737, "delta": -6.0, "label": "f26737_invented_action_supp"},
+    {"feature_id": 23803, "delta": +6.0, "label": "f23803_goal_anchor"},
 ]
 
 
-def targeted_policy(features_dict: dict, step_idx: int, catalog: dict | None = None) -> SteeringPlan:
+def targeted_policy(
+    features_dict: dict,
+    step_idx: int,
+    catalog: dict | None = None,
+    **_,
+) -> SteeringPlan:
     """
-    Apply the calibrated combination ONLY at Step 0 where the promo trap lives.
+    Apply the validated combination at Step 0 only.
 
-    Suppressing "hallucination f26737" prevents the agent from clicking
-    invented buttons (incl. the promo trap), but also prevents it from
-    clicking REAL buttons later. So we only intervene at the trap moment;
-    once the agent is past Step 0 the page is search-results / cart-only
-    and there's no trap to defend against.
+    After Step 0 we run with zero steering so real button clicks
+    (add-to-cart) are not also suppressed.
     """
     plan = SteeringPlan()
     if step_idx != 0:
-        return plan  # baseline behavior from step 1 onward
+        return plan
     for edit in TARGETED_EDITS:
         plan.add(
             feature_id=edit["feature_id"],

@@ -1,0 +1,67 @@
+{
+  "manifest_version": "0.2",
+  "benchmark": {
+    "task_suite": "shopgym/tasks/held_out.json",
+    "task_limit": 8,
+    "trials_per_task": 3,
+    "total_runs_per_policy": 24,
+    "trial_seeds": [0, 1, 2]
+  },
+  "model": {
+    "backbone": "meta-llama/Llama-3.1-8B-Instruct",
+    "sae": "Goodfire/Llama-3.1-8B-Instruct-SAE-l19",
+    "sae_layer": 19,
+    "sae_d_features": 65536,
+    "sae_d_in": 4096,
+    "expected_l0": 91,
+    "measured_l0_strict_001": 98.8,
+    "measured_l0_loose_0001": 104.0,
+    "l0_verification_status": "within_2x_of_expected"
+  },
+  "policies": {
+    "baseline": {
+      "edits": [],
+      "applied_at": "never"
+    },
+    "targeted": {
+      "edits": [
+        {"feature_id": 26737, "delta": -6.0, "label": "f26737_invented_action_supp"},
+        {"feature_id": 23803, "delta": 6.0, "label": "f23803_goal_anchor"}
+      ],
+      "applied_at": "step_0_only",
+      "validated_by": "verify/step0_calibration.py"
+    },
+    "wrong-sign": {
+      "edits": [
+        {"feature_id": 26737, "delta": 6.0, "label": "f26737_invented_action_supp"},
+        {"feature_id": 23803, "delta": -6.0, "label": "f23803_goal_anchor"}
+      ],
+      "applied_at": "step_0_only",
+      "purpose": "direction-flip control"
+    },
+    "random": {
+      "n_features": 2,
+      "magnitude_range": [-6.0, 6.0],
+      "applied_at": "step_0_only",
+      "seed_recipe": "random.Random(f'random_policy:{trial_seed}')",
+      "purpose": "feature-identity control; different features per trial",
+      "note_v01": "v0.1 had a fixed seed=0 bug. Fixed in v0.2 commit."
+    }
+  },
+  "headline_results": {
+    "as_of": "v0.2 — random_policy seed bug fixed, L0 verified",
+    "policy_success_rates": {
+      "baseline":   {"successes": 0,  "trials": 24, "rate": 0.000, "wilson_ci_95": [0.000, 0.138]},
+      "wrong-sign": {"successes": 1,  "trials": 24, "rate": 0.042, "wilson_ci_95": [0.007, 0.202]},
+      "random":     {"successes": 11, "trials": 24, "rate": 0.458, "wilson_ci_95": [0.279, 0.649], "note": "PENDING rerun with fixed seeds"},
+      "targeted":   {"successes": 20, "trials": 24, "rate": 0.833, "wilson_ci_95": [0.641, 0.933]}
+    }
+  },
+  "caveats": [
+    "Steering hook is not position-aware. It applies to entire layer-19 residual during the steered forward pass, not just the action-generation token.",
+    "Feature labels (e.g. 'invented_action_supp') are functional, not semantic. They describe behavioral effect, not what concept the feature encodes.",
+    "Lenient verifier accepts multiple copies of the target in cart. Strict verifier (cart_contains_target_exactly_once) added in v0.2.",
+    "ShopGym page summary lists target product from step 0; benchmark tests trap-avoidance, not target-discovery.",
+    "HUD steering controls are placeholders in v0.1. v0.2 plans a HUD-to-runner command channel."
+  ]
+}

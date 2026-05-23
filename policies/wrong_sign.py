@@ -12,7 +12,12 @@ from policies.targeted import TARGETED_EDITS
 from sae.steering_controller import SteeringPlan
 
 
-def wrong_sign_policy(features_dict: dict, step_idx: int, catalog: dict | None = None) -> SteeringPlan:
+def wrong_sign_policy(
+    features_dict: dict,
+    step_idx: int,
+    catalog: dict | None = None,
+    **_,
+) -> SteeringPlan:
     plan = SteeringPlan()
     if step_idx != 0:
         return plan  # mirror targeted's step-0-only application

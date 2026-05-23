@@ -1,10 +1,10 @@
 # Inside the Agent
 
-> *Today's agents fail mysteriously. Ours fails legibly.*
+> *A reproducible harness for SAE feature interventions on browser agents.*
 
-A fully open, reproducible reference implementation of **SAE-steered language agents on browser tasks**, with a live interpretability HUD and a deterministic benchmark.
+A fully open reference implementation of **SAE-feature-level steering on a browser agent**, with a deterministic benchmark and a live interpretability telemetry surface.
 
-Two SAE feature edits at one decision step take success from **0% → 83%** on a held-out promotional-trap benchmark.
+Two empirically-validated SAE feature edits at one decision step shift success rate by **+83 percentage points** on a held-out promotional-trap benchmark, with a sign-flipped control dropping back into baseline's confidence interval. The features themselves are *under-characterized* — we name them by feature ID, not by semantic label, until they are independently validated.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -17,18 +17,24 @@ Two SAE feature edits at one decision step take success from **0% → 83%** on a
 
 8 held-out promotional-trap shopping tasks, 3 trials per policy (**24 trials each**), Wilson 95% CIs:
 
-| Policy | Success | 95% CI | Δ vs baseline |
-|---|---|---|---|
-| baseline (no steering) | **0.0%** | [0.0%, 13.8%] | — |
-| wrong-sign | 4.2% | [0.7%, 20.2%] | +4 pts |
-| random | 45.8% | [27.9%, 64.9%] | +46 pts |
-| **targeted — 2 SAE edits at Step 0** | **83.3%** | **[64.1%, 93.3%]** | **+83 pts** |
+| Policy | Success | 95% CI | Δ vs baseline | Notes |
+|---|---|---|---|---|
+| baseline (no steering) | **0.0%** | [0.0%, 13.8%] | — | Falls for the trap every time |
+| wrong-sign | 4.2% | [0.7%, 20.2%] | +4 pts | Sign-flipped targeted edits |
+| random | 45.8% | [27.9%, 64.9%] | +46 pts | Random feature edits, same magnitudes |
+| **targeted — 2 SAE feature edits at Step 0** | **83.3%** | **[64.1%, 93.3%]** | **+83 pts** | f26737 (-6) + f23803 (+6) |
 
-![Headline chart](data/results/headline.png)
+![Headline chart](artifacts/headline.png)
 
-The **wrong-sign control at 4.2%** is the smoking gun: flipping the targeted edits' signs drops performance back into baseline's CI. **Direction matters causally** — not just "any intervention helps."
+### How to read these numbers honestly
 
-See `docs/methodology.md` for the 4-page writeup.
+- **Wrong-sign at 4.2%** sits inside baseline's CI. Flipping the targeted edits' signs erases the effect — direction matters causally, not just "any intervention."
+- **Random at 45.8%** is a real but noisy lift. Random feature perturbations sometimes break the promo-click bias by accident. The **targeted-vs-random gap (+37 pts)** is the quantitative claim about *which* features matter.
+- **Targeted at 83.3%** is the validated effect of two specific feature edits.
+
+This is *not* a claim that we found "the promotional bias feature." It is a claim that **two specific SAE features, when intervened at the first decision step, causally shift the agent's success rate on this benchmark**. The features' semantic content is unverified — they may encode something narrower or broader than "promotional bias."
+
+See `docs/methodology.md` for the full writeup, limitations, and known caveats.
 
 ---
 
@@ -36,13 +42,19 @@ See `docs/methodology.md` for the 4-page writeup.
 
 LLM agents are black boxes. When Claude / GPT-5 / Llama get tricked by a promotional banner, click an invented button, or wander away from the goal, the failure is observable but the cause isn't.
 
-Mechanistic interpretability has produced **Sparse Autoencoder (SAE) features** — concept-level decompositions of the model's residual stream where each feature ideally encodes one human-interpretable concept (planning, hallucination, promotional language). Until now those features have been used almost exclusively for *post-hoc analysis*.
+Mechanistic interpretability has produced **Sparse Autoencoder (SAE) features** — concept-level decompositions of the model's residual stream where each feature ideally encodes one human-interpretable concept. Until now those features have been used almost exclusively for *post-hoc analysis*.
 
-This project wires them into a working agent as a **runtime control surface**:
+This project wires them into a working agent as a **runtime intervention surface**:
 
-- **Read** which features fire at every decision step
-- **Steer** behavior by applying feature-level deltas at inference time
-- **See** it all live in a HUD
+- **Read** which features fire at every decision step (live telemetry)
+- **Intervene** by adding feature-level deltas to the residual stream during inference
+- **See** it all in a HUD: feature activations, intervention timeline, success/failure verdict
+
+### What this is *not* (yet)
+
+- Not a verified mapping from features to semantic concepts. We use feature IDs in policy code; we do not claim feature 26737 "is" the hallucination feature.
+- Not a fully position-aware steering layer. The hook applies to the entire layer-19 residual stream during the steered forward pass, not just the action-generation token.
+- Not yet an interactive control surface. The HUD shows the model's internals; the sidebar dials are placeholders until a HUD-to-runner command channel is wired in v0.2.
 
 ## Demo (3-minute video)
 

@@ -18,7 +18,12 @@ def _by_label(catalog: dict, label_substring: str) -> int | None:
     return None
 
 
-def dynamic_policy(features_dict: dict, step_idx: int, catalog: dict | None = None) -> SteeringPlan:
+def dynamic_policy(
+    features_dict: dict,
+    step_idx: int,
+    catalog: dict | None = None,
+    **_,
+) -> SteeringPlan:
     """
     Apply per-step rules based on what features are firing.
 

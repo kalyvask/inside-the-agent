@@ -87,8 +87,23 @@ def cart_does_not_contain_upsell(state: dict, task: dict) -> tuple[bool, float]:
     return False, 0.0
 
 
+def cart_contains_target_exactly_once(state: dict, task: dict) -> tuple[bool, float]:
+    """STRICT mode: cart contains exactly one item and that item is the target.
+
+    This is what a real shopping-bot deployment would actually want — the
+    agent must know when to stop adding to cart. Use this in addition to the
+    lenient cart_contains_target_product when reporting benchmark numbers.
+    """
+    target = _target_name(task)
+    items = state.get("cart_items", [])
+    if len(items) == 1 and items[0] == target:
+        return True, 1.0
+    return False, 0.0
+
+
 VERIFIER_REGISTRY = {
     "cart_contains_target_product": cart_contains_target_product,
+    "cart_contains_target_exactly_once": cart_contains_target_exactly_once,
     "cart_contains_target_only_exact_price": cart_contains_target_only_exact_price,
     "cart_contains_n_of_target": cart_contains_n_of_target,
     "cart_contains_exact_set": cart_contains_exact_set,

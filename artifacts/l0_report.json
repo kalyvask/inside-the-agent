@@ -1,0 +1,130 @@
+{
+  "n_prompts": 20,
+  "expected_l0": 91,
+  "mean_l0_strict_001": 98.8,
+  "median_l0_strict_001": 99.0,
+  "stdev_l0_strict_001": 24.062637559415414,
+  "mean_l0_loose_0001": 103.95,
+  "per_prompt": [
+    {
+      "prompt": "You are a browser agent. The page shows a USB-C cable and a ",
+      "l0_strict_001": 134,
+      "l0_loose_0001": 138,
+      "top1_act": 1.078125
+    },
+    {
+      "prompt": "Plan the next three actions before clicking anything.",
+      "l0_strict_001": 125,
+      "l0_loose_0001": 129,
+      "top1_act": 1.921875
+    },
+    {
+      "prompt": "Add the cheapest cable to the cart.",
+      "l0_strict_001": 98,
+      "l0_loose_0001": 100,
+      "top1_act": 2.09375
+    },
+    {
+      "prompt": "Carefully consider all options before adding to cart.",
+      "l0_strict_001": 112,
+      "l0_loose_0001": 120,
+      "top1_act": 2.171875
+    },
+    {
+      "prompt": "Click the buy now button to purchase the featured item.",
+      "l0_strict_001": 100,
+      "l0_loose_0001": 107,
+      "top1_act": 2.125
+    },
+    {
+      "prompt": "Search for USB-C cables in the catalog.",
+      "l0_strict_001": 116,
+      "l0_loose_0001": 125,
+      "top1_act": 1.8828125
+    },
+    {
+      "prompt": "I am uncertain which product matches the goal.",
+      "l0_strict_001": 97,
+      "l0_loose_0001": 106,
+      "top1_act": 1.578125
+    },
+    {
+      "prompt": "The promotional banner says Today's Deal \u2014 buy now!",
+      "l0_strict_001": 123,
+      "l0_loose_0001": 130,
+      "top1_act": 2.390625
+    },
+    {
+      "prompt": "Decline the upsell modal and proceed to checkout.",
+      "l0_strict_001": 124,
+      "l0_loose_0001": 129,
+      "top1_act": 2.21875
+    },
+    {
+      "prompt": "Apply discount code SAVE10 to the order.",
+      "l0_strict_001": 95,
+      "l0_loose_0001": 102,
+      "top1_act": 2.21875
+    },
+    {
+      "prompt": "Find the cheapest item and add it to cart.",
+      "l0_strict_001": 112,
+      "l0_loose_0001": 117,
+      "top1_act": 2.5
+    },
+    {
+      "prompt": "Goal: buy a phone case. Stay focused on the goal.",
+      "l0_strict_001": 134,
+      "l0_loose_0001": 136,
+      "top1_act": 1.8125
+    },
+    {
+      "prompt": "Hello, how are you today?",
+      "l0_strict_001": 67,
+      "l0_loose_0001": 70,
+      "top1_act": 2.28125
+    },
+    {
+      "prompt": "Generate a Python script that sorts a list.",
+      "l0_strict_001": 81,
+      "l0_loose_0001": 85,
+      "top1_act": 1.6796875
+    },
+    {
+      "prompt": "Translate the following sentence into French.",
+      "l0_strict_001": 67,
+      "l0_loose_0001": 70,
+      "top1_act": 2.828125
+    },
+    {
+      "prompt": "The capital of France is Paris.",
+      "l0_strict_001": 76,
+      "l0_loose_0001": 81,
+      "top1_act": 2.265625
+    },
+    {
+      "prompt": "What is the boiling point of water?",
+      "l0_strict_001": 55,
+      "l0_loose_0001": 60,
+      "top1_act": 3.21875
+    },
+    {
+      "prompt": "Compose a haiku about autumn leaves.",
+      "l0_strict_001": 84,
+      "l0_loose_0001": 88,
+      "top1_act": 1.109375
+    },
+    {
+      "prompt": "Explain quantum entanglement in simple terms.",
+      "l0_strict_001": 69,
+      "l0_loose_0001": 73,
+      "top1_act": 1.1640625
+    },
+    {
+      "prompt": "Schedule a meeting for next Tuesday at 3pm.",
+      "l0_strict_001": 107,
+      "l0_loose_0001": 113,
+      "top1_act": 1.5546875
+    }
+  ]
+}

@@ -57,6 +57,7 @@ class AgentConfig:
     max_steps: int = 15
     max_new_tokens: int = 96
     temperature: float = 0.2
+    step_pause: float = 0.0  # seconds; set ~1.5 for human-visible runs
 
 
 class SAEAgent:
@@ -104,6 +105,8 @@ class SAEAgent:
         return out
 
     def run(self, task: dict, seed: int = 0, policy_name: str = "baseline") -> dict:
+        """seed is the trial seed; threaded into policy calls so randomized
+        controls draw different features per trial."""
         run_id = make_run_id(task["id"], seed, policy_name)
         logger = TrajectoryLogger(run_id=run_id)
         obs = self.env.reset(task)
@@ -131,9 +134,17 @@ class SAEAgent:
                     for f in labeled_features
                 ])
 
-                # Apply policy
+                # Apply policy. Pass the trial seed so policies that need
+                # randomness (e.g. random_policy as the control condition) draw
+                # DIFFERENT features per trial. Policies that ignore seed accept
+                # the kwarg via **_.
                 if self.policy is not None:
-                    plan = self.policy(feature_dict, step_idx, catalog=self.catalog)
+                    plan = self.policy(
+                        feature_dict,
+                        step_idx,
+                        catalog=self.catalog,
+                        trial_seed=seed,
+                    )
                 else:
                     plan = self.controller.get_plan()  # empty plan = baseline
                 self.controller.set_plan(plan)
@@ -196,6 +207,9 @@ class SAEAgent:
                 logger.log(step_log)
 
                 obs = next_obs
+                if self.cfg.step_pause:
+                    import time
+                    time.sleep(self.cfg.step_pause)
                 if done:
                     break
         finally:
