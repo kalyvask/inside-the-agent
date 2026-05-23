@@ -24,18 +24,24 @@ export default function Verdict({ visible, success, taskId, totalSteps, policy }
     }
   }, [visible]);
 
-  if (!show || success === null) return null;
+  if (!show) return null;
 
-  // v0.17b: compact bottom-right toast instead of a full-screen modal.
-  // Reviewer asked the verdict to annotate the browser, not cover the
-  // product grid that caused success/failure.
+  // v0.19: success === null means the task was qualitative (no verifier
+  // evaluated). For eBay / AliExpress demos this is always the case —
+  // reward is structurally 0 because there's nothing to score against.
+  // Show a neutral "task ended" instead of a misleading FAILURE label.
+  const isNeutral = success === null;
+  const palette = isNeutral
+    ? "bg-zinc-900/85 border-zinc-700/60 text-zinc-300"
+    : success
+    ? "bg-emerald-950/85 border-emerald-700/60 text-emerald-200"
+    : "bg-red-950/85 border-red-800/60 text-red-200";
+  const symbol = isNeutral ? "●" : success ? "✓" : "✗";
+  const label = isNeutral ? "task ended" : success ? "success" : "failure";
+
   return (
     <div
-      className={`fixed bottom-3 right-3 z-40 px-3 py-2 rounded-md border text-xs font-mono backdrop-blur-sm pointer-events-none ${
-        success
-          ? "bg-emerald-950/85 border-emerald-700/60 text-emerald-200"
-          : "bg-red-950/85 border-red-800/60 text-red-200"
-      }`}
+      className={`fixed bottom-3 right-3 z-40 px-3 py-2 rounded-md border text-xs font-mono backdrop-blur-sm pointer-events-none ${palette}`}
       style={{ animation: "verdictSlide 0.35s ease-out" }}
     >
       <style jsx>{`
@@ -45,13 +51,12 @@ export default function Verdict({ visible, success, taskId, totalSteps, policy }
         }
       `}</style>
       <div className="flex items-center gap-2">
-        <span className="text-lg leading-none">{success ? "✓" : "✗"}</span>
+        <span className="text-lg leading-none">{symbol}</span>
         <div className="leading-tight">
-          <div className="font-bold uppercase tracking-wider">
-            {success ? "success" : "failure"}
-          </div>
+          <div className="font-bold uppercase tracking-wider">{label}</div>
           <div className="text-[10px] opacity-70">
             {policy} · {taskId} · {totalSteps ?? "?"} steps
+            {isNeutral && " · qualitative (no verifier)"}
           </div>
         </div>
       </div>

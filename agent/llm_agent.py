@@ -313,7 +313,17 @@ class SAEAgent:
         finally:
             logger.close()
 
-        success = bool(total_reward > 0)
+        # v0.19: qualitative tasks (real-web demos with verifier='manual',
+        # 'manual_observation', or 'qualitative') always have reward=0
+        # because no verifier evaluates the end state. Emitting success=False
+        # makes the HUD render "FAILURE" — misleading. Emit None so the
+        # HUD shows a neutral "task ended" instead of a pass/fail verdict.
+        verifier = (task.get("verifier") or "").lower()
+        qualitative = verifier in ("manual", "manual_observation", "qualitative")
+        if qualitative:
+            success = None
+        else:
+            success = bool(total_reward > 0)
         self.hud.task_done(success)
         return {
             "run_id": run_id,

@@ -65,23 +65,27 @@ export default function SteeringControls({
   const [startBusy, setStartBusy] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
 
-  async function startAgentRun() {
+  // v0.19: both run buttons fire the SAME eBay task (real_ebay.json) —
+  // user explicitly asked the demo to live on a real site. The only
+  // difference is the policy: targeted (the headline, 2 SAE edits at
+  // step 0) vs baseline (no steering, the comparison condition).
+  async function startAgentRun(policyName: "targeted" | "baseline" = "targeted") {
     setStartBusy(true);
     try {
-      // Clear stale buffer first so the new run's demo_banner is what the HUD
-      // sees, not buffered events from a previous run.
+      // Clear stale buffer first so the new run's demo_banner is what the
+      // HUD sees, not buffered events from a previous run.
       await fetch(clearUrl(), { method: "POST" });
       const r = await fetch(startRunUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          policy: "targeted",
+          policy: policyName,
           task: "shopgym/tasks/real_ebay.json",
           pause: 6.0,           // slow enough for HUD clicks to land
           position_mode: "all",
           limit: 1,
           trials: 1,
-          output_suffix: "hud",
+          output_suffix: `hud_${policyName}`,
         }),
       });
       if (r.ok) {
@@ -144,10 +148,10 @@ export default function SteeringControls({
           actually drive behavior. Default config = targeted on real_ebay.json
           @ pause=6.0 (long enough for a human to click presets between
           steps). */}
-      <div className="flex items-center gap-2 pb-2 border-b border-zinc-800">
+      <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-zinc-800">
         <button
           disabled={startBusy}
-          onClick={startAgentRun}
+          onClick={() => startAgentRun("targeted")}
           className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-colors ${
             startBusy
               ? "bg-zinc-700 text-zinc-500 cursor-wait"
@@ -155,13 +159,25 @@ export default function SteeringControls({
                 ? "bg-emerald-700 hover:bg-emerald-600 text-white"
                 : "bg-emerald-600 hover:bg-emerald-500 text-white animate-pulse"
           }`}
-          title="Spawn `python -m bench.runner --policy targeted --tasks shopgym/tasks/real_ebay.json --pause 6.0 --hud` on the ws_server host"
+          title="Live targeted run on real eBay: f26737 -6 + f23803 +6 at step 0, then unsteered."
         >
           {startBusy
             ? "starting…"
             : agentLive
-              ? "↻ start another agent run"
-              : "▶ start agent run (eBay live)"}
+              ? "↻ run targeted"
+              : "▶ targeted (eBay)"}
+        </button>
+        <button
+          disabled={startBusy}
+          onClick={() => startAgentRun("baseline")}
+          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-colors ${
+            startBusy
+              ? "bg-zinc-700 text-zinc-500 cursor-wait"
+              : "bg-zinc-700 hover:bg-zinc-600 text-zinc-100"
+          }`}
+          title="Live baseline run on real eBay — NO steering. Use this for side-by-side comparison against the targeted run."
+        >
+          ▷ baseline (no steering)
         </button>
         {agentLive ? (
           <span className="text-[10px] text-emerald-400 font-mono">
@@ -169,7 +185,7 @@ export default function SteeringControls({
           </span>
         ) : (
           <span className="text-[10px] text-zinc-500 font-mono">
-            no agent listening — start one to make steering clicks land
+            both buttons run real eBay · pick one
           </span>
         )}
       </div>
