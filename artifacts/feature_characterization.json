@@ -1,0 +1,1860 @@
+{
+  "feature_ids": [
+    26737,
+    23803,
+    50853,
+    19079,
+    39820,
+    44602,
+    38249
+  ],
+  "candidates": {
+    "26737": "validated_targeted_invented_action_supp",
+    "23803": "validated_targeted_goal_anchor",
+    "50853": "100pct_failure_1",
+    "19079": "100pct_failure_2",
+    "39820": "100pct_failure_3",
+    "44602": "100pct_failure_4",
+    "38249": "80pct_failure"
+  },
+  "logit_lens": {
+    "26737": {
+      "feature_id": 26737,
+      "decoder_norm": 1.234375,
+      "score_mean": -0.00836181640625,
+      "score_std": 0.017822265625,
+      "promoted": [
+        {
+          "token_id": 38499,
+          "token": " selections",
+          "score": 0.1669921875
+        },
+        {
+          "token_id": 3072,
+          "token": " option",
+          "score": 0.166015625
+        },
+        {
+          "token_id": 6727,
+          "token": " selection",
+          "score": 0.1630859375
+        },
+        {
+          "token_id": 50243,
+          "token": " selects",
+          "score": 0.142578125
+        },
+        {
+          "token_id": 2671,
+          "token": " options",
+          "score": 0.142578125
+        },
+        {
+          "token_id": 11709,
+          "token": " choices",
+          "score": 0.134765625
+        },
+        {
+          "token_id": 27397,
+          "token": " selecting",
+          "score": 0.1328125
+        },
+        {
+          "token_id": 9063,
+          "token": " radio",
+          "score": 0.1328125
+        },
+        {
+          "token_id": 31867,
+          "token": "\u9009",
+          "score": 0.12890625
+        },
+        {
+          "token_id": 5873,
+          "token": " choice",
+          "score": 0.126953125
+        },
+        {
+          "token_id": 1779,
+          "token": "select",
+          "score": 0.126953125
+        },
+        {
+          "token_id": 3373,
+          "token": " select",
+          "score": 0.1259765625
+        },
+        {
+          "token_id": 24536,
+          "token": "selection",
+          "score": 0.125
+        },
+        {
+          "token_id": 25117,
+          "token": " Selection",
+          "score": 0.125
+        },
+        {
+          "token_id": 4183,
+          "token": " selected",
+          "score": 0.12451171875
+        },
+        {
+          "token_id": 28419,
+          "token": " sele",
+          "score": 0.12451171875
+        },
+        {
+          "token_id": 76805,
+          "token": "-selection",
+          "score": 0.12353515625
+        },
+        {
+          "token_id": 7104,
+          "token": " Option",
+          "score": 0.12158203125
+        },
+        {
+          "token_id": 2091,
+          "token": "option",
+          "score": 0.12109375
+        },
+        {
+          "token_id": 11425,
+          "token": "Selection",
+          "score": 0.119140625
+        }
+      ],
+      "suppressed": [
+        {
+          "token_id": 83770,
+          "token": "placeholders",
+          "score": -0.10400390625
+        },
+        {
+          "token_id": 51723,
+          "token": "rss",
+          "score": -0.099609375
+        },
+        {
+          "token_id": 104455,
+          "token": "eniz",
+          "score": -0.09033203125
+        },
+        {
+          "token_id": 71692,
+          "token": "QRST",
+          "score": -0.0888671875
+        },
+        {
+          "token_id": 64419,
+          "token": "fte",
+          "score": -0.087890625
+        },
+        {
+          "token_id": 80470,
+          "token": "apia",
+          "score": -0.08740234375
+        },
+        {
+          "token_id": 81984,
+          "token": "datatable",
+          "score": -0.0859375
+        },
+        {
+          "token_id": 78254,
+          "token": "-comments",
+          "score": -0.0859375
+        },
+        {
+          "token_id": 73859,
+          "token": "ContentLoaded",
+          "score": -0.08544921875
+        },
+        {
+          "token_id": 71629,
+          "token": "bate",
+          "score": -0.08544921875
+        },
+        {
+          "token_id": 24106,
+          "token": ".DataGridViewTextBoxColumn",
+          "score": -0.08544921875
+        },
+        {
+          "token_id": 26622,
+          "token": "ulas",
+          "score": -0.08349609375
+        },
+        {
+          "token_id": 94830,
+          "token": "/feed",
+          "score": -0.0830078125
+        },
+        {
+          "token_id": 53423,
+          "token": "edly",
+          "score": -0.08251953125
+        },
+        {
+          "token_id": 76031,
+          "token": "arella",
+          "score": -0.08251953125
+        },
+        {
+          "token_id": 45683,
+          "token": ".feed",
+          "score": -0.08203125
+        },
+        {
+          "token_id": 85798,
+          "token": "\u00e8les",
+          "score": -0.08154296875
+        },
+        {
+          "token_id": 65859,
+          "token": "nist",
+          "score": -0.08056640625
+        },
+        {
+          "token_id": 99625,
+          "token": "estatus",
+          "score": -0.080078125
+        },
+        {
+          "token_id": 98329,
+          "token": "zell",
+          "score": -0.080078125
+        }
+      ]
+    },
+    "23803": {
+      "feature_id": 23803,
+      "decoder_norm": 1.1484375,
+      "score_mean": 0.00154876708984375,
+      "score_std": 0.015869140625,
+      "promoted": [
+        {
+          "token_id": 77549,
+          "token": " distractions",
+          "score": 0.1533203125
+        },
+        {
+          "token_id": 82398,
+          "token": " distracting",
+          "score": 0.1318359375
+        },
+        {
+          "token_id": 54716,
+          "token": " distraction",
+          "score": 0.12890625
+        },
+        {
+          "token_id": 49804,
+          "token": " distracted",
+          "score": 0.11865234375
+        },
+        {
+          "token_id": 64917,
+          "token": " distract",
+          "score": 0.11474609375
+        },
+        {
+          "token_id": 26032,
+          "token": " tempt",
+          "score": 0.11474609375
+        },
+        {
+          "token_id": 62461,
+          "token": " temptation",
+          "score": 0.1123046875
+        },
+        {
+          "token_id": 89508,
+          "token": " interruptions",
+          "score": 0.11083984375
+        },
+        {
+          "token_id": 44537,
+          "token": " interrupts",
+          "score": 0.10546875
+        },
+        {
+          "token_id": 54980,
+          "token": " tempted",
+          "score": 0.09814453125
+        },
+        {
+          "token_id": 8064,
+          "token": " distr",
+          "score": 0.0966796875
+        },
+        {
+          "token_id": 12956,
+          "token": " interrupt",
+          "score": 0.09521484375
+        },
+        {
+          "token_id": 114682,
+          "token": " \u043e\u0442\u0432",
+          "score": 0.0947265625
+        },
+        {
+          "token_id": 75103,
+          "token": " interruption",
+          "score": 0.09326171875
+        },
+        {
+          "token_id": 22736,
+          "token": " notifications",
+          "score": 0.09228515625
+        },
+        {
+          "token_id": 30182,
+          "token": " INTERRU",
+          "score": 0.09130859375
+        },
+        {
+          "token_id": 61299,
+          "token": " tempting",
+          "score": 0.09033203125
+        },
+        {
+          "token_id": 80480,
+          "token": " Interr",
+          "score": 0.09033203125
+        },
+        {
+          "token_id": 37098,
+          "token": " divert",
+          "score": 0.08642578125
+        },
+        {
+          "token_id": 22933,
+          "token": " Interrupt",
+          "score": 0.08349609375
+        }
+      ],
+      "suppressed": [
+        {
+          "token_id": 32932,
+          "token": "upp",
+          "score": -0.07080078125
+        },
+        {
+          "token_id": 39965,
+          "token": "\u00e9ric",
+          "score": -0.06982421875
+        },
+        {
+          "token_id": 125279,
+          "token": "ledik",
+          "score": -0.068359375
+        },
+        {
+          "token_id": 89488,
+          "token": ".nlm",
+          "score": -0.06787109375
+        },
+        {
+          "token_id": 44876,
+          "token": "versed",
+          "score": -0.06787109375
+        },
+        {
+          "token_id": 92542,
+          "token": " Moderator",
+          "score": -0.06689453125
+        },
+        {
+          "token_id": 38596,
+          "token": "ardown",
+          "score": -0.0654296875
+        },
+        {
+          "token_id": 65574,
+          "token": "zimmer",
+          "score": -0.0654296875
+        },
+        {
+          "token_id": 76899,
+          "token": "utschein",
+          "score": -0.0654296875
+        },
+        {
+          "token_id": 357,
+          "token": " st",
+          "score": -0.06494140625
+        },
+        {
+          "token_id": 9150,
+          "token": "CR",
+          "score": -0.06494140625
+        },
+        {
+          "token_id": 90324,
+          "token": "Ymd",
+          "score": -0.06396484375
+        },
+        {
+          "token_id": 14304,
+          "token": "\u00e4r",
+          "score": -0.06396484375
+        },
+        {
+          "token_id": 30636,
+          "token": "ogan",
+          "score": -0.0634765625
+        },
+        {
+          "token_id": 45083,
+          "token": "rar",
+          "score": -0.06298828125
+        },
+        {
+          "token_id": 16348,
+          "token": "anim",
+          "score": -0.06298828125
+        },
+        {
+          "token_id": 87129,
+          "token": "defgroup",
+          "score": -0.06298828125
+        },
+        {
+          "token_id": 58481,
+          "token": "ashtra",
+          "score": -0.0625
+        },
+        {
+          "token_id": 99543,
+          "token": "(fullfile",
+          "score": -0.0625
+        },
+        {
+          "token_id": 91991,
+          "token": "relay",
+          "score": -0.062255859375
+        }
+      ]
+    },
+    "50853": {
+      "feature_id": 50853,
+      "decoder_norm": 1.1484375,
+      "score_mean": -0.00482177734375,
+      "score_std": 0.0164794921875,
+      "promoted": [
+        {
+          "token_id": 611,
+          "token": " /",
+          "score": 0.095703125
+        },
+        {
+          "token_id": 95660,
+          "token": "abar",
+          "score": 0.0791015625
+        },
+        {
+          "token_id": 65954,
+          "token": "undos",
+          "score": 0.072265625
+        },
+        {
+          "token_id": 100599,
+          "token": "\u011bl",
+          "score": 0.0703125
+        },
+        {
+          "token_id": 28824,
+          "token": "ukan",
+          "score": 0.0693359375
+        },
+        {
+          "token_id": 88650,
+          "token": "krit",
+          "score": 0.068359375
+        },
+        {
+          "token_id": 98501,
+          "token": "akit",
+          "score": 0.06494140625
+        },
+        {
+          "token_id": 2070,
+          "token": "ape",
+          "score": 0.064453125
+        },
+        {
+          "token_id": 6210,
+          "token": "ityEngine",
+          "score": 0.064453125
+        },
+        {
+          "token_id": 5136,
+          "token": "aset",
+          "score": 0.064453125
+        },
+        {
+          "token_id": 85268,
+          "token": "orang",
+          "score": 0.06396484375
+        },
+        {
+          "token_id": 82028,
+          "token": " Uncategorized",
+          "score": 0.06396484375
+        },
+        {
+          "token_id": 42602,
+          "token": "rost",
+          "score": 0.0634765625
+        },
+        {
+          "token_id": 25049,
+          "token": "MemoryWarning",
+          "score": 0.06298828125
+        },
+        {
+          "token_id": 28750,
+          "token": "AGER",
+          "score": 0.06103515625
+        },
+        {
+          "token_id": 89267,
+          "token": "antor",
+          "score": 0.06103515625
+        },
+        {
+          "token_id": 8005,
+          "token": "conds",
+          "score": 0.06103515625
+        },
+        {
+          "token_id": 11554,
+          "token": "aret",
+          "score": 0.060791015625
+        },
+        {
+          "token_id": 35150,
+          "token": "amina",
+          "score": 0.060302734375
+        },
+        {
+          "token_id": 31355,
+          "token": "illes",
+          "score": 0.06005859375
+        }
+      ],
+      "suppressed": [
+        {
+          "token_id": 34304,
+          "token": "iferay",
+          "score": -0.0908203125
+        },
+        {
+          "token_id": 122416,
+          "token": "\u3070\u304b\u308a",
+          "score": -0.0859375
+        },
+        {
+          "token_id": 116446,
+          "token": "\u306b\u3057\u3066",
+          "score": -0.08349609375
+        },
+        {
+          "token_id": 117892,
+          "token": " \uba3c",
+          "score": -0.078125
+        },
+        {
+          "token_id": 89352,
+          "token": "_________________\n\n",
+          "score": -0.07763671875
+        },
+        {
+          "token_id": 121629,
+          "token": " G\u00f6z",
+          "score": -0.0771484375
+        },
+        {
+          "token_id": 63319,
+          "token": "_Metadata",
+          "score": -0.07666015625
+        },
+        {
+          "token_id": 104332,
+          "token": "\u043c\u044b",
+          "score": -0.07666015625
+        },
+        {
+          "token_id": 100081,
+          "token": ".shapes",
+          "score": -0.0751953125
+        },
+        {
+          "token_id": 105319,
+          "token": "\u0430\u043b\u0443",
+          "score": -0.07275390625
+        },
+        {
+          "token_id": 85691,
+          "token": ",exports",
+          "score": -0.07275390625
+        },
+        {
+          "token_id": 116756,
+          "token": "\u30b9\u30ec",
+          "score": -0.072265625
+        },
+        {
+          "token_id": 119753,
+          "token": " yapm\u0131\u015f",
+          "score": -0.072265625
+        },
+        {
+          "token_id": 65027,
+          "token": "_VALIDATE",
+          "score": -0.0712890625
+        },
+        {
+          "token_id": 84115,
+          "token": " MOCK",
+          "score": -0.07080078125
+        },
+        {
+          "token_id": 106068,
+          "token": "\u0431\u0438\u0440\u0430",
+          "score": -0.07080078125
+        },
+        {
+          "token_id": 117503,
+          "token": "\u300d\u306e",
+          "score": -0.07080078125
+        },
+        {
+          "token_id": 22199,
+          "token": " prospect",
+          "score": -0.06982421875
+        },
+        {
+          "token_id": 114956,
+          "token": " Thi\u00ean",
+          "score": -0.06884765625
+        },
+        {
+          "token_id": 108991,
+          "token": " \ub124\uc774\ud2b8",
+          "score": -0.06884765625
+        }
+      ]
+    },
+    "19079": {
+      "feature_id": 19079,
+      "decoder_norm": 0.96484375,
+      "score_mean": 0.0038909912109375,
+      "score_std": 0.01348876953125,
+      "promoted": [
+        {
+          "token_id": 1531,
+          "token": "else",
+          "score": 0.07470703125
+        },
+        {
+          "token_id": 775,
+          "token": " else",
+          "score": 0.068359375
+        },
+        {
+          "token_id": 2339,
+          "token": " catch",
+          "score": 0.06787109375
+        },
+        {
+          "token_id": 113126,
+          "token": "\u0648\u0627\u0631\u0647",
+          "score": 0.06689453125
+        },
+        {
+          "token_id": 52525,
+          "token": "esto",
+          "score": 0.064453125
+        },
+        {
+          "token_id": 7320,
+          "token": "catch",
+          "score": 0.06396484375
+        },
+        {
+          "token_id": 126305,
+          "token": " vitam",
+          "score": 0.0634765625
+        },
+        {
+          "token_id": 43892,
+          "token": ".transition",
+          "score": 0.06298828125
+        },
+        {
+          "token_id": 60788,
+          "token": " AppleWebKit",
+          "score": 0.061279296875
+        },
+        {
+          "token_id": 62573,
+          "token": "abl",
+          "score": 0.06103515625
+        },
+        {
+          "token_id": 5681,
+          "token": "\ufffd",
+          "score": 0.06005859375
+        },
+        {
+          "token_id": 85223,
+          "token": "oste",
+          "score": 0.0595703125
+        },
+        {
+          "token_id": 96972,
+          "token": ".Alpha",
+          "score": 0.0595703125
+        },
+        {
+          "token_id": 52687,
+          "token": "adh",
+          "score": 0.05908203125
+        },
+        {
+          "token_id": 88642,
+          "token": "_redis",
+          "score": 0.058837890625
+        },
+        {
+          "token_id": 117583,
+          "token": "\u093e\u0932\u0924",
+          "score": 0.05859375
+        },
+        {
+          "token_id": 78307,
+          "token": ".failure",
+          "score": 0.05859375
+        },
+        {
+          "token_id": 124524,
+          "token": "angl",
+          "score": 0.05810546875
+        },
+        {
+          "token_id": 101547,
+          "token": "\u0e31\u0e48",
+          "score": 0.057861328125
+        },
+        {
+          "token_id": 103640,
+          "token": "\u0633\u0627\u0646",
+          "score": 0.05712890625
+        }
+      ],
+      "suppressed": [
+        {
+          "token_id": 91595,
+          "token": "rrha",
+          "score": -0.06787109375
+        },
+        {
+          "token_id": 121780,
+          "token": "\uff08\u5e73\u6210",
+          "score": -0.059814453125
+        },
+        {
+          "token_id": 9187,
+          "token": "atile",
+          "score": -0.0576171875
+        },
+        {
+          "token_id": 11110,
+          "token": "iento",
+          "score": -0.056884765625
+        },
+        {
+          "token_id": 53909,
+          "token": " Plug",
+          "score": -0.0517578125
+        },
+        {
+          "token_id": 71958,
+          "token": "olem",
+          "score": -0.0517578125
+        },
+        {
+          "token_id": 10133,
+          "token": "OPY",
+          "score": -0.0517578125
+        },
+        {
+          "token_id": 93551,
+          "token": "ataires",
+          "score": -0.051513671875
+        },
+        {
+          "token_id": 34263,
+          "token": "ilk",
+          "score": -0.050537109375
+        },
+        {
+          "token_id": 62677,
+          "token": " Bolton",
+          "score": -0.05029296875
+        },
+        {
+          "token_id": 63105,
+          "token": "\ufffd",
+          "score": -0.05029296875
+        },
+        {
+          "token_id": 29470,
+          "token": "atics",
+          "score": -0.050048828125
+        },
+        {
+          "token_id": 23336,
+          "token": "iatric",
+          "score": -0.0498046875
+        },
+        {
+          "token_id": 62776,
+          "token": "\u043b\u0435\u043d\u0438\u044f",
+          "score": -0.0498046875
+        },
+        {
+          "token_id": 44766,
+          "token": " Craw",
+          "score": -0.0498046875
+        },
+        {
+          "token_id": 14492,
+          "token": "outine",
+          "score": -0.04931640625
+        },
+        {
+          "token_id": 88585,
+          "token": "ompiler",
+          "score": -0.049072265625
+        },
+        {
+          "token_id": 23950,
+          "token": " Angel",
+          "score": -0.04833984375
+        },
+        {
+          "token_id": 5382,
+          "token": "atory",
+          "score": -0.0478515625
+        },
+        {
+          "token_id": 34304,
+          "token": "iferay",
+          "score": -0.047607421875
+        }
+      ]
+    },
+    "39820": {
+      "feature_id": 39820,
+      "decoder_norm": 1.0390625,
+      "score_mean": 3.5762786865234375e-05,
+      "score_std": 0.01483154296875,
+      "promoted": [
+        {
+          "token_id": 106090,
+          "token": "\u968e",
+          "score": 0.07275390625
+        },
+        {
+          "token_id": 52767,
+          "token": "kov",
+          "score": 0.0712890625
+        },
+        {
+          "token_id": 60477,
+          "token": "\u00f3r",
+          "score": 0.0703125
+        },
+        {
+          "token_id": 31141,
+          "token": "akk",
+          "score": 0.06982421875
+        },
+        {
+          "token_id": 92356,
+          "token": "anine",
+          "score": 0.06982421875
+        },
+        {
+          "token_id": 98501,
+          "token": "akit",
+          "score": 0.06787109375
+        },
+        {
+          "token_id": 22575,
+          "token": "kee",
+          "score": 0.06787109375
+        },
+        {
+          "token_id": 77645,
+          "token": "GenerationStrategy",
+          "score": 0.0673828125
+        },
+        {
+          "token_id": 54725,
+          "token": "fragistics",
+          "score": 0.06689453125
+        },
+        {
+          "token_id": 35760,
+          "token": "aeda",
+          "score": 0.06591796875
+        },
+        {
+          "token_id": 57394,
+          "token": "asurer",
+          "score": 0.0654296875
+        },
+        {
+          "token_id": 82063,
+          "token": "\\Id",
+          "score": 0.06396484375
+        },
+        {
+          "token_id": 92607,
+          "token": ":UIAlert",
+          "score": 0.0634765625
+        },
+        {
+          "token_id": 24800,
+          "token": " worlds",
+          "score": 0.06298828125
+        },
+        {
+          "token_id": 85740,
+          "token": "IPH",
+          "score": 0.06298828125
+        },
+        {
+          "token_id": 68249,
+          "token": "elier",
+          "score": 0.06298828125
+        },
+        {
+          "token_id": 6210,
+          "token": "ityEngine",
+          "score": 0.0625
+        },
+        {
+          "token_id": 28824,
+          "token": "ukan",
+          "score": 0.06201171875
+        },
+        {
+          "token_id": 36900,
+          "token": "nej",
+          "score": 0.061767578125
+        },
+        {
+          "token_id": 25049,
+          "token": "MemoryWarning",
+          "score": 0.061767578125
+        }
+      ],
+      "suppressed": [
+        {
+          "token_id": 118549,
+          "token": "\u0435\u0432\u0438\u0447",
+          "score": -0.0693359375
+        },
+        {
+          "token_id": 40347,
+          "token": ".RadioButton",
+          "score": -0.064453125
+        },
+        {
+          "token_id": 71327,
+          "token": " espos",
+          "score": -0.06396484375
+        },
+        {
+          "token_id": 93434,
+          "token": "ULLET",
+          "score": -0.0625
+        },
+        {
+          "token_id": 97503,
+          "token": ":'',",
+          "score": -0.062255859375
+        },
+        {
+          "token_id": 54019,
+          "token": "venta",
+          "score": -0.061767578125
+        },
+        {
+          "token_id": 85691,
+          "token": ",exports",
+          "score": -0.060546875
+        },
+        {
+          "token_id": 127479,
+          "token": "\u300d\u7684",
+          "score": -0.060302734375
+        },
+        {
+          "token_id": 85937,
+          "token": " Athe",
+          "score": -0.0595703125
+        },
+        {
+          "token_id": 122215,
+          "token": " \u0443\u043b\u044b",
+          "score": -0.05859375
+        },
+        {
+          "token_id": 116469,
+          "token": " \uc5c6\uc774",
+          "score": -0.058349609375
+        },
+        {
+          "token_id": 98242,
+          "token": ".espresso",
+          "score": -0.05810546875
+        },
+        {
+          "token_id": 59712,
+          "token": "\u300d\u300c",
+          "score": -0.05810546875
+        },
+        {
+          "token_id": 104332,
+          "token": "\u043c\u044b",
+          "score": -0.0576171875
+        },
+        {
+          "token_id": 107309,
+          "token": " \u3161",
+          "score": -0.056884765625
+        },
+        {
+          "token_id": 53653,
+          "token": ".transport",
+          "score": -0.056396484375
+        },
+        {
+          "token_id": 55430,
+          "token": "\uc8fc",
+          "score": -0.056396484375
+        },
+        {
+          "token_id": 91118,
+          "token": " Rosenstein",
+          "score": -0.056396484375
+        },
+        {
+          "token_id": 78537,
+          "token": " Spear",
+          "score": -0.05615234375
+        },
+        {
+          "token_id": 38706,
+          "token": "\tthrows",
+          "score": -0.0556640625
+        }
+      ]
+    },
+    "44602": {
+      "feature_id": 44602,
+      "decoder_norm": 1.078125,
+      "score_mean": 0.0019683837890625,
+      "score_std": 0.0145263671875,
+      "promoted": [
+        {
+          "token_id": 78794,
+          "token": "#ac",
+          "score": 0.0810546875
+        },
+        {
+          "token_id": 84477,
+          "token": "\u30fc\u30c8",
+          "score": 0.07373046875
+        },
+        {
+          "token_id": 78685,
+          "token": "#ab",
+          "score": 0.07373046875
+        },
+        {
+          "token_id": 91794,
+          "token": "ileen",
+          "score": 0.0712890625
+        },
+        {
+          "token_id": 56156,
+          "token": "ialect",
+          "score": 0.0712890625
+        },
+        {
+          "token_id": 59064,
+          "token": "chy",
+          "score": 0.0703125
+        },
+        {
+          "token_id": 17158,
+          "token": "roduction",
+          "score": 0.06884765625
+        },
+        {
+          "token_id": 118618,
+          "token": "\uce74\ub77c",
+          "score": 0.06787109375
+        },
+        {
+          "token_id": 111,
+          "token": "\ufffd",
+          "score": 0.0673828125
+        },
+        {
+          "token_id": 122734,
+          "token": "eyh",
+          "score": 0.0673828125
+        },
+        {
+          "token_id": 116477,
+          "token": "etler",
+          "score": 0.06494140625
+        },
+        {
+          "token_id": 68350,
+          "token": "uchos",
+          "score": 0.064453125
+        },
+        {
+          "token_id": 6601,
+          "token": "anded",
+          "score": 0.064453125
+        },
+        {
+          "token_id": 93683,
+          "token": "rang",
+          "score": 0.064453125
+        },
+        {
+          "token_id": 125958,
+          "token": " li\u1ec7t",
+          "score": 0.06396484375
+        },
+        {
+          "token_id": 7114,
+          "token": "gest",
+          "score": 0.06396484375
+        },
+        {
+          "token_id": 22194,
+          "token": "729",
+          "score": 0.0634765625
+        },
+        {
+          "token_id": 3210,
+          "token": "ively",
+          "score": 0.06298828125
+        },
+        {
+          "token_id": 100499,
+          "token": "\ufffd",
+          "score": 0.06298828125
+        },
+        {
+          "token_id": 35555,
+          "token": "cad",
+          "score": 0.062255859375
+        }
+      ],
+      "suppressed": [
+        {
+          "token_id": 287,
+          "token": "ing",
+          "score": -0.158203125
+        },
+        {
+          "token_id": 1753,
+          "token": "ING",
+          "score": -0.0927734375
+        },
+        {
+          "token_id": 3865,
+          "token": "\u0443",
+          "score": -0.07080078125
+        },
+        {
+          "token_id": 819,
+          "token": "ish",
+          "score": -0.06884765625
+        },
+        {
+          "token_id": 26062,
+          "token": "\ufffd\u56de",
+          "score": -0.06640625
+        },
+        {
+          "token_id": 5571,
+          "token": "ernel",
+          "score": -0.06591796875
+        },
+        {
+          "token_id": 91823,
+          "token": "Gran",
+          "score": -0.0634765625
+        },
+        {
+          "token_id": 100736,
+          "token": "\u0e31\u0e14",
+          "score": -0.0625
+        },
+        {
+          "token_id": 2648,
+          "token": "arse",
+          "score": -0.0615234375
+        },
+        {
+          "token_id": 106887,
+          "token": "\u03bc\u03c6",
+          "score": -0.059326171875
+        },
+        {
+          "token_id": 61025,
+          "token": "\u00f1as",
+          "score": -0.05859375
+        },
+        {
+          "token_id": 105179,
+          "token": "\u03b2\u03b1",
+          "score": -0.05859375
+        },
+        {
+          "token_id": 22980,
+          "token": "\u00f2",
+          "score": -0.05859375
+        },
+        {
+          "token_id": 10133,
+          "token": "OPY",
+          "score": -0.058349609375
+        },
+        {
+          "token_id": 25356,
+          "token": "edor",
+          "score": -0.057861328125
+        },
+        {
+          "token_id": 1386,
+          "token": "uff",
+          "score": -0.0576171875
+        },
+        {
+          "token_id": 56350,
+          "token": "OOD",
+          "score": -0.057373046875
+        },
+        {
+          "token_id": 7153,
+          "token": "opping",
+          "score": -0.057373046875
+        },
+        {
+          "token_id": 108446,
+          "token": "\u7d0d",
+          "score": -0.057373046875
+        },
+        {
+          "token_id": 126469,
+          "token": "\u304b\u3063\u3066",
+          "score": -0.05712890625
+        }
+      ]
+    },
+    "38249": {
+      "feature_id": 38249,
+      "decoder_norm": 0.8984375,
+      "score_mean": 0.0126953125,
+      "score_std": 0.01416015625,
+      "promoted": [
+        {
+          "token_id": 13717,
+          "token": ".Serial",
+          "score": 0.07958984375
+        },
+        {
+          "token_id": 126835,
+          "token": "\uff2d",
+          "score": 0.07861328125
+        },
+        {
+          "token_id": 118568,
+          "token": " beled",
+          "score": 0.078125
+        },
+        {
+          "token_id": 104972,
+          "token": "\u0e31\u0e12",
+          "score": 0.07763671875
+        },
+        {
+          "token_id": 124417,
+          "token": "\uff29",
+          "score": 0.0771484375
+        },
+        {
+          "token_id": 124128,
+          "token": "\u0386",
+          "score": 0.076171875
+        },
+        {
+          "token_id": 106587,
+          "token": "\u2019\u0454",
+          "score": 0.07568359375
+        },
+        {
+          "token_id": 51492,
+          "token": "\u017ee",
+          "score": 0.0751953125
+        },
+        {
+          "token_id": 107786,
+          "token": "j\u00edm",
+          "score": 0.0751953125
+        },
+        {
+          "token_id": 116101,
+          "token": "\u0388",
+          "score": 0.0732421875
+        },
+        {
+          "token_id": 33893,
+          "token": ".XR",
+          "score": 0.07275390625
+        },
+        {
+          "token_id": 114810,
+          "token": "\u30a4\u30f3\u30c8",
+          "score": 0.07177734375
+        },
+        {
+          "token_id": 14670,
+          "token": "!\n\n\n\n",
+          "score": 0.07177734375
+        },
+        {
+          "token_id": 95098,
+          "token": " @}",
+          "score": 0.0712890625
+        },
+        {
+          "token_id": 105918,
+          "token": "\u0384",
+          "score": 0.0712890625
+        },
+        {
+          "token_id": 39722,
+          "token": " prostitu",
+          "score": 0.07080078125
+        },
+        {
+          "token_id": 123097,
+          "token": "\u01a0",
+          "score": 0.07080078125
+        },
+        {
+          "token_id": 60315,
+          "token": "\u2501",
+          "score": 0.07080078125
+        },
+        {
+          "token_id": 122204,
+          "token": " kanal",
+          "score": 0.0703125
+        },
+        {
+          "token_id": 34550,
+          "token": "\u1ec3",
+          "score": 0.0703125
+        }
+      ],
+      "suppressed": [
+        {
+          "token_id": 63670,
+          "token": "isman",
+          "score": -0.053955078125
+        },
+        {
+          "token_id": 76418,
+          "token": "umbledore",
+          "score": -0.051025390625
+        },
+        {
+          "token_id": 43556,
+          "token": "UpInside",
+          "score": -0.048583984375
+        },
+        {
+          "token_id": 297,
+          "token": " o",
+          "score": -0.045654296875
+        },
+        {
+          "token_id": 721,
+          "token": " _",
+          "score": -0.045654296875
+        },
+        {
+          "token_id": 3642,
+          "token": "Us",
+          "score": -0.0439453125
+        },
+        {
+          "token_id": 4194,
+          "token": "\u00a0",
+          "score": -0.04248046875
+        },
+        {
+          "token_id": 54928,
+          "token": " Atmos",
+          "score": -0.041015625
+        },
+        {
+          "token_id": 33828,
+          "token": " supposedly",
+          "score": -0.0400390625
+        },
+        {
+          "token_id": 97866,
+          "token": " Vinci",
+          "score": -0.03955078125
+        },
+        {
+          "token_id": 14038,
+          "token": "izard",
+          "score": -0.03955078125
+        },
+        {
+          "token_id": 293,
+          "token": " b",
+          "score": -0.03955078125
+        },
+        {
+          "token_id": 1198,
+          "token": " --",
+          "score": -0.03955078125
+        },
+        {
+          "token_id": 22361,
+          "token": "verted",
+          "score": -0.03955078125
+        },
+        {
+          "token_id": 80904,
+          "token": "ContextHolder",
+          "score": -0.039306640625
+        },
+        {
+          "token_id": 88136,
+          "token": "...\n\n\n\n\n\n",
+          "score": -0.039306640625
+        },
+        {
+          "token_id": 80209,
+          "token": " Longitude",
+          "score": -0.0390625
+        },
+        {
+          "token_id": 13795,
+          "token": "omatic",
+          "score": -0.0390625
+        },
+        {
+          "token_id": 1219,
+          "token": " Com",
+          "score": -0.0390625
+        },
+        {
+          "token_id": 90789,
+          "token": " Blazers",
+          "score": -0.03857421875
+        }
+      ]
+    }
+  },
+  "decoder_neighbors": {
+    "26737": [
+      {
+        "feature_id": 62830,
+        "cosine_sim": 0.3513985872268677
+      },
+      {
+        "feature_id": 58839,
+        "cosine_sim": 0.3408587574958801
+      },
+      {
+        "feature_id": 55688,
+        "cosine_sim": 0.32218265533447266
+      },
+      {
+        "feature_id": 37414,
+        "cosine_sim": 0.30269575119018555
+      },
+      {
+        "feature_id": 5713,
+        "cosine_sim": 0.27787619829177856
+      },
+      {
+        "feature_id": 38091,
+        "cosine_sim": 0.2761038541793823
+      },
+      {
+        "feature_id": 46021,
+        "cosine_sim": 0.26563146710395813
+      },
+      {
+        "feature_id": 28508,
+        "cosine_sim": 0.2612611651420593
+      },
+      {
+        "feature_id": 13075,
+        "cosine_sim": 0.2584243416786194
+      },
+      {
+        "feature_id": 53630,
+        "cosine_sim": 0.25744596123695374
+      }
+    ],
+    "23803": [
+      {
+        "feature_id": 28336,
+        "cosine_sim": 0.3765610158443451
+      },
+      {
+        "feature_id": 24633,
+        "cosine_sim": 0.30769670009613037
+      },
+      {
+        "feature_id": 61666,
+        "cosine_sim": 0.3031621277332306
+      },
+      {
+        "feature_id": 35254,
+        "cosine_sim": 0.2921771705150604
+      },
+      {
+        "feature_id": 42844,
+        "cosine_sim": 0.2869851291179657
+      },
+      {
+        "feature_id": 57061,
+        "cosine_sim": 0.2863239645957947
+      },
+      {
+        "feature_id": 14003,
+        "cosine_sim": 0.2808113098144531
+      },
+      {
+        "feature_id": 54137,
+        "cosine_sim": 0.280808687210083
+      },
+      {
+        "feature_id": 33080,
+        "cosine_sim": 0.2636198103427887
+      },
+      {
+        "feature_id": 47930,
+        "cosine_sim": 0.2625942826271057
+      }
+    ],
+    "50853": [
+      {
+        "feature_id": 61035,
+        "cosine_sim": 0.67341148853302
+      },
+      {
+        "feature_id": 39820,
+        "cosine_sim": 0.6171244978904724
+      },
+      {
+        "feature_id": 61203,
+        "cosine_sim": 0.562039852142334
+      },
+      {
+        "feature_id": 51891,
+        "cosine_sim": 0.5613446235656738
+      },
+      {
+        "feature_id": 24750,
+        "cosine_sim": 0.5308195948600769
+      },
+      {
+        "feature_id": 48190,
+        "cosine_sim": 0.4828999638557434
+      },
+      {
+        "feature_id": 57438,
+        "cosine_sim": 0.48070457577705383
+      },
+      {
+        "feature_id": 32886,
+        "cosine_sim": 0.4768081307411194
+      },
+      {
+        "feature_id": 14047,
+        "cosine_sim": 0.47671812772750854
+      },
+      {
+        "feature_id": 36983,
+        "cosine_sim": 0.4717503488063812
+      }
+    ],
+    "19079": [
+      {
+        "feature_id": 44602,
+        "cosine_sim": 0.49525147676467896
+      },
+      {
+        "feature_id": 58650,
+        "cosine_sim": 0.4840559661388397
+      },
+      {
+        "feature_id": 5925,
+        "cosine_sim": 0.3830745220184326
+      },
+      {
+        "feature_id": 64273,
+        "cosine_sim": 0.3683236837387085
+      },
+      {
+        "feature_id": 3834,
+        "cosine_sim": 0.3434167802333832
+      },
+      {
+        "feature_id": 52622,
+        "cosine_sim": 0.3387032151222229
+      },
+      {
+        "feature_id": 33120,
+        "cosine_sim": 0.3351982533931732
+      },
+      {
+        "feature_id": 55899,
+        "cosine_sim": 0.32517415285110474
+      },
+      {
+        "feature_id": 19435,
+        "cosine_sim": 0.3242613971233368
+      },
+      {
+        "feature_id": 52093,
+        "cosine_sim": 0.29931193590164185
+      }
+    ],
+    "39820": [
+      {
+        "feature_id": 61203,
+        "cosine_sim": 0.6849023699760437
+      },
+      {
+        "feature_id": 50853,
+        "cosine_sim": 0.6171244978904724
+      },
+      {
+        "feature_id": 49027,
+        "cosine_sim": 0.6143733859062195
+      },
+      {
+        "feature_id": 61035,
+        "cosine_sim": 0.5839385986328125
+      },
+      {
+        "feature_id": 31992,
+        "cosine_sim": 0.5138922929763794
+      },
+      {
+        "feature_id": 48214,
+        "cosine_sim": 0.4591200649738312
+      },
+      {
+        "feature_id": 1788,
+        "cosine_sim": 0.4525633156299591
+      },
+      {
+        "feature_id": 30768,
+        "cosine_sim": 0.44676077365875244
+      },
+      {
+        "feature_id": 52856,
+        "cosine_sim": 0.4421507716178894
+      },
+      {
+        "feature_id": 38249,
+        "cosine_sim": 0.4385794997215271
+      }
+    ],
+    "44602": [
+      {
+        "feature_id": 19079,
+        "cosine_sim": 0.49525147676467896
+      },
+      {
+        "feature_id": 50014,
+        "cosine_sim": 0.4748174548149109
+      },
+      {
+        "feature_id": 19435,
+        "cosine_sim": 0.3930097818374634
+      },
+      {
+        "feature_id": 52093,
+        "cosine_sim": 0.3760451674461365
+      },
+      {
+        "feature_id": 50186,
+        "cosine_sim": 0.3556509017944336
+      },
+      {
+        "feature_id": 55899,
+        "cosine_sim": 0.33675357699394226
+      },
+      {
+        "feature_id": 39113,
+        "cosine_sim": 0.27541810274124146
+      },
+      {
+        "feature_id": 41404,
+        "cosine_sim": 0.2447664588689804
+      },
+      {
+        "feature_id": 37296,
+        "cosine_sim": 0.24272695183753967
+      },
+      {
+        "feature_id": 5925,
+        "cosine_sim": 0.24225403368473053
+      }
+    ],
+    "38249": [
+      {
+        "feature_id": 25564,
+        "cosine_sim": 0.7486752867698669
+      },
+      {
+        "feature_id": 28239,
+        "cosine_sim": 0.7041898965835571
+      },
+      {
+        "feature_id": 17625,
+        "cosine_sim": 0.6901669502258301
+      },
+      {
+        "feature_id": 17015,
+        "cosine_sim": 0.6896525025367737
+      },
+      {
+        "feature_id": 23358,
+        "cosine_sim": 0.6893457770347595
+      },
+      {
+        "feature_id": 42786,
+        "cosine_sim": 0.6808880567550659
+      },
+      {
+        "feature_id": 7343,
+        "cosine_sim": 0.6688445806503296
+      },
+      {
+        "feature_id": 33637,
+        "cosine_sim": 0.6666247844696045
+      },
+      {
+        "feature_id": 59147,
+        "cosine_sim": 0.647133469581604
+      },
+      {
+        "feature_id": 63024,
+        "cosine_sim": 0.6422502398490906
+      }
+    ]
+  },
+  "top_activating_prompts": {
+    "26737": [
+      {
+        "activation": 0.703125,
+        "category": "hallucinated_ui",
+        "prompt": "The price-range slider lets me narrow results."
+      },
+      {
+        "activation": 0.421875,
+        "category": "shopping_neutral",
+        "prompt": "The product description lists size options."
+      },
+      {
+        "activation": 0.3046875,
+        "category": "search_ui",
+        "prompt": "Click the search button to filter results."
+      },
+      {
+        "activation": 0.3046875,
+        "category": "hallucinated_ui",
+        "prompt": "The advanced search panel should let me set filters."
+      },
+      {
+        "activation": 0.1484375,
+        "category": "search_ui",
+        "prompt": "Search results page filtered by query."
+      },
+      {
+        "activation": 0.10546875,
+        "category": "impulsive",
+        "prompt": "Don't think \u2014 react. Click whatever stands out."
+      },
+      {
+        "activation": 0.095703125,
+        "category": "shopping_with_promo",
+        "prompt": "The hero promotional button is highlighted in red."
+      },
+      {
+        "activation": 0.022705078125,
+        "category": "hallucinated_ui",
+        "prompt": "Click the recommendation widget on the side."
+      },
+      {
+        "activation": 0.007080078125,
+        "category": "planning",
+        "prompt": "Carefully consider all options before deciding."
+      }
+    ],
+    "23803": [
+      {
+        "activation": 1.2734375,
+        "category": "goal_tracking",
+        "prompt": "Keep the task in mind and ignore distractions."
+      },
+      {
+        "activation": 0.64453125,
+        "category": "goal_tracking",
+        "prompt": "Goal: buy a USB-C cable. Stay focused."
+      }
+    ],
+    "50853": [
+      {
+        "activation": 0.07958984375,
+        "category": "shopping_with_promo",
+        "prompt": "Today's Deal: Wireless Earbuds for $39.99 \u2014 Buy Now!"
+      }
+    ],
+    "19079": [],
+    "39820": [],
+    "44602": [],
+    "38249": []
+  }
+}

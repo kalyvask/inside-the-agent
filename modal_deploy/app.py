@@ -231,6 +231,91 @@ class BrainServer:
         }
 
     @modal.method()
+    def feature_logit_lens(self, feature_id: int, top_k: int = 30):
+        """
+        Project a feature's decoder direction onto the unembedding matrix.
+
+        Returns the tokens this feature most "promotes" and most "suppresses"
+        in the model's next-token distribution. This is the strongest internal
+        evidence of what a feature encodes — independent of any prompt corpus.
+
+        Mathematically:
+            scores = W_dec[fid] @ W_U  (1, vocab_size)
+            promoted = argsort(scores)[-top_k:]   # tokens with highest score
+            suppressed = argsort(scores)[:top_k]  # tokens with lowest (most negative) score
+        """
+        import torch
+
+        # Get the model's unembedding matrix.
+        # For Llama, it's the lm_head.weight: shape (vocab_size, d_in).
+        W_U = self.model.lm_head.weight  # (vocab_size, d_in)
+        decoder_dir = self.sae.W_dec[feature_id].to(W_U.dtype).to(W_U.device)  # (d_in,)
+
+        # scores[v] = W_dec[fid] @ W_U[v].T  (effectively W_dec[fid] @ W_U.T)
+        scores = W_U @ decoder_dir  # (vocab_size,)
+
+        # Top-k promoted (highest scores) and suppressed (lowest = most negative).
+        top_promoted = torch.topk(scores, top_k)
+        top_suppressed = torch.topk(scores, top_k, largest=False)
+
+        promoted = []
+        for i in range(top_k):
+            tok_id = int(top_promoted.indices[i].item())
+            promoted.append({
+                "token_id": tok_id,
+                "token": self.tokenizer.decode([tok_id]),
+                "score": float(top_promoted.values[i].item()),
+            })
+
+        suppressed = []
+        for i in range(top_k):
+            tok_id = int(top_suppressed.indices[i].item())
+            suppressed.append({
+                "token_id": tok_id,
+                "token": self.tokenizer.decode([tok_id]),
+                "score": float(top_suppressed.values[i].item()),
+            })
+
+        return {
+            "feature_id": feature_id,
+            "decoder_norm": float(decoder_dir.norm().item()),
+            "score_mean": float(scores.mean().item()),
+            "score_std": float(scores.std().item()),
+            "promoted": promoted,
+            "suppressed": suppressed,
+        }
+
+    @modal.method()
+    def feature_decoder_similarity(self, feature_ids: list, top_k: int = 10):
+        """
+        For each feature, return its nearest decoder-vector neighbors by cosine
+        similarity. Features with high cosine similarity likely encode similar
+        concepts.
+        """
+        import torch
+        import torch.nn.functional as F
+
+        # W_dec shape: (d_features, d_in)
+        W_dec = self.sae.W_dec.to(torch.float32)
+        # Normalize all rows.
+        W_dec_norm = F.normalize(W_dec, dim=1)
+
+        results = {}
+        for fid in feature_ids:
+            target = W_dec_norm[fid]  # (d_in,)
+            sims = W_dec_norm @ target  # (d_features,)
+            # Top-k+1 because the feature itself has similarity 1.0.
+            top = torch.topk(sims, top_k + 1)
+            neighbors = []
+            for i in range(1, top_k + 1):  # skip self
+                neighbors.append({
+                    "feature_id": int(top.indices[i].item()),
+                    "cosine_sim": float(top.values[i].item()),
+                })
+            results[fid] = neighbors
+        return {"similarities": results}
+
+    @modal.method()
     def read_features(self, prompt: str, top_k: int = TOP_K_DEFAULT):
         """Run a forward pass on the prompt, return top-k SAE features."""
         import torch

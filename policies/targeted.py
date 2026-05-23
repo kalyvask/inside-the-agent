@@ -23,8 +23,14 @@ from sae.steering_controller import SteeringPlan
 
 
 TARGETED_EDITS = [
-    {"feature_id": 26737, "delta": -6.0, "label": "f26737_invented_action_supp"},
-    {"feature_id": 23803, "delta": +6.0, "label": "f23803_goal_anchor"},
+    # v0.4 logit-lens evidence (see docs/feature_characterization.md):
+    # Promotes UI-selection vocabulary: option, selection, select, choices, radio.
+    # Suppressing pushes the model away from "click X" verbs at the decision moment.
+    {"feature_id": 26737, "delta": -6.0, "label": "f26737_ui_selection_vocab"},
+    # Promotes distraction-avoidance vocabulary: distractions, distract, tempt,
+    # interrupt, notifications. Amplifying primes the model to attend to
+    # distractions-to-avoid (the promotional banner is literally a distraction).
+    {"feature_id": 23803, "delta": +6.0, "label": "f23803_distraction_avoidance_vocab"},
 ]
 
 
