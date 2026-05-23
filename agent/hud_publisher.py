@@ -65,6 +65,42 @@ class HudPublisher:
             )
         self._publish("step_started", run_id=run_id)
 
+    def policy_meta(
+        self,
+        policy: str,
+        position_mode: str,
+        seed: int | None = None,
+        max_steps: int | None = None,
+        max_new_tokens: int | None = None,
+        temperature: float | None = None,
+        steering_endpoint: str | None = None,
+    ):
+        """v0.7-D: emit the steering scope + decoding params at the start of a
+        run so the HUD's debugging cockpit can show 'targeted @ all' or
+        'noise @ last_prompt_only' instead of just the policy name.
+
+        Reviewer note: the headline 83% targeted result depends on
+        position_mode='all'; surgical 'last_prompt_only' gives 0% in our
+        tests. The HUD should make the active scope unmissable so the
+        audience can't conflate the two conditions."""
+        self._publish(
+            "policy_meta",
+            policy=policy,
+            position_mode=position_mode,
+            seed=seed,
+            max_steps=max_steps,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            steering_endpoint=steering_endpoint,
+        )
+
+    def baseline_action(self, step: int, action: dict):
+        """v0.7-D: emit a cached baseline action for the same task+step the
+        agent is on, so the HUD can show a before/after diff. The runner
+        looks up data/baselines/<task_id>.jsonl and emits this if a row
+        exists for the current step."""
+        self._publish("baseline_action", step=step, action=action)
+
     def features_read(self, features: list[dict]):
         self._publish("features_read", features=features)
 

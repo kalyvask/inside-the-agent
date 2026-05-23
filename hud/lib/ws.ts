@@ -27,6 +27,8 @@ export type AgentEvent = {
     | "env_updated"
     | "task_done"
     | "demo_banner"
+    | "policy_meta"
+    | "baseline_action"
     | "ping";
   task_id?: string;
   step?: number;
@@ -40,6 +42,24 @@ export type AgentEvent = {
   success?: boolean;
   expected_success?: boolean;
   timestamp?: number;
+  // v0.7-D: cockpit metadata
+  position_mode?: "all" | "all_prompt" | "last_prompt_only";
+  seed?: number;
+  max_steps?: number;
+  max_new_tokens?: number;
+  temperature?: number;
+  steering_endpoint?: "steer_act" | "steer_act_with_noise";
+};
+
+// v0.7-D: locally-queued steering command before delivery to runner.
+// Held in HUD client state so users see what they queued before the next
+// agent step drains it. Cleared when a matching steering_applied event
+// arrives from the agent with source="hud".
+export type PendingCommand = {
+  feature_id: number;
+  delta: number;
+  label: string;
+  queued_at: number;  // epoch ms
 };
 
 export function connectWS(handler: (ev: AgentEvent) => void): () => void {

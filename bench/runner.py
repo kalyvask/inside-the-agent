@@ -102,6 +102,61 @@ def _load_tasks(path: str, limit: int | None = None) -> list[dict]:
     return tasks
 
 
+BASELINE_CACHE_DIR = Path("data/baselines")
+
+
+def _load_baseline_cache(task_id: str) -> list[dict]:
+    """v0.7-D: read cached baseline actions for a task, keyed by step.
+
+    Cache format: one JSON line per step with {"step": int, "action": dict}.
+    Used by the HUD's before/after-diff panel — when a non-baseline policy
+    runs this task, the HUD compares the live action against the cached
+    baseline action for the same step.
+
+    Returns [] if the cache doesn't exist (e.g., baseline hasn't been run
+    yet for this task)."""
+    cache_path = BASELINE_CACHE_DIR / f"{task_id}.jsonl"
+    if not cache_path.exists():
+        return []
+    out = []
+    for line in cache_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            out.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return out
+
+
+def _write_baseline_cache(task_id: str, trajectory_path: Path) -> None:
+    """v0.7-D: after a baseline run, extract per-step actions from the
+    trajectory JSONL and write the cache. Idempotent — last baseline trial
+    wins, which is fine for the diff panel."""
+    if not trajectory_path.exists():
+        return
+    BASELINE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    rows = []
+    for line in trajectory_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            step_log = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        rows.append({
+            "step": step_log.get("step"),
+            "action": step_log.get("model", {}).get("parsed_action"),
+        })
+    cache_path = BASELINE_CACHE_DIR / f"{task_id}.jsonl"
+    cache_path.write_text(
+        "\n".join(json.dumps(r) for r in rows) + "\n",
+        encoding="utf-8",
+    )
+
+
 def _make_env(headless: bool = True, env_type: str = "shopgym"):
     """Construct the browser environment.
 
@@ -215,9 +270,36 @@ def main(
         with Progress(console=console) as progress:
             bar = progress.add_task(f"Running {policy}", total=len(task_list) * trials)
             for task in task_list:
+                # v0.7-D: pre-load baseline cache for this task if it exists,
+                # so the HUD's before/after diff can render. Cache is written
+                # automatically when policy=baseline (below).
+                baseline_cache = _load_baseline_cache(task["id"])
                 for seed in range(trials):
+                    # v0.7-D: emit policy_meta so HUD shows position_mode +
+                    # decoding params alongside the policy badge.
+                    publisher.policy_meta(
+                        policy=policy,
+                        position_mode=position_mode,
+                        seed=seed,
+                        max_steps=task.get("max_steps"),
+                        max_new_tokens=agent.cfg.max_new_tokens,
+                        temperature=agent.cfg.temperature,
+                        steering_endpoint=("steer_act_with_noise"
+                                           if policy == "noise"
+                                           else "steer_act"),
+                    )
+                    # Emit cached baseline actions for each step in advance so
+                    # the HUD can render the diff alongside the live action.
+                    for cached in baseline_cache:
+                        publisher.baseline_action(step=cached["step"], action=cached["action"])
+
                     r = agent.run(task=task, seed=seed, policy_name=policy)
                     results.append(r)
+                    # v0.7-D: if this was a baseline run, refresh the baseline
+                    # cache so subsequent non-baseline runs of this task can
+                    # show a before/after diff in the HUD.
+                    if policy == "baseline" and seed == 0:
+                        _write_baseline_cache(task["id"], Path(r["log_path"]))
                     progress.advance(bar)
 
     out_file = out_dir / f"{policy}.jsonl"
