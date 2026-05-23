@@ -74,11 +74,18 @@ export default function FeatureBars({
 
   // v0.17b: cap default rows to 8 so the right rail stops feeling like
   // an oversized box. Reviewer: "cap to 6-8 rows."
+  //
+  // v0.17c: ALSO use h-full + flex-col so the panel uses its full height —
+  // features at the top, legend pinned to the bottom via mt-auto, the
+  // empty space between them becomes deliberate breathing room instead
+  // of a dark gap below the legend.
   const visibleFeatures = animatedFeatures.slice(0, 8);
+  const hiddenCount = animatedFeatures.length - visibleFeatures.length;
 
   return (
-    <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-200px)]">
-      {visibleFeatures.map((f) => {
+    <div className="flex flex-col h-full">
+      <div className="flex flex-col gap-2">
+        {visibleFeatures.map((f) => {
         const cat = inferCategory(f);
         const isHighlighted = highlightedIds.includes(f.id);
         const isLabelled = cat !== "unlabelled";
@@ -119,14 +126,22 @@ export default function FeatureBars({
             )}
           </div>
         );
-      })}
+        })}
+        {hiddenCount > 0 && (
+          <div className="text-[10px] text-zinc-500 font-mono pl-1 pt-1">
+            +{hiddenCount} more features below threshold
+          </div>
+        )}
+      </div>
 
-      {/* Legend */}
-      <div className="mt-3 pt-3 border-t border-zinc-800 flex flex-wrap gap-3 text-xs">
+      {/* Legend — pinned to the bottom of the panel via mt-auto so the
+          empty space between features and legend becomes deliberate
+          breathing room rather than a dark gap below the legend. */}
+      <div className="mt-auto pt-3 border-t border-zinc-800 flex flex-wrap gap-x-3 gap-y-1 text-xs">
         {(["risk", "behavioral", "epistemic", "task", "unlabelled"] as Category[]).map((c) => (
           <div key={c} className="flex items-center gap-1">
-            <div className={`w-3 h-3 rounded ${CATEGORY_COLORS[c]}`} />
-            <span className={CATEGORY_LABEL_COLORS[c]}>{c}</span>
+            <div className={`w-2.5 h-2.5 rounded-sm ${CATEGORY_COLORS[c]}`} />
+            <span className={`text-[10px] ${CATEGORY_LABEL_COLORS[c]}`}>{c}</span>
           </div>
         ))}
       </div>
