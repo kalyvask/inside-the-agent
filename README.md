@@ -15,6 +15,18 @@ Our 60-trial browser-agent benchmark on Llama-3.1-8B shows this lever has measur
 
 The result reframes interpretability as a deployable intervention layer that makes smaller, cheaper models competitive on tasks where they would otherwise fall short.
 
+### What this enables
+
+Two practical consequences of treating interpretability as an intervention surface rather than only an analysis tool:
+
+1. **Smaller-model agents become competitive on specific failure classes.** When a small model fails because of a specific behavioral circuit (e.g. UI-vocabulary over-firing on promotional buttons), an SAE intervention can rescue that failure without retraining or upgrading to a larger model. The 8B + intervention result above closes most of the gap to the 70B at roughly one-eighth the inference cost. For deployments where dollar-per-call matters (high-volume agents, on-device inference, latency-sensitive products), this is a real lever.
+
+2. **Some classes of evals can be replaced by mechanism reads.** A pass-rate eval tells you "the model failed 30% of the time on category X." An SAE introspection at the failure step tells you "feature f26737 (UI-selection vocabulary) was firing at the wrong moment." The second is more informative per failure and generalizes to nearby tasks without needing additional eval coverage. We do not claim interpretability replaces all evals. We do claim it can shrink the eval surface required to catch a fixed set of failure modes.
+
+### Where this is going
+
+The natural next step is a model trained specifically to be intervened on via interpretability: an agent whose residual stream is organized around clean, intervention-amenable features rather than features that emerge accidentally during pre-training. That requires training a dedicated SAE on agent-task residuals (the LMSYS-Chat-1M corpus the Goodfire SAE was trained on is a chat corpus, not an agent corpus), and optionally co-training the base model against an interpretability objective. Tracked in roadmap item 22. Longer term than this project, but the direction the v0.24-K result points toward.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Modal](https://img.shields.io/badge/runs--on-Modal-purple.svg)](https://modal.com)
