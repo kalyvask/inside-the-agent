@@ -21,15 +21,24 @@ from sae.steering_controller import SteeringPlan
 # Stricter JSON-format spec. Names the specific failure mode (prose-leaking
 # into the target field) and shows a correct/wrong example pair. Format
 # guidance only — no behavioral instruction about traps.
+#
+# v0.24-K bugfix: the original example used `button#add-usb-c-cable` (CSS
+# selector style) which ShopGym's env rejects. Successful trajectories use
+# the bare element_id `add-usb-c-cable`. The earlier 0/60 run with this
+# policy was a result of prescribing the wrong selector format, not a real
+# 70B limitation.
 PROMPT_PREFIX = (
     "STRICT JSON OUTPUT (the action parser requires exact compliance):\n"
     "- Respond with EXACTLY ONE JSON object. Output starts with { and ends with }.\n"
-    "- target MUST be a SINGLE element_id like \"button#add-usb-c-cable\". "
-    "NEVER a phrase like '\"Add to cart\" on \"USB-C Cable\"'.\n"
+    "- target MUST be a SINGLE element_id like \"add-usb-c-cable\" or "
+    "\"search-input\". NEVER a phrase like '\"Add to cart\" on \"USB-C Cable\"' "
+    "and NEVER a CSS-style selector like \"button#add-usb-c-cable\".\n"
     "- No prose before or after. No code fences. No markdown.\n"
     "\n"
-    "CORRECT: {\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}\n"
+    "CORRECT: {\"action\": \"click\", \"target\": \"add-usb-c-cable\"}\n"
+    "CORRECT: {\"action\": \"type\", \"target\": \"search-input\", \"text\": \"usb-c cable\"}\n"
     "WRONG:   {\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}\n"
+    "WRONG:   {\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}\n"
     "\n"
 )
 

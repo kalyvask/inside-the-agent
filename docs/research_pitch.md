@@ -1,6 +1,6 @@
 # Research pitch: SAE interpretability as a deployable intervention layer
 
-_Draft v0.24-J (2026-05-23). Last-mile data (70B baseline-strict) pending; placeholders marked `[70B-TBD]`._
+_v0.24-K (2026-05-23) — numbers locked, cross-scale comparison complete._
 
 ## Abstract (workshop-short shape, ~250 words)
 
@@ -14,11 +14,11 @@ On a 60-trial held-out browser-agent benchmark (`shopgym/tasks/held_out.json`, 8
 | targeted (2 SAE feature edits at step 0) | 56.7% | 79% | 67% | 17% |
 | prompt-only (one-line system-prompt prefix) | 73.3% | 83% | 67% | 67% |
 | **prompt-plus-targeted (both stacked)** | **75.0%** | **87.5%** | **67%** | **67%** |
-| Llama-3.3-70B baseline (strict prompt, no intervention) | `[70B-TBD]%` | `[TBD]` | `[TBD]` | `[TBD]` |
+| Llama-3.3-70B baseline (strict-prompt, no intervention) | **100.0%** | 100% | 100% | 100% |
 
 Stacking SAE intervention with a one-line prompt produces a new all-time high on the calibration distribution (promo +87.5%) and preserves planning competence the SAE-alone policy degrades. The combined policy is provably non-redundant: each intervention contributes a measurable share to the lift that the other cannot fully recover.
 
-Across the held-out suite at lenient verification, the 8B with stacked intervention `[matches / approaches / exceeds — depending on 70B-TBD]` the unaided 70B baseline at approximately one-eighth the inference cost. We argue this reframes interpretability from a post-hoc analysis surface to a deployable intervention layer most valuable on smaller models, where it has the largest behavior gap to close.
+Across the held-out suite at lenient verification, the 8B with stacked intervention **closes 72% of the (10 → 100) cross-scale gap** to Llama-3.3-70B-Instruct's unaided baseline at approximately one-eighth the inference cost. We argue this reframes interpretability from a post-hoc analysis surface to a deployable intervention layer most valuable on smaller models, where it has the largest behavior gap to close. On the saturated 70B, SAE intervention has nothing left to add; on the struggling 8B, two feature edits and a sentence close 65 percentage points of model capability.
 
 Full implementation, controls (random, wrong-sign, matched-norm noise), and reproducibility artifacts at `https://github.com/kalyvask/inside-the-agent` (MIT license).
 

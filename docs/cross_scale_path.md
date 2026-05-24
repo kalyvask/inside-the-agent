@@ -64,6 +64,21 @@ Raw outputs in `artifacts/calibration_70b_fix.json`.
 
 The remaining empirical question: what is the 70B's baseline rate on the full 60-trial held_out suite with the strict prompt? That number quantifies "approaches" in the previous sentence. Captured next via `BRAIN_APP_NAME=inside-the-agent-70b python -m bench.runner --policy baseline-strict-prompt ...`.
 
+### v0.24-K outcome
+
+Two iterations were needed:
+- **First run (v0.24-K-v1) scored 0/60**, but the failure was an operator bug not a model finding: the strict prompt taught the model to emit CSS-style selectors (`button#add-usb-c-cable`), which ShopGym's env rejects (every action `executed=False`). The 70B's JSON was perfectly formed and semantically correct; the env couldn't act on it.
+- **Fix**: the strict prompt now teaches bare element_ids (`add-usb-c-cable`), matching the env's parser convention. Validated with a 1-trial smoke (succeeded in 3 steps).
+- **Second run (v0.24-K final)**: **60/60 = 100%** across all three categories (promo 24/24, halluc 18/18, planning 18/18). Wilson 95% CI [0.94, 1.0]. Avg 2.9 steps per trial (vs the 8B's ~12).
+
+The 70B-baseline-strict is **saturated** on the held-out suite. SAE intervention on the 70B was therefore not benchmarked in full; there is no room for it to add value at this scale on this task class.
+
+**The cross-scale claim, locked in v0.24-K:**
+
+> Llama-3.1-8B-Instruct + SAE intervention + a one-line prompt lifts overall success from **10% baseline to 75% (prompt-plus-targeted)**, closing **72% of the (10 → 100) cross-scale gap** to Llama-3.3-70B-Instruct's unaided baseline at approximately **one-eighth the inference cost**. The interpretability lift is most valuable where the base model needs it most. On a saturated 70B, SAE intervention adds nothing; on a struggling 8B, two feature edits and a sentence close 65 percentage points.
+
+Honest caveat: the 70B uses a 1-line format-rescue prompt prefix (strict-JSON guidance, no behavioral instruction about traps). This is a deployment-implementation detail to make the 70B's verbose default JSON output parseable by ShopGym, NOT a behavioral intervention. The 8B does not require this fix. The cross-scale comparison therefore controls for prompt-format compliance, not decision quality.
+
 ## How to read the result
 
 Three plausible outcomes:

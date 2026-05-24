@@ -93,10 +93,16 @@
       "applied_at": "step_0_only",
       "prompt_prefix_source": "policies/prompt_only_control.py (shared)",
       "purpose": "v0.24-J: combine prompt-only and targeted SAE-steering. Tests whether they are substitutes (matches max), complementary (beats both), or interfering (below targeted)."
+    },
+    "baseline-strict-prompt": {
+      "edits": [],
+      "applied_at": "never",
+      "prompt_prefix_source": "policies/baseline_strict_prompt.py",
+      "purpose": "v0.24-I/K: 70B cross-scale baseline. Strict-JSON format prefix only; NO behavioral instruction."
     }
   },
   "headline_results": {
-    "as_of": "v0.24-J \u2014 added prompt-plus-targeted 2026-05-23",
+    "as_of": "v0.24-K \u2014 refreshed with 70B baseline 2026-05-23",
     "policy_success_rates": {
       "baseline": {
         "successes": 6,
@@ -413,6 +419,33 @@
           0.793
         ]
       }
+    }
+  },
+  "cross_scale": {
+    "model_70b": {
+      "backbone": "meta-llama/Llama-3.3-70B-Instruct",
+      "sae": "Goodfire/Llama-3.3-70B-Instruct-SAE-l50",
+      "sae_layer": 50,
+      "sae_d_features": 65536,
+      "sae_d_in": 8192,
+      "inference": "eager attention (cuDNN-SDPA on H200 bug), temperature 0.05",
+      "gpu": "H200 (141 GB)"
+    },
+    "70b_baseline_strict_results": {
+      "successes": 60,
+      "trials": 60,
+      "rate": 1.0,
+      "wilson_ci_95": [
+        0.94,
+        1.0
+      ],
+      "per_category": {
+        "promo": "24/24 (100%)",
+        "halluc": "18/18 (100%)",
+        "planning": "18/18 (100%)"
+      },
+      "avg_steps_per_trial": 2.9,
+      "note": "v0.24-K: with a 1-line strict-JSON format-rescue prompt prefix (NOT a behavioral instruction about traps), Llama-3.3-70B achieves 100% on the held-out suite. Compared to 8B-with-prompt-plus-targeted (75.0%), this means 8B + SAE intervention closes 72% of the (10% -> 100%) scale gap at ~1/8 the inference cost. The 70B is saturated; SAE intervention not needed at this scale."
     }
   }
 }

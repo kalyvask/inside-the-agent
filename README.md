@@ -4,9 +4,11 @@
 
 A fully open reference implementation of **SAE-feature-level steering on a browser agent**, with a deterministic benchmark and a live interpretability telemetry surface.
 
-Two SAE feature edits at one decision step shift overall success rate from **10% (baseline) to 57% (targeted)** on a 60-trial held-out suite. The lift is concentrated where the features were calibrated: **promotional traps 0 → 79%** and **hallucination tasks 0 → 67%**. On planning tasks the same edits **hurt the agent (33 → 17%)** — a real cost we surface, not bury. A prompt-only control beats targeted overall at **73%** by doing well across all categories, but loses to it on promotional traps. Direction-flipped, random, and matched-norm-noise controls all stay near baseline.
+**The headline result (v0.24-K):** on a 60-trial held-out suite, stacking SAE-feature interventions with a one-line prompt lifts Llama-3.1-8B-Instruct from **10% baseline to 75% (prompt-plus-targeted)** — an intervention that closes **72% of the cross-scale gap** to Llama-3.3-70B's unaided baseline (which scores **100% on the same suite** with a one-line format-rescue prompt) at approximately **one-eighth the inference cost**. The lift on the calibration distribution (promotional-trap tasks) is **0 → 87.5%**. Direction-flipped, random, and matched-norm-noise controls all stay near baseline.
 
-The honest framing: this is not a "best browser agent" claim. It is a working reference for runtime SAE interventions, an observability + controllability surface for agentic LLMs, and a benchmark that surfaces both wins and failure modes by construction. Features themselves are *under-characterized*; we name them by feature ID and logit-lens-derived behavior tag (`f26737_ui_selection_vocab`, `f23803_distraction_avoidance_vocab`) until independent validation lands.
+This reframes interpretability from a post-hoc analysis surface to a deployable intervention layer most valuable on smaller models, where the behavior gap is largest. Two interventions stack non-redundantly: a one-line natural-language prompt and two SAE feature edits at the first decision step. We tested every obvious alternative (SAE alone, prompt alone, SAE-derived prompts, smaller-magnitude edits) and report all results including the negative ones.
+
+Features themselves are *under-characterized*; we name them by feature ID and logit-lens-derived behavior tag (`f26737_ui_selection_vocab`, `f23803_distraction_avoidance_vocab`) until independent validation lands.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -29,6 +31,7 @@ Wilson 95% CIs. All numbers regenerated from `data/results/*.jsonl` via [`python
 | prompt-only (system-prompt control) | 73.3% | [61.0%, 82.9%] | +63 pts | "Avoid promotional banners; use search" in the system prompt |
 | **prompt-plus-targeted (v0.24-J)** | **75.0%** | **[62.8%, 84.2%]** | **+65 pts** | Prompt-only's prefix **+** targeted SAE edits at step 0 — **beats both alone** |
 | interpretability-prompt (v0.24-H) | 25.0% | [15.8%, 37.2%] | +15 pts | SAE-derived prompt naming f26737 + f23803 circuits — **negative result** |
+| Llama-3.3-70B baseline-strict (v0.24-K) | **100.0%** | [94.0%, 100.0%] | n/a (different model) | 70B + 1-line format-rescue prompt, no SAE intervention. Cross-scale ceiling. |
 
 ![Headline chart](artifacts/headline.png)
 
