@@ -1,9 +1,10 @@
-# Live real-website demo — runbook (v0.9-B)
+# Live real-website demo — runbook (v0.24-K)
 
-This is the "live on a real popular website" segment for May 29. The ShopGym
-83% vs 0% headline (see `demo_script.md`) is the canonical result; this segment
-is about showing the audience the HUD streaming live SAE features on a site
-they recognize.
+This is the "live on a real popular website" segment for May 29. The v0.24-K
+ShopGym headline (8B baseline 10%, 8B + prompt + 2 SAE edits 75%, closes 72%
+of the cross-scale gap to 70B's 100% baseline at ~1/8 the inference cost) is
+the canonical result; this segment is about showing the audience the HUD
+streaming live SAE features on a site they recognize.
 
 ## Demo target: **eBay** (US-recognized, headless-friendly, promo-rich)
 
@@ -90,9 +91,9 @@ the audience can follow.
 >
 > [throughout] In the bottom-right, the intervention log keeps the audit. The features panel on the right streams live SAE activations on every step. Notice the features are DIFFERENT from what fires on ShopGym — we're outside the calibration distribution, and the HUD shows that honestly.
 >
-> Look at the `executed` flags in the trajectory log: two steps didn't land — the model emitted parseable JSON but our selector heuristics didn't find a match in eBay's DOM. That's exactly the kind of failure mode the v0.8 instrumentation surfaces — separating 'JSON parsed' from 'browser actually acted.'
+> Look at the `executed` flags in the trajectory log: two steps didn't land — the model emitted parseable JSON but our selector heuristics didn't find a match in eBay's DOM. That's the kind of failure mode the executed-rate diagnostic surfaces, separating 'JSON parsed' from 'browser actually acted.'
 >
-> The eighty-three percent headline at the bottom of the slide is twenty-four trials of step-zero divergence on ShopGym. This live segment is the cockpit working on a real site you've all shopped on."
+> The headline on the slide is the 60-trial held-out benchmark: 8B baseline at ten percent, prompt-plus-targeted at seventy-five percent, closing 72% of the cross-scale gap to a 70B baseline at one-eighth the inference cost. This live segment is the same cockpit working on a real site you've all shopped on."
 
 ## Risks & mitigations
 
@@ -115,5 +116,4 @@ steering."* The live eBay segment shows:
 4. The v0.8 `executed` field exposing the honest gap between
    "model parses valid JSON" and "browser actually executed it"
 
-The 83% on ShopGym remains the headline. This is the "and here's it running
-on the open web" beat.
+The v0.24-K cross-scale headline on ShopGym (8B 10% → 75% with stacked intervention; 70B 100% baseline; 72% gap closure at ~1/8 cost) remains the canonical claim. This live segment is the "and here is it running on the open web" beat.

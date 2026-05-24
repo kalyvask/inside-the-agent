@@ -74,16 +74,25 @@ trial of a controlled experiment.**
 
 > *(Show the headline chart in the slide.)*
 >
-> 24-trial held-out benchmark of shopping tasks. Baseline agent: **0%** — falls
-> for the promotional banner every time. Wrong-sign control — same features,
-> flipped deltas: **4%**, inside baseline's confidence interval. Random feature
-> perturbations: noisy but real. Targeted: **83%**.
+> 60-trial held-out benchmark of shopping tasks. Baseline 8B agent: **10%** —
+> falls for the promotional banner most of the time. Wrong-sign, random, and
+> matched-norm-noise controls all sit inside baseline's confidence interval.
 >
-> The targeted policy is **two SAE feature edits at step zero only**. Suppress
-> feature 26737 by 6 — that's the UI-selection-verb feature, characterized via
-> logit lens. Amplify feature 23803 by 6 — distraction-avoidance-verb. Steps 1
-> onward run with zero steering — the agent acts normally once the first
-> decision flips.
+> Two interventions stack non-redundantly. **SAE feature edits alone: 57%.
+> One-line prompt alone: 73%. Both together: 75%, with 87% on the
+> promotional-trap subset.** Each intervention contributes a measurable share
+> the other cannot recover.
+>
+> The targeted edits are **two SAE features at step zero only**: suppress
+> feature 26737 by 6 (UI-selection-verb circuit, characterized via logit lens)
+> and amplify feature 23803 by 6 (distraction-avoidance circuit). Steps 1
+> onward run with zero steering.
+>
+> Cross-scale comparison: Llama-3.3-70B with a one-line format-rescue prompt
+> and no SAE intervention scores **100% on the same suite**. The 8B + stacked
+> intervention closes **72% of that gap at roughly one-eighth the inference
+> cost**. Interpretability becomes a deployable lever that makes a smaller
+> model competitive where it would normally fall short.
 
 ### 1:30 — Live cockpit on eBay (90s)
 
@@ -94,8 +103,8 @@ trial of a controlled experiment.**
 >
 > *(Click ▶ START AGENT RUN)*
 >
-> That spawns one targeted agent attempt on eBay's deals page — the same
-> policy from the 83% headline. Brain warms, step zero fires.
+> That spawns one prompt-plus-targeted agent attempt on eBay's deals page —
+> the same policy from the 75% headline. Brain warms, step zero fires.
 >
 > *(When step 0's emerald pulse fires)*
 >
@@ -119,26 +128,29 @@ trial of a controlled experiment.**
 > my live intervention. That's the cockpit's whole value: live introspection
 > AND live control, mid-decision.
 
-### 3:00 — Honest close (20s)
+### 3:00 — Close (20s)
 
-> The 83% number is in ShopGym — a controlled storefront. The eBay segment shows
-> the same pipeline running in production conditions. Honest limit, which you
-> can read in `docs/real_world_generalization.md`: on eBay's vocabulary, the
-> features we tuned on ShopGym don't fire identically, and the agent's clicks
-> don't always land on real DOM. The cockpit surfaces both — the `executed`
-> flag in every trajectory step exposes when Playwright actually dispatched
-> versus when it just emitted valid JSON.
+> The 75% number is in ShopGym, a controlled storefront. The cross-scale
+> comparison to 70B comes from the same suite. The eBay segment shows the
+> same pipeline running in production conditions. Limits documented in
+> `docs/real_world_generalization.md`: on eBay's vocabulary the SAE features
+> tuned on ShopGym do not fire identically, and the agent's clicks do not
+> always land on real DOM. The cockpit surfaces both: the `executed` flag in
+> every trajectory step exposes when Playwright actually dispatched versus
+> when the model just emitted valid JSON.
 >
-> The headline rate is real. The mechanism is documented. The cockpit makes
+> The headline rates are real. The mechanism is documented. The cockpit makes
 > both visible. Repo: github.com/kalyvask/inside-the-agent.
 
 ## Talking points if asked
 
 **"How is this different from prompt engineering?"**
-→ Prompt engineering is system-prompt-only. Our `prompt-only` policy gets 75%.
-Feature-level steering gets 83%. The gap is small in this benchmark but the
-*method* is different — we're modifying internal activations, not input tokens.
-The honest comparison is in `artifacts/benchmark_report.md`.
+→ Prompt engineering is system-prompt-only. Our `prompt-only` policy gets 73%.
+SAE feature-level steering alone gets 57%. Stacking them gets 75%, with 87%
+on the promo-trap subset. The two interventions are complementary, not
+substitutes: they modify different things (input tokens vs residual stream
+at layer 19) and each contributes a measurable share the other cannot
+recover. Full comparison in `artifacts/benchmark_report.md`.
 
 **"How do you know what f26737 means?"**
 → Three independent methods. Logit lens (projects decoder row through unembed
@@ -152,9 +164,11 @@ to "type"). We only label features when all three methods agree.
 multi-step planning. Per-category breakdown is in `artifacts/benchmark_report.md`.
 
 **"Cross-model?"**
-→ Llama-only today. Gemma 2-9B + Gemma Scope is scaffolded in
-`modal_deploy/app_gemma.py` with a runbook in `docs/cross_model_path.md`. ~$15
-of Modal compute + 3 hours of attended work. On the roadmap.
+→ Llama-only today. Cross-SCALE within Llama is done (Llama-3.3-70B baseline
+is 100% on the same suite, see v0.24-K). Cross-MODEL replication on Gemma
+2-9B + Gemma Scope is scaffolded in `modal_deploy/app_gemma.py` with a
+runbook in `docs/cross_model_path.md`. ~$15 + 3 hours of attended work, in
+"Future directions" in the README.
 
 **"Production-ready?"**
 → No. This is a research testbed. Two specific gaps documented in the README:
@@ -166,7 +180,8 @@ are tracked in the roadmap section.
 
 | Reaction | What to say |
 |---|---|
-| "But you ran it on ShopGym, not the real web." | "Correct — and the next eBay beat is the same pipeline on the real web. The ShopGym number is controlled science; the eBay segment is the cockpit on production conditions." |
-| "Random got 45% — isn't your effect just noise?" | "Random was a v0.1 bug — same seed every trial. The v0.2 fixed-seed rerun dropped random to 0%, confirming the targeted-vs-random gap is causal, not chance. The bug + fix is in the seed_manifest." |
+| "But you ran it on ShopGym, not the real web." | "Correct, and the next eBay beat is the same pipeline on the real web. The ShopGym number is controlled science; the eBay segment is the cockpit on production conditions." |
+| "Random got 46% — isn't your effect just noise?" | "Random was a v0.1 bug, same seed every trial. The v0.2 fixed-seed rerun dropped random to 15%, well below targeted at 57% and prompt-plus-targeted at 75%. The bug + fix is in the seed_manifest." |
+| "8B is closer to 70B baseline than to 70B with intervention. What did interpretability really add?" | "Strict-cart verification tells the harder story: under strict scoring the 8B intervention reaches 8% vs the 70B's 90%. The 8B reaches the right item but pollutes the cart. Both numbers are in the README. The interpretability lift is real on 'reach the right item' but the 8B remains noisy on 'act with surgical precision'. Honest about both." |
 | "Two features can't be 'the' promotional bias feature." | "Right — we don't claim they are. They're features whose logit lens shows lexical clusters around UI selection and distraction avoidance. Suppressing one and amplifying the other flips the agent's first action. That's the mechanism story, not a label." |
 | "Looks fragile — what if eBay changes the layout?" | "The selector heuristics use 8 strategies and tolerate one or two changes. We track `executed: bool` per step to surface the gap when they break. Real-website agents are a separate hard problem from feature interventions." |

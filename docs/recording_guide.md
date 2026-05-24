@@ -97,12 +97,12 @@ python -m verify.replay_trajectory \\
 ### Clip 5: Headline chart (2:15–2:45)
 
 - Scene: Chart
-- Voice: *"24 trials per policy. Baseline 0. Wrong-sign 4 — flipping the steering direction drops it back to baseline's CI. Random 46 — random perturbations help sometimes. Targeted 83. The wrong-sign result is the smoking gun: direction matters causally."*
+- Voice: *"60 trials per policy on the held-out suite. Baseline 10. Wrong-sign 13, inside baseline's CI. Random 15. SAE-steering alone 57. Prompt-only 73. Both stacked 75, with 87 on promo-traps. The wrong-sign and noise controls are the smoking gun: direction matters causally."*
 
 ### Clip 6: Close (2:45–3:00)
 
 - Scene: Slide (final slide with repo link)
-- Voice: *"Today's agents fail mysteriously. Ours fails legibly. Two SAE feature edits at one decision step take success from 0 to 83 on 24 held-out trials. Llama 3.1-8B, Goodfire SAE — both open weights. Repo at github dot com slash kalyvask slash inside-the-agent."*
+- Voice: *"Today's agents fail mysteriously. Ours fails legibly. A one-line prompt plus two SAE feature edits at one decision step take Llama-3.1-8B from 10 to 75 percent on a 60-trial held-out benchmark, closing 72 percent of the gap to Llama-3.3-70B's unaided baseline at about one-eighth the cost. Llama and Goodfire SAEs, both open weights. Repo at github dot com slash kalyvask slash inside-the-agent."*
 
 ## Phase 4 — Edit (~30 min)
 
