@@ -23,6 +23,14 @@ from .interpretability_prompt import (
     interpretability_prompt_policy,
     PROMPT_PREFIX as INTERP_PROMPT_PREFIX,
 )
+from .baseline_strict_prompt import (
+    baseline_strict_prompt_policy,
+    PROMPT_PREFIX as STRICT_JSON_PREFIX,
+)
+from .prompt_plus_targeted import (
+    prompt_plus_targeted_policy,
+    PROMPT_PREFIX as PROMPT_PLUS_TARGETED_PREFIX,
+)
 
 POLICY_REGISTRY = {
     "baseline": None,
@@ -43,12 +51,22 @@ POLICY_REGISTRY = {
     # the system prompt. Tests whether interpretability gives an info edge
     # over the general prompt-only baseline (73.3%).
     "interpretability-prompt": interpretability_prompt_policy,
+    # v0.24-I: 70B-format-fix baseline. Same as baseline (no steering) plus
+    # the strict-JSON prefix that rescues the 70B's malformed-JSON output.
+    # Used for the cross-scale baseline data point.
+    "baseline-strict-prompt": baseline_strict_prompt_policy,
+    # v0.24-K: combined intervention. Prompt-only's prefix + targeted's SAE
+    # edits applied simultaneously. Tests whether the two are substitutes,
+    # complementary, or interfering.
+    "prompt-plus-targeted": prompt_plus_targeted_policy,
 }
 
 # Per-policy system prompt overrides. Empty string = use the default prompt.
 POLICY_PROMPT_PREFIX = {
     "prompt-only": PROMPT_ONLY_PREFIX,
     "interpretability-prompt": INTERP_PROMPT_PREFIX,
+    "baseline-strict-prompt": STRICT_JSON_PREFIX,
+    "prompt-plus-targeted": PROMPT_PLUS_TARGETED_PREFIX,
 }
 
 __all__ = ["POLICY_REGISTRY", "static_policy", "dynamic_policy", "random_policy", "wrong_sign_policy"]

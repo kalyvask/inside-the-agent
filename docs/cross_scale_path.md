@@ -36,6 +36,34 @@ The rest of the project — `bench/runner.py`, `policies/`, `verify/feature_dril
 | **7. Targeted benchmark** | ~60 min | $6-10 | Same but with the new step-0 edits from step 5. |
 | **Total** | **~4 hours attended** | **~$25-40** | Most of it on Modal GPU time |
 
+## What actually happened (v0.24-I — 2026-05-23)
+
+Three days into the cross-scale run, the picture is more nuanced than the original three outcomes suggested. Documented here to keep the runbook honest.
+
+**1. Deploy + verification worked cleanly.** App `inside-the-agent-70b` is live (`Llama-3.3-70B-Instruct` + `Goodfire/Llama-3.3-70B-Instruct-SAE-l50`). All four `sae_smoke` tests pass: health, read_features, contrast pairs, steering effect. cuDNN SDPA hit "No execution plans support the graph" on the H200; bypassed via `attn_implementation="eager"` (v0.24-C).
+
+**2. Feature discovery surfaced 14 candidates across 6 contrasts** (v0.24-E, see `sae/features_70b.yaml`): 7 high-confidence, 5 medium, 2 low. Promo bias (f25161, f25021, f19733), planning (f4346), goal-tracking (f19808, f16718, f51865) cluster as expected. The IDs are completely different from the 8B's (f26737, f23803) because SAE feature indices do not transfer across SAEs.
+
+**3. `tune_deltas` converged on ±6.0 for every single feature.** The CANDIDATE_MAGNITUDES range tops out at 6.0; the 70B coherence guard passed at that magnitude for every feature tested. Suggests either the 70B is robust to that magnitude across feature directions, or the coherence threshold is too permissive.
+
+**4. `step0_calibration` initially looked like a clean negative.** Baseline emitted malformed JSON (`{"action": "click", "target": "Add to cart" on "USB-C Cable"}`). The action parser rejected it. Most single-feature interventions at ±6 also produced INVALID; all 4 compositions tested produced INVALID; promo-bias features specifically never rescued at any magnitude.
+
+**5. A three-fix smoke (`verify/calibration_70b_fix.py`) found the root cause was prompt format, not steering.** Tried (a) temperature 0.05, (b) a stricter JSON-only system prompt that names the prose-leak failure mode and shows correct/wrong examples, (c) gentler composition magnitudes (±2, ±3, ±4). With the strict prompt + temp 0.05, **every condition produced valid + correct actions** including the previously-failing compositions:
+
+| Condition | Baseline prompt | Strict prompt |
+|---|---|---|
+| baseline (no steering) | INVALID | `type "usb-c cable"` (search) |
+| promo+goal ±6 | INVALID | ✓ click USB-C cable |
+| promo+goal ±3 | INVALID | ✓ click USB-C cable |
+| promo+goal ±2 | INVALID | ✓ click USB-C cable |
+| impulsive+goal ±2 | INVALID | ✓ click USB-C cable |
+
+Raw outputs in `artifacts/calibration_70b_fix.json`.
+
+**6. The implication for the cross-scale story.** With the strict prompt the 70B baseline already chooses search/correct-action on the calibration prompt, while the 8B baseline (with its default prompt) falls for the promo trap. This is a *different* finding than the original three outcomes anticipated — not "scale fixes interpretability" or "scale doesn't fix it", but **"scale + proper prompting reduces the failure mode the SAE intervention was designed to fix"**. The interpretability lift is most valuable where the base model needs it most. The new headline-candidate story: smaller model + SAE intervention approaches larger model's unaided baseline at a fraction of the inference cost.
+
+The remaining empirical question: what is the 70B's baseline rate on the full 60-trial held_out suite with the strict prompt? That number quantifies "approaches" in the previous sentence. Captured next via `BRAIN_APP_NAME=inside-the-agent-70b python -m bench.runner --policy baseline-strict-prompt ...`.
+
 ## How to read the result
 
 Three plausible outcomes:

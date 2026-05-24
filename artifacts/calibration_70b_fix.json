@@ -1,0 +1,273 @@
+[
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "baseline (no steering)",
+    "edits": {},
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "promo f25161 -6",
+    "edits": {
+      "25161": -6.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "goal f19808 +6",
+    "edits": {
+      "19808": 6.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "promo+goal +/-6",
+    "edits": {
+      "25161": -6.0,
+      "19808": 6.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "promo+goal +/-4",
+    "edits": {
+      "25161": -4.0,
+      "19808": 4.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "promo+goal +/-3",
+    "edits": {
+      "25161": -3.0,
+      "19808": 3.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "promo+goal +/-2",
+    "edits": {
+      "25161": -2.0,
+      "19808": 2.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "impulsive+goal +/-3",
+    "edits": {
+      "24688": -3.0,
+      "19808": 3.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "impulsive+goal +/-2",
+    "edits": {
+      "24688": -2.0,
+      "19808": 2.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, baseline-prompt",
+    "condition": "halluc+goal +/-3",
+    "edits": {
+      "7000": -3.0,
+      "19808": 3.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}",
+    "parsed": {
+      "action": "invalid",
+      "raw": "{\"action\": \"click\", \"target\": \"Add to cart\" on \"USB-C Cable\"}"
+    },
+    "category": "[INVALID]"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "baseline (no steering)",
+    "edits": {},
+    "raw": "{\"action\": \"type\", \"target\": \"input#search-input\", \"text\": \"usb-c cable\"}",
+    "parsed": {
+      "action": "type",
+      "target": "input#search-input",
+      "text": "usb-c cable"
+    },
+    "category": "type('usb-c cable')"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "promo f25161 -6",
+    "edits": {
+      "25161": -6.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}",
+    "parsed": {
+      "action": "click",
+      "target": "button#add-usb-c-cable"
+    },
+    "category": "\u2713 click USB-C cable"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "goal f19808 +6",
+    "edits": {
+      "19808": 6.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}",
+    "parsed": {
+      "action": "click",
+      "target": "button#add-usb-c-cable"
+    },
+    "category": "\u2713 click USB-C cable"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "promo+goal +/-6",
+    "edits": {
+      "25161": -6.0,
+      "19808": 6.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}",
+    "parsed": {
+      "action": "click",
+      "target": "button#add-usb-c-cable"
+    },
+    "category": "\u2713 click USB-C cable"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "promo+goal +/-4",
+    "edits": {
+      "25161": -4.0,
+      "19808": 4.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}",
+    "parsed": {
+      "action": "click",
+      "target": "button#add-usb-c-cable"
+    },
+    "category": "\u2713 click USB-C cable"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "promo+goal +/-3",
+    "edits": {
+      "25161": -3.0,
+      "19808": 3.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}",
+    "parsed": {
+      "action": "click",
+      "target": "button#add-usb-c-cable"
+    },
+    "category": "\u2713 click USB-C cable"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "promo+goal +/-2",
+    "edits": {
+      "25161": -2.0,
+      "19808": 2.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}",
+    "parsed": {
+      "action": "click",
+      "target": "button#add-usb-c-cable"
+    },
+    "category": "\u2713 click USB-C cable"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "impulsive+goal +/-3",
+    "edits": {
+      "24688": -3.0,
+      "19808": 3.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}",
+    "parsed": {
+      "action": "click",
+      "target": "button#add-usb-c-cable"
+    },
+    "category": "\u2713 click USB-C cable"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "impulsive+goal +/-2",
+    "edits": {
+      "24688": -2.0,
+      "19808": 2.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}",
+    "parsed": {
+      "action": "click",
+      "target": "button#add-usb-c-cable"
+    },
+    "category": "\u2713 click USB-C cable"
+  },
+  {
+    "variant": "temp=0.05, strict-prompt",
+    "condition": "halluc+goal +/-3",
+    "edits": {
+      "7000": -3.0,
+      "19808": 3.0
+    },
+    "raw": "{\"action\": \"click\", \"target\": \"button#add-usb-c-cable\"}",
+    "parsed": {
+      "action": "click",
+      "target": "button#add-usb-c-cable"
+    },
+    "category": "\u2713 click USB-C cable"
+  }
+]
