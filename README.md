@@ -47,7 +47,7 @@ Wilson 95% CIs. All numbers regenerated from `data/results/*.jsonl` via [`python
 | **targeted — 2 SAE feature edits at Step 0** | **56.7%** | **[44.1%, 68.4%]** | **+47 pts** | f26737 (-6) + f23803 (+6), `position_mode=all` |
 | prompt-only (system-prompt control) | 73.3% | [61.0%, 82.9%] | +63 pts | "Avoid promotional banners; use search" in the system prompt |
 | **prompt-plus-targeted (v0.24-J)** | **75.0%** | **[62.8%, 84.2%]** | **+65 pts** | Prompt-only's prefix **+** targeted SAE edits at step 0 — **beats both alone** |
-| interpretability-prompt (v0.24-H) | 25.0% | [15.8%, 37.2%] | +15 pts | SAE-derived prompt naming f26737 + f23803 circuits — **negative result** |
+| interpretability-prompt (v0.24-H) | 25.0% | [15.8%, 37.2%] | +15 pts | SAE-derived prompt naming f26737 + f23803 circuits |
 | Llama-3.3-70B baseline-strict (v0.24-K) | **100.0%** | [94.0%, 100.0%] | n/a (different model) | 70B + 1-line format-rescue prompt, no SAE intervention. Cross-scale ceiling. |
 
 ![Headline chart](artifacts/headline.png)
@@ -70,7 +70,7 @@ The 8B success rates above use the **lenient** verifier: "target product is in t
 
 Under strict scoring the cross-scale gap is starker. The 8B + intervention closes 72% of the **lenient** gap (10 → 75 vs 70B's 100) but only ~9% of the **strict** gap (0 → 8.3 vs 70B's 90). The lift is real on "reach the right item" but the 8B remains noisy on "act with surgical precision." The 70B picks cleanly in 2-3 steps; the 8B reaches the same item in 7-12 steps and often adds extras along the way.
 
-Both numbers are reported because they measure different things and both are interesting. Strict-cart is the harder bar and the more honest one for production deployment.
+Both numbers are reported because they measure different things. Strict-cart is the harder bar and the more relevant one for production deployment where cart hygiene matters.
 
 ### Action quality: valid vs executed (v0.24-F diagnostic)
 
@@ -103,11 +103,11 @@ The targeted edits don't lift uniformly — the **mechanism is category-specific
 | wrong-sign | 4% | 33% | 6% |
 | random | 0% | 22% | 28% |
 
-Three honest findings:
+Three readings from the breakdown:
 
-1. **Targeted dominates the calibration distribution.** On promotional traps — what we tuned for — the agent goes from 0% to 79%. The original v0.2 headline (83% on 24 trials) was correct for promo; the 56.7% overall just averages across categories.
-2. **Targeted transfers cross-domain to hallucination tasks.** 0% → 67% on a category we never calibrated against. Suppressing UI-selection vocabulary stops the agent from inventing buttons that don't exist. Evidence of cross-distribution generalization.
-3. **Targeted *hurts* on planning.** 33% → 17%, worse than baseline. The features that block "click the wrong thing" also block "click the right thing" when multi-step navigation needs legitimate clicks. **Mechanistically consistent** — the logit lens predicts this failure.
+1. **Targeted dominates the calibration distribution.** On promotional traps, the agent goes from 0% to 79%. The 56.7% overall averages across categories.
+2. **Targeted transfers cross-domain to hallucination tasks.** 0% → 67% on a category not used for calibration. Suppressing UI-selection vocabulary stops the agent from inventing buttons that don't exist.
+3. **Targeted hurts on planning.** 33% → 17%, below baseline. The features that block "click the wrong thing" also block "click the right thing" when multi-step navigation needs legitimate clicks. The logit lens predicts this failure mode.
 
 ### When does SAE steering beat prompt-only?
 
@@ -126,20 +126,20 @@ The combination has now been tested (v0.24-J) and lands at **75.0% overall — b
 
 SAE steering is not a replacement for prompt engineering; it is a runtime intervention surface at a layer of representation prompts cannot directly access. When you stack the two, you get the prompt-only baseline floor *plus* a category-specific causal lift you couldn't get from prompting alone.
 
-#### Negative result: interpretability-derived prompts (v0.24-H)
+#### Interpretability-derived prompts (v0.24-H)
 
-A natural follow-up: take what the SAE characterization tells us (f26737 = UI-selection vocabulary, f23803 = distraction-tracking) and re-express it as an explicit system-prompt instruction. The hypothesis was that interpretability provenance would beat the generic prompt-only baseline.
+We tested whether the SAE characterization could be re-expressed as a prompt: name the discovered circuits (f26737 = UI-selection vocabulary, f23803 = distraction-tracking) directly in the system prompt and see if that beats the generic prompt-only baseline.
 
-It did not. The interpretability-prompt (12 lines, names both circuits, explains the mechanism) scored **25.0% overall vs prompt-only's 73.3%**. The catastrophic failure was on promo specifically: **4% vs prompt-only's 83%**. Halluc was comparable (56% vs 67%); planning was slightly better than the steering version but worse than prompt-only (22% vs 17% vs 67%).
+It did not. The interpretability-prompt (12 lines, names both circuits, explains the mechanism) scored **25.0% overall vs prompt-only's 73.3%**, with the largest gap on promo specifically (4% vs 83%). Halluc was comparable (56% vs 67%); planning was slightly better than the steering version but worse than prompt-only (22% vs 17% vs 67%).
 
-What this tells us:
-- **Interpretability provenance does not automatically beat well-written prompts.** A 4-line natural prompt outperformed a 12-line mechanistic explanation by 48 points.
-- **Self-aware framing may backfire.** Telling the model "we have measured your activations and your circuit f26737 fires on..." likely triggers meta-reasoning that disrupts decisive action at the very decision moment we are trying to influence.
-- **SAE steering and prompt-only are distinct interventions, not interchangeable.** You cannot reduce one to the other by translating SAE insights into prompt text. That makes the SAE intervention surface genuinely additional, not redundant.
+Three reads:
+- A 4-line natural prompt outperformed a 12-line mechanistic explanation by 48 points. Interpretability provenance does not automatically beat well-written prompts.
+- Naming circuits in the prompt likely triggers meta-reasoning that disrupts decisive action at the decision moment we are trying to influence.
+- SAE steering and prompt-only are distinct interventions. You cannot reduce one to the other by translating SAE insights into prompt text. That makes the SAE intervention surface additional, not redundant.
 
 Full prompt + policy in [`policies/interpretability_prompt.py`](policies/interpretability_prompt.py).
 
-### How to read these numbers honestly
+### Caveats
 
 - **Wrong-sign sits inside baseline's CI.** Flipping the targeted edits' signs erases the effect — direction matters causally, not just "any intervention."
 - **Random at 15% is the corrected number.** v0.1 reported random at 45.8% due to a fixed-seed bug; v0.2-A fixed it; v0.8 confirms random doesn't get lucky much.
