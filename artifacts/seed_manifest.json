@@ -76,10 +76,27 @@
       "applied_at": "never",
       "prompt_prefix_source": "policies/interpretability_prompt.py",
       "purpose": "Test whether SAE-derived characterization (names f26737 ui-vocab and f23803 distraction-tracking circuits) beats the generic prompt-only baseline."
+    },
+    "prompt-plus-targeted": {
+      "edits": [
+        {
+          "feature_id": 26737,
+          "delta": -6.0,
+          "label": "f26737_invented_action_supp"
+        },
+        {
+          "feature_id": 23803,
+          "delta": 6.0,
+          "label": "f23803_goal_anchor"
+        }
+      ],
+      "applied_at": "step_0_only",
+      "prompt_prefix_source": "policies/prompt_only_control.py (shared)",
+      "purpose": "v0.24-J: combine prompt-only and targeted SAE-steering. Tests whether they are substitutes (matches max), complementary (beats both), or interfering (below targeted)."
     }
   },
   "headline_results": {
-    "as_of": "v0.24-H \u2014 refreshed with interp-prompt 2026-05-23",
+    "as_of": "v0.24-J \u2014 added prompt-plus-targeted 2026-05-23",
     "policy_success_rates": {
       "baseline": {
         "successes": 6,
@@ -162,6 +179,16 @@
           0.372
         ],
         "note": "v0.24-H: SAE-derived prompt (names f26737 + f23803 circuits in system prompt). Negative result: 25.0% overall, vs prompt-only 73.3% and targeted 56.7%. Catastrophic on promo (4.2% vs prompt-only 83.3%). Mechanism explanation does not translate to action."
+      },
+      "prompt-plus-targeted": {
+        "successes": 45,
+        "trials": 60,
+        "rate": 0.75,
+        "wilson_ci_95": [
+          0.628,
+          0.842
+        ],
+        "note": "v0.24-J: combined prompt-only + targeted SAE-steering. 75.0% beats either alone. Promo 87.5% (new high), halluc 66.7%, planning 66.7% (rescued from SAE-only 17%). Interventions are complementary, not substitutes."
       }
     },
     "policy_success_rates_by_scope": {

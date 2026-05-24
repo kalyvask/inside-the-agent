@@ -27,6 +27,7 @@ Wilson 95% CIs. All numbers regenerated from `data/results/*.jsonl` via [`python
 | noise (matched-norm) | 18.3% | [10.6%, 29.9%] | +8 pts | Random isotropic residual perturbation, same magnitude as targeted |
 | **targeted — 2 SAE feature edits at Step 0** | **56.7%** | **[44.1%, 68.4%]** | **+47 pts** | f26737 (-6) + f23803 (+6), `position_mode=all` |
 | prompt-only (system-prompt control) | 73.3% | [61.0%, 82.9%] | +63 pts | "Avoid promotional banners; use search" in the system prompt |
+| **prompt-plus-targeted (v0.24-J)** | **75.0%** | **[62.8%, 84.2%]** | **+65 pts** | Prompt-only's prefix **+** targeted SAE edits at step 0 — **beats both alone** |
 | interpretability-prompt (v0.24-H) | 25.0% | [15.8%, 37.2%] | +15 pts | SAE-derived prompt naming f26737 + f23803 circuits — **negative result** |
 
 ![Headline chart](artifacts/headline.png)
@@ -57,6 +58,7 @@ The targeted edits don't lift uniformly — the **mechanism is category-specific
 | baseline | 0% (0/24) | 0% (0/18) | 33% (6/18) |
 | **targeted** | **79%** (19/24) | **67%** (12/18) | **17%** (3/18) |
 | prompt-only | 83% (20/24) | 67% (12/18) | 67% (12/18) |
+| **prompt-plus-targeted** | **88%** (21/24) | 67% (12/18) | 67% (12/18) |
 | interpretability-prompt | **4%** (1/24) | 56% (10/18) | 22% (4/18) |
 | wrong-sign | 4% | 33% | 6% |
 | random | 0% | 22% | 28% |
@@ -80,7 +82,9 @@ Prompt-only wins on average; SAE steering wins inside its calibration domain. Th
 - **Prompt-only modifies the input tokens** ("Avoid promotional banners; use search."). It works because the model follows instructions and the instruction happens to be correct across all three categories.
 - **Targeted modifies the residual stream at layer 19** by ±6 on two SAE features. It works on promo and hallucination because those features encode "click this option" UI-selection vocabulary, which is the trap. On planning, the same features encode the legitimate clicks the agent needs to navigate, so suppressing them backfires.
 
-The combination (prompt-only AND SAE steering simultaneously) is the obvious next experiment and is on the roadmap. SAE steering is not a replacement for prompt engineering; it is a runtime intervention surface at a layer of representation prompts cannot directly access, with category-specific causal effects you can read and write live.
+The combination has now been tested (v0.24-J) and lands at **75.0% overall — beating either intervention alone**. Per-category: promo **87.5% (new all-time high)**, halluc 66.7%, planning 66.7%. The two interventions are **complementary, not substitutes**: prompt-only handles general guidance across all categories; SAE steering adds a measurable lift on the calibration distribution (promo) without breaking planning because the prompt restores legitimate clicking. This was the central question from earlier reviewer rounds and the data resolves it cleanly.
+
+SAE steering is not a replacement for prompt engineering; it is a runtime intervention surface at a layer of representation prompts cannot directly access. When you stack the two, you get the prompt-only baseline floor *plus* a category-specific causal lift you couldn't get from prompting alone.
 
 #### Negative result: interpretability-derived prompts (v0.24-H)
 

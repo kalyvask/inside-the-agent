@@ -264,7 +264,13 @@ def main(
         env=env,
         policy=policy_fn,
         feature_catalog=catalog,
-        config=AgentConfig(step_pause=pause),
+        # v0.24-I: AGENT_TEMPERATURE env override so the 70B cross-scale
+        # benchmark can use 0.05 (strict-prompt + low-temp = parseable JSON)
+        # without changing the 8B default of 0.2 baked into the v0.8 results.
+        config=AgentConfig(
+            step_pause=pause,
+            temperature=float(os.environ.get("AGENT_TEMPERATURE", 0.2)),
+        ),
         hud=publisher,
     )
 
