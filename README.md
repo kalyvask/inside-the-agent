@@ -11,7 +11,7 @@ Sparse Autoencoder (SAE) features give two things black-box evals can't:
 
 Why this matters: agent improvement today happens through prompt engineering, eval-driven retraining, or buying a bigger model. Interpretability adds a fourth lever, one that operates at a representation layer prompts cannot directly access. The same SAE feature you read to explain a failure is the one you write to correct it.
 
-Our 60-trial browser-agent benchmark on Llama-3.1-8B shows this lever has measurable value. Stacking a one-line system prompt with two SAE feature edits lifts overall success from **10% baseline to 75%**. Either intervention alone scores lower (73% prompt-only, 57% SAE-only). The combination closes **72% of the (10 → 100) cross-scale gap** to Llama-3.3-70B-Instruct's unaided baseline at about **one-eighth the inference cost**.
+Our 60-trial browser-agent benchmark on Llama-3.1-8B shows this lever has measurable value. Stacking a one-line system prompt with two SAE feature edits lifts overall success from **10% baseline to 75%** (lenient verification: target product reached the cart). Either intervention alone scores lower (73% prompt-only, 57% SAE-only). The combination closes **72% of the lenient cross-scale gap** to Llama-3.3-70B-Instruct's unaided baseline (100%) at about **one-eighth the inference cost**. Under strict verification (cart contains target exactly once, no pollution), the same intervention reaches 8.3% vs the 70B's 90%: the 8B reaches the right item but often pollutes the cart with duplicates or extras. We report both numbers because they measure different things and both are interesting.
 
 The result reframes interpretability as a deployable intervention layer that makes smaller, cheaper models competitive on tasks where they would otherwise fall short.
 
@@ -51,6 +51,26 @@ Wilson 95% CIs. All numbers regenerated from `data/results/*.jsonl` via [`python
 | Llama-3.3-70B baseline-strict (v0.24-K) | **100.0%** | [94.0%, 100.0%] | n/a (different model) | 70B + 1-line format-rescue prompt, no SAE intervention. Cross-scale ceiling. |
 
 ![Headline chart](artifacts/headline.png)
+
+### Strict vs lenient verification (v0.24-K diagnostic)
+
+The 8B success rates above use the **lenient** verifier: "target product is in the cart at some point." The **strict** verifier ("cart contains target exactly once AND no other product was added") shows a sharper picture, because the 8B often reaches the right item *and also* pollutes the cart with duplicates or extras.
+
+| Policy | n | Lenient | Strict |
+|---|---:|---:|---:|
+| baseline | 60 | 10.0% | 0.0% |
+| wrong-sign | 60 | 13.3% | 0.0% |
+| random | 60 | 15.0% | 0.0% |
+| noise | 60 | 18.3% | 0.0% |
+| targeted | 60 | 56.7% | 0.0% |
+| failure-mining | 60 | 58.3% | 0.0% |
+| prompt-only | 60 | 73.3% | 0.0% |
+| **prompt-plus-targeted** | 60 | **75.0%** | **8.3%** |
+| Llama-3.3-70B baseline-strict | 60 | **100.0%** | **90.0%** |
+
+Under strict scoring the cross-scale gap is starker. The 8B + intervention closes 72% of the **lenient** gap (10 → 75 vs 70B's 100) but only ~9% of the **strict** gap (0 → 8.3 vs 70B's 90). The lift is real on "reach the right item" but the 8B remains noisy on "act with surgical precision." The 70B picks cleanly in 2-3 steps; the 8B reaches the same item in 7-12 steps and often adds extras along the way.
+
+Both numbers are reported because they measure different things and both are interesting. Strict-cart is the harder bar and the more honest one for production deployment.
 
 ### Action quality: valid vs executed (v0.24-F diagnostic)
 
@@ -390,52 +410,17 @@ inside-the-agent/
 └── data/                 trajectories, results, baselines, screenshots (gitignored)
 ```
 
-## Roadmap
+## Future directions
 
-### Immediate (this week — demo polish)
+The headline result is locked. Three directions worth pursuing further, in order of cost and impact:
 
-1. **Main rerun + auto-finalize** _(running now, ~2h)_. `bench/rerun_p0.py` is replacing the stale v0.2 artifact rows. `bench/v0_8_finalize.py` auto-chains scope reruns + report regen + manifest refresh + artifact_check.
-2. **Regenerate `artifacts/headline.png`** from the new numbers — current chart is v0.2.
-3. **Refresh README headline table** with v0.7+ rates (random=0% after seed fix, noise + prompt-only rows added).
-4. **Flip `artifact_check` from soft-fail to hard-fail in CI** once the artifact rows are consistent.
-5. **Record the live cockpit clip** via `python record_demo.py` + screen capture.
+1. **Cross-model replication on a non-Llama open SAE.** Gemma-2-9B + Gemma Scope SAE is scaffolded in `modal_deploy/app_gemma.py` with a runbook in [`docs/cross_model_path.md`](docs/cross_model_path.md). ~$15 Modal + 3 hours attended. Defuses the "is the result Llama-specific?" reviewer question.
 
-### Short-term (1-2 weeks — close P1 reviewer items)
+2. **Multi-domain expansion.** Today's benchmark covers promotional traps, hallucination tasks, and short planning sequences. Adding forms, comparison shopping, longer multi-step planning, and form-fill suites would test whether the intervention pattern generalizes beyond shopping browser tasks.
 
-6. **Strict-cart as canonical headline.** Reviewer P1: lenient verifier hides repeated add-to-cart pollution. Run a strict pass that captures `cart_contains_target_exactly_once` alongside lenient.
-7. **Per-feature ablation studies.** `f26737` alone vs `f23803` alone vs combined — closes the "is the effect synergistic or additive?" question.
-8. **Sponsored-vs-organic decision** on a search-results page. Needs the real-site selector flake addressed first (LLM emits `search-result-N` patterns that don't exist in real DOMs).
-9. **HUD: latency badge per step** — credibility marker, ~30 min of plumbing existing timestamps.
-10. **HUD: counterfactual baseline diff.** Currently uses a cache from a prior baseline run; live counterfactual = call brain twice/step (with + without edits), shows true per-step divergence. Doubles brain cost.
+3. **Train a dedicated SAE on browser-agent residuals.** The Goodfire SAE was trained on LMSYS-Chat-1M (a chat corpus); its features encode chat concepts. A SAE trained on residual activations from agent episodes should yield features more semantically aligned with agent decisions ("sponsored-banner-recognition" instead of "ui-selection vocabulary"). Significant cost (~$500-1000 GPU training run + infrastructure) but it is the most direct path past the current lexical-feature limit and toward the dedicated interpretability-optimized model framed in the "Where this is going" section above.
 
-### Medium-term (next month — strengthen the science)
-
-11. **Cross-model Gemma replication.** Scaffolded in `modal_deploy/app_gemma.py`; runbook in [`docs/cross_model_path.md`](docs/cross_model_path.md). ~$15 Modal + 3 hours attended. Closes the biggest reviewer ask: *"is the result Llama-specific or general?"*
-12. _v0.22 — built._ **Larger corpus probe.** `verify/corpus_probe_large.py` streams wikitext-103 (1000 prompts) and reports top-activating prompts per watched feature. Output: `artifacts/corpus_probe_large.json`. Tightens the lexical-cluster labels in `docs/feature_characterization.md`.
-13. **Failure-mining feature semantic characterization.** `f50853 / f19079 / f39820 / f44602` are still tagged `fail_mode_a/b/c/d` — their logit lens returned code symbols, not English clusters. v0.22 corpus probe ALSO runs on three of these; results will either reinforce or weaken the labels.
-14. **Cross-reference with Neuronpedia.** Other public SAE explorers may have richer data on our features; haven't checked.
-15. _v0.21 — built._ **HUD trajectory replay mode + browser.** `▶ REPLAY SAVED` button in the HUD lists every saved trajectory and replays it through the cockpit. Zero Modal cost.
-16. _v0.24 — scaffolded, awaiting demo._ **Cross-scale to Llama-3.3-70B + Goodfire l50.** `modal_deploy/app_70b.py` with all methods pre-filled; runbook in [`docs/cross_scale_path.md`](docs/cross_scale_path.md). ~$25-40 Modal + 4 hours attended. Tests whether the planning failure mode at 8B is intrinsic to the lexical-feature limit (which should persist at 70B) or specific to the 8B SAE's representation (which scale should fix). Either result is publishable: the first as evidence the limit is in the SAE training objective, the second as evidence for Goodfire's "bigger models are easier to interpret" thesis at the agentic-intervention level.
-
-### Long-term (months — research direction)
-
-17. **Multi-domain expansion.** Beyond promo / halluc / planning — add forms, comparison shopping, multi-step planning suites. Test whether targeted generalizes across task types.
-18. **Dynamic policy v2.** Current adaptive thresholds (0.40 for failure-mining features) are hand-set. Learn thresholds from a validation split.
-19. **Compositional steering.** Pair `f26737` with each of its decoder-neighbors (cosine sim > 0.5) — does the steering effect amplify? Tests whether feature clusters or single features carry the meaning.
-20. **Reusable testbed.** Package the runner + HUD + brain-server contract so others can plug in their SAE + their model. The wedge per reviewer P2: *"reproducible testbed for runtime feature interventions in browser agents, with live telemetry and controllable steering."*
-21. **Failure causality vs correlation.** The 4 failure-mining features fire in 100% of failures — but a heartbeat fires in 100% of car accidents. The `failure-mining` policy (v0.9) tests whether suppressing them actually rescues behavior, separating the causal from correlational story.
-22. **Train a dedicated SAE on browser-agent residuals.** The Goodfire SAE we use was trained on LMSYS-Chat-1M, a chat-style corpus. Its features reflect chat concepts; that is why the top intervention features encode lexical patterns ("ui-selection vocabulary") rather than agent-level concepts ("sponsored-banner-recognition"). A SAE trained on residual-stream activations collected from agent episodes (target: ~10M tokens across promo, hallucination, and planning categories) should yield features more semantically aligned with agent decisions. Significant cost (~$500-1000 GPU training run) and infrastructure to build, but it addresses the lexical-feature limit at its source rather than only at the model-scale level. The most direct path past the planning failure mode if the v0.24 70B run shows it persists.
-
-### Status of the 4 original "Open questions"
-
-The four open questions from earlier reviewer feedback are now wired and measurable in the codebase:
-
-| Original ask | Status | Where |
-|---|---|---|
-| Failure-mode features as steering targets | ✅ built (`failure-mining` policy + catalog labels) | `policies/failure_mining.py` |
-| Cross-domain (hallucination + planning) | ✅ wired | per-category section in `artifacts/benchmark_report.md` |
-| Cross-model (Gemma 2-9B + Gemma Scope) | 📘 runbook ready | `docs/cross_model_path.md` |
-| Dynamic steering (not just step 0) | ✅ rewritten | `policies/dynamic.py` watches failure features per step |
+The four reviewer "open questions" from earlier rounds (failure-mode features as steering targets, cross-domain hallucination + planning, cross-model replication, dynamic step-by-step steering) are all wired in the codebase. See `policies/failure_mining.py`, `policies/dynamic.py`, the per-category breakdown in `artifacts/benchmark_report.md`, and `docs/cross_model_path.md` respectively.
 
 ## Built on
 
