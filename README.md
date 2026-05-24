@@ -2,13 +2,18 @@
 
 > *A reproducible harness for SAE feature interventions on browser agents.*
 
-A fully open reference implementation of **SAE-feature-level steering on a browser agent**, with a deterministic benchmark and a live interpretability telemetry surface.
+Black-box benchmarks tell you *that* a language model agent failed. They don't tell you *why*, and they don't help you fix it.
 
-**The headline result (v0.24-K):** on a 60-trial held-out suite, stacking SAE-feature interventions with a one-line prompt lifts Llama-3.1-8B-Instruct from **10% baseline to 75% (prompt-plus-targeted)** — an intervention that closes **72% of the cross-scale gap** to Llama-3.3-70B's unaided baseline (which scores **100% on the same suite** with a one-line format-rescue prompt) at approximately **one-eighth the inference cost**. The lift on the calibration distribution (promotional-trap tasks) is **0 → 87.5%**. Direction-flipped, random, and matched-norm-noise controls all stay near baseline.
+Sparse Autoencoder (SAE) features give two things black-box evals can't:
 
-This reframes interpretability from a post-hoc analysis surface to a deployable intervention layer most valuable on smaller models, where the behavior gap is largest. Two interventions stack non-redundantly: a one-line natural-language prompt and two SAE feature edits at the first decision step. We tested every obvious alternative (SAE alone, prompt alone, SAE-derived prompts, smaller-magnitude edits) and report all results including the negative ones.
+1. **A mechanistic read on why an agent failed.** SAE features show which concept circuits inside the model were active at the wrong decision.
+2. **A runtime way to fix it.** Adding or subtracting features at inference time changes the next action. No retraining required.
 
-Features themselves are *under-characterized*; we name them by feature ID and logit-lens-derived behavior tag (`f26737_ui_selection_vocab`, `f23803_distraction_avoidance_vocab`) until independent validation lands.
+Why this matters: agent improvement today happens through prompt engineering, eval-driven retraining, or buying a bigger model. Interpretability adds a fourth lever, one that operates at a representation layer prompts cannot directly access. The same SAE feature you read to explain a failure is the one you write to correct it.
+
+Our 60-trial browser-agent benchmark on Llama-3.1-8B shows this lever has measurable value. Stacking a one-line system prompt with two SAE feature edits lifts overall success from **10% baseline to 75%**. Either intervention alone scores lower (73% prompt-only, 57% SAE-only). The combination closes **72% of the (10 → 100) cross-scale gap** to Llama-3.3-70B-Instruct's unaided baseline at about **one-eighth the inference cost**.
+
+The result reframes interpretability as a deployable intervention layer that makes smaller, cheaper models competitive on tasks where they would otherwise fall short.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
