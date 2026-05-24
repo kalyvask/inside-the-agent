@@ -27,6 +27,7 @@ Wilson 95% CIs. All numbers regenerated from `data/results/*.jsonl` via [`python
 | noise (matched-norm) | 18.3% | [10.6%, 29.9%] | +8 pts | Random isotropic residual perturbation, same magnitude as targeted |
 | **targeted — 2 SAE feature edits at Step 0** | **56.7%** | **[44.1%, 68.4%]** | **+47 pts** | f26737 (-6) + f23803 (+6), `position_mode=all` |
 | prompt-only (system-prompt control) | 73.3% | [61.0%, 82.9%] | +63 pts | "Avoid promotional banners; use search" in the system prompt |
+| interpretability-prompt (v0.24-H) | 25.0% | [15.8%, 37.2%] | +15 pts | SAE-derived prompt naming f26737 + f23803 circuits — **negative result** |
 
 ![Headline chart](artifacts/headline.png)
 
@@ -56,6 +57,7 @@ The targeted edits don't lift uniformly — the **mechanism is category-specific
 | baseline | 0% (0/24) | 0% (0/18) | 33% (6/18) |
 | **targeted** | **79%** (19/24) | **67%** (12/18) | **17%** (3/18) |
 | prompt-only | 83% (20/24) | 67% (12/18) | 67% (12/18) |
+| interpretability-prompt | **4%** (1/24) | 56% (10/18) | 22% (4/18) |
 | wrong-sign | 4% | 33% | 6% |
 | random | 0% | 22% | 28% |
 
@@ -79,6 +81,19 @@ Prompt-only wins on average; SAE steering wins inside its calibration domain. Th
 - **Targeted modifies the residual stream at layer 19** by ±6 on two SAE features. It works on promo and hallucination because those features encode "click this option" UI-selection vocabulary, which is the trap. On planning, the same features encode the legitimate clicks the agent needs to navigate, so suppressing them backfires.
 
 The combination (prompt-only AND SAE steering simultaneously) is the obvious next experiment and is on the roadmap. SAE steering is not a replacement for prompt engineering; it is a runtime intervention surface at a layer of representation prompts cannot directly access, with category-specific causal effects you can read and write live.
+
+#### Negative result: interpretability-derived prompts (v0.24-H)
+
+A natural follow-up: take what the SAE characterization tells us (f26737 = UI-selection vocabulary, f23803 = distraction-tracking) and re-express it as an explicit system-prompt instruction. The hypothesis was that interpretability provenance would beat the generic prompt-only baseline.
+
+It did not. The interpretability-prompt (12 lines, names both circuits, explains the mechanism) scored **25.0% overall vs prompt-only's 73.3%**. The catastrophic failure was on promo specifically: **4% vs prompt-only's 83%**. Halluc was comparable (56% vs 67%); planning was slightly better than the steering version but worse than prompt-only (22% vs 17% vs 67%).
+
+What this tells us:
+- **Interpretability provenance does not automatically beat well-written prompts.** A 4-line natural prompt outperformed a 12-line mechanistic explanation by 48 points.
+- **Self-aware framing may backfire.** Telling the model "we have measured your activations and your circuit f26737 fires on..." likely triggers meta-reasoning that disrupts decisive action at the very decision moment we are trying to influence.
+- **SAE steering and prompt-only are distinct interventions, not interchangeable.** You cannot reduce one to the other by translating SAE insights into prompt text. That makes the SAE intervention surface genuinely additional, not redundant.
+
+Full prompt + policy in [`policies/interpretability_prompt.py`](policies/interpretability_prompt.py).
 
 ### How to read these numbers honestly
 

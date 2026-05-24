@@ -70,10 +70,16 @@
       "seed_recipe": "random.Random(f'random_policy:{trial_seed}')",
       "purpose": "feature-identity control; different features per trial",
       "note_v01": "v0.1 had a fixed seed=0 bug. Fixed in v0.2 commit."
+    },
+    "interpretability-prompt": {
+      "edits": [],
+      "applied_at": "never",
+      "prompt_prefix_source": "policies/interpretability_prompt.py",
+      "purpose": "Test whether SAE-derived characterization (names f26737 ui-vocab and f23803 distraction-tracking circuits) beats the generic prompt-only baseline."
     }
   },
   "headline_results": {
-    "as_of": "v0.8 \u2014 refreshed 2026-05-23 12:56 UTC",
+    "as_of": "v0.24-H \u2014 refreshed with interp-prompt 2026-05-23",
     "policy_success_rates": {
       "baseline": {
         "successes": 6,
@@ -146,6 +152,16 @@
           0.457,
           0.699
         ]
+      },
+      "interpretability-prompt": {
+        "successes": 15,
+        "trials": 60,
+        "rate": 0.25,
+        "wilson_ci_95": [
+          0.158,
+          0.372
+        ],
+        "note": "v0.24-H: SAE-derived prompt (names f26737 + f23803 circuits in system prompt). Negative result: 25.0% overall, vs prompt-only 73.3% and targeted 56.7%. Catastrophic on promo (4.2% vs prompt-only 83.3%). Mechanism explanation does not translate to action."
       }
     },
     "policy_success_rates_by_scope": {

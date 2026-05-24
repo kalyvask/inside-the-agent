@@ -19,6 +19,10 @@ from .noise_control import noise_control_policy
 from .failure_mining import failure_mining_policy
 from .targeted_f26737_only import targeted_f26737_only_policy
 from .targeted_f23803_only import targeted_f23803_only_policy
+from .interpretability_prompt import (
+    interpretability_prompt_policy,
+    PROMPT_PREFIX as INTERP_PROMPT_PREFIX,
+)
 
 POLICY_REGISTRY = {
     "baseline": None,
@@ -34,11 +38,17 @@ POLICY_REGISTRY = {
     # of the two. Answers: synergistic or additive?
     "targeted-f26737-only": targeted_f26737_only_policy,
     "targeted-f23803-only": targeted_f23803_only_policy,
+    # v0.24-H: interpretability-derived prompt. Names the SAE-discovered
+    # circuits (f26737 UI-vocab, f23803 distraction-tracking) directly in
+    # the system prompt. Tests whether interpretability gives an info edge
+    # over the general prompt-only baseline (73.3%).
+    "interpretability-prompt": interpretability_prompt_policy,
 }
 
 # Per-policy system prompt overrides. Empty string = use the default prompt.
 POLICY_PROMPT_PREFIX = {
     "prompt-only": PROMPT_ONLY_PREFIX,
+    "interpretability-prompt": INTERP_PROMPT_PREFIX,
 }
 
 __all__ = ["POLICY_REGISTRY", "static_policy", "dynamic_policy", "random_policy", "wrong_sign_policy"]
