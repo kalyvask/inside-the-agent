@@ -343,8 +343,6 @@ inside-the-agent/
 │   │                     steer_act / steer_act_with_noise / read_features /
 │   │                     feature_logit_lens / feature_decoder_similarity /
 │   │                     sae_validation endpoints
-│   └── app_gemma.py      fallback: Gemma 2-9B + Gemma Scope (not gated).
-│                         Runbook: docs/cross_model_path.md
 ├── sae/                  loader, steering controller, feature catalog
 │   └── features.yaml     v0.4 logit-lens + v0.9 failure-mining labels
 ├── agent/                trajectory schema, prompts, agent loop, HUD publisher
@@ -396,7 +394,7 @@ inside-the-agent/
 │                         replay_trajectory
 ├── docs/                 methodology, feature_characterization, demo_script,
 │                         live_demo, real_world_generalization,
-│                         cross_model_path, recording_guide, data_splits
+│                         recording_guide, data_splits
 ├── tests/                46 unit tests (action parser, trajectory schema,
 │                         verifiers, task config, noise routing, executed
 │                         tracking, ...)
@@ -414,13 +412,13 @@ inside-the-agent/
 
 The headline result is locked. Three directions worth pursuing further, in order of cost and impact:
 
-1. **Cross-model replication on a non-Llama open SAE.** Gemma-2-9B + Gemma Scope SAE is scaffolded in `modal_deploy/app_gemma.py` with a runbook in [`docs/cross_model_path.md`](docs/cross_model_path.md). ~$15 Modal + 3 hours attended. Defuses the "is the result Llama-specific?" reviewer question.
+1. **Cross-model replication on a non-Llama open SAE.** ~$15 Modal + 3 hours attended. Defuses the "is the result Llama-specific?" reviewer question.
 
 2. **Multi-domain expansion.** Today's benchmark covers promotional traps, hallucination tasks, and short planning sequences. Adding forms, comparison shopping, longer multi-step planning, and form-fill suites would test whether the intervention pattern generalizes beyond shopping browser tasks.
 
 3. **Train a dedicated SAE on browser-agent residuals.** The Goodfire SAE was trained on LMSYS-Chat-1M (a chat corpus); its features encode chat concepts. A SAE trained on residual activations from agent episodes should yield features more semantically aligned with agent decisions ("sponsored-banner-recognition" instead of "ui-selection vocabulary"). Significant cost (~$500-1000 GPU training run + infrastructure) but it is the most direct path past the current lexical-feature limit and toward the dedicated interpretability-optimized model framed in the "Where this is going" section above.
 
-The four reviewer "open questions" from earlier rounds (failure-mode features as steering targets, cross-domain hallucination + planning, cross-model replication, dynamic step-by-step steering) are all wired in the codebase. See `policies/failure_mining.py`, `policies/dynamic.py`, the per-category breakdown in `artifacts/benchmark_report.md`, and `docs/cross_model_path.md` respectively.
+The reviewer "open questions" from earlier rounds (failure-mode features as steering targets, cross-domain hallucination + planning, dynamic step-by-step steering) are wired in the codebase. See `policies/failure_mining.py`, `policies/dynamic.py`, and the per-category breakdown in `artifacts/benchmark_report.md`.
 
 ## Built on
 

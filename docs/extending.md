@@ -186,7 +186,7 @@ If L0 measured ≈ L0 expected (within 2×), you're good. If reconstruction erro
 
 ## 6. Swap the backbone model
 
-The brain-server in `modal_deploy/app.py` is configured for Llama-3.1-8B-Instruct. There's a Gemma 2-9B alternative in `modal_deploy/app_gemma.py`. To run against a different backbone:
+The brain-server in `modal_deploy/app.py` is configured for Llama-3.1-8B-Instruct. To run against a different backbone:
 
 1. **Deploy your variant** as a new Modal app:
    ```bash
@@ -203,8 +203,6 @@ The brain-server in `modal_deploy/app.py` is configured for Llama-3.1-8B-Instruc
    BRAIN_APP_NAME=... python -m verify.feature_drill
    BRAIN_APP_NAME=... python -m verify.feature_characterize
    ```
-
-Full runbook for the Gemma case: [`cross_model_path.md`](cross_model_path.md).
 
 ---
 

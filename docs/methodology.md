@@ -147,7 +147,7 @@ The trajectory log writes this same schema to JSONL on disk for offline analysis
 ## 9. Limitations & Future Work
 
 1. **One concept domain.** All held-out evaluation was on promotional traps. Hallucination-prone and multi-step planning tasks are part of ShopGym but were not used in the reported benchmark; the targeted policy's step-0-only structure is unlikely to generalize directly to those categories.
-2. **One backbone.** Results are specific to Llama 3.1-8B-Instruct with Goodfire's SAE on layer 19. Cross-model generalization (Gemma 2 + Gemma Scope SAEs is scaffolded as an alternative in `modal_deploy/app_gemma.py`) is not measured here.
+2. **One backbone.** Results are specific to Llama 3.1-8B-Instruct with Goodfire's SAE on layer 19. Cross-model generalization is not measured here.
 3. **Single-step intervention.** The validated policy applies steering only at Step 0. A dynamic policy that watches feature activations across the trajectory and intervenes only at risky moments would be a stronger and more general claim.
 4. **Failure features unexplored.** The 4 features that fire in 100% of baseline failures are strong candidates for the true "promo-trap" representation. We did not yet test steering with them.
 5. **Sample size.** 24 trials per policy gives 95% CIs of width ~30 points. Replicating at 100 trials per policy would shrink these.

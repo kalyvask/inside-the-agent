@@ -34,8 +34,8 @@ app = typer.Typer(add_completion=False)
 def _make_brain_call():
     """Returns a callable wrapping the Modal brain-server's steer_act endpoint.
 
-    Respects BRAIN_APP_NAME env var so the same runner can target either the
-    Llama (inside-the-agent) or the Gemma fallback (inside-the-agent-gemma).
+    Respects BRAIN_APP_NAME env var so the runner can be pointed at a
+    different Modal app (e.g. the Llama 70B variant in `app_70b.py`).
     """
     import os
     import modal

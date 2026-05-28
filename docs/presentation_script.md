@@ -165,10 +165,8 @@ multi-step planning. Per-category breakdown is in `artifacts/benchmark_report.md
 
 **"Cross-model?"**
 → Llama-only today. Cross-SCALE within Llama is done (Llama-3.3-70B baseline
-is 100% on the same suite, see v0.24-K). Cross-MODEL replication on Gemma
-2-9B + Gemma Scope is scaffolded in `modal_deploy/app_gemma.py` with a
-runbook in `docs/cross_model_path.md`. ~$15 + 3 hours of attended work, in
-"Future directions" in the README.
+is 100% on the same suite, see v0.24-K). Cross-MODEL replication onto a
+different SAE family is listed under "Future directions" in the README.
 
 **"Production-ready?"**
 → No. This is a research testbed. Two specific gaps documented in the README:

@@ -93,7 +93,7 @@ Black-box evals tell you _that_ a model fails. SAE introspection tells you _why_
 ## What would strengthen this pitch further
 
 1. **The 70B baseline-strict number** (running now, ~1.5 hr to land). Locks the Claim 1 framing.
-2. **A cross-model replication** (e.g., Gemma-2-9B + Gemma Scope SAE, scaffolded in `modal_deploy/app_gemma.py`). Would defuse the "Llama-specific?" reviewer question. ~$15 + 3 hr attended.
+2. **A cross-model replication** on a different SAE family. Would defuse the "Llama-specific?" reviewer question. ~$15 + 3 hr attended.
 3. **Inference-cost numbers.** "1/8 the cost" needs a per-token-cost table for both 8B and 70B Modal deploys. ~30 min of math + a paragraph.
 4. **One more open-model SAE pair as cross-validation.** Most likely candidate: GPT-2-small + the SAE Lens library. Smaller still, faster to iterate. ~$5 + a day.
 
