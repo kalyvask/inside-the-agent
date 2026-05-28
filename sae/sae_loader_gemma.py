@@ -130,12 +130,21 @@ def load_gemma_scope_sae(
     else:
         threshold = raw_threshold
 
-    # Determine orientation.
-    if W_enc.shape[0] > W_enc.shape[1]:
-        d_in, d_features = W_enc.shape
-    else:
-        d_features, d_in = W_enc.shape
+    # Determine orientation using b_dec as a fixed reference: b_dec is always
+    # d_in-sized in Gemma Scope releases. The earlier heuristic compared
+    # W_enc's two dims and assumed d_in > d_features, which fails on
+    # sparse-overcomplete SAEs where d_features > d_in (the normal case).
+    d_in = int(np.asarray(b_dec).reshape(-1).shape[0])
+    if W_enc.shape[0] == d_in:
+        d_features = W_enc.shape[1]
+    elif W_enc.shape[1] == d_in:
+        d_features = W_enc.shape[0]
         W_enc = W_enc.T
+    else:
+        raise ValueError(
+            f"Could not align W_enc {W_enc.shape} with b_dec d_in={d_in}. "
+            f"Available .npz keys: {list(npz.keys())}"
+        )
 
     print(f"[gemma_loader] d_in={d_in}, d_features={d_features}")
 
