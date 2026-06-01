@@ -70,6 +70,10 @@ The 8B success rates above use the **lenient** verifier: "target product is in t
 
 Under strict scoring the cross-scale gap is starker. The 8B + intervention closes 72% of the **lenient** gap (10 → 75 vs 70B's 100) but only ~9% of the **strict** gap (0 → 8.3 vs 70B's 90). The lift is real on "reach the right item" but the 8B remains noisy on "act with surgical precision." The 70B picks cleanly in 2-3 steps; the 8B reaches the same item in 7-12 steps and often adds extras along the way.
 
+![Cross-scale: SAE steering closes about half the 8B-to-70B gap](artifacts/cross_scale.png)
+
+The SAE signal alone gives the small model a real, causal lift: two feature edits at one decision step take Llama-3.1-8B from 10.0% to 56.7%, closing about half (52%) of the gap to Llama-3.3-70B's saturated 100%, with no prompt and no retraining, at roughly 1/8 the inference cost. Stacking a system prompt on top reaches 75% (72% of the gap); the 70B is a different model run with a 1-line format prompt, so treat it as a ceiling reference rather than a controlled comparison.
+
 Both numbers are reported because they measure different things. Strict-cart is the harder bar and the more relevant one for production deployment where cart hygiene matters.
 
 ### Action quality: valid vs executed (v0.24-F diagnostic)
@@ -125,6 +129,20 @@ Prompt-only wins on average; SAE steering wins inside its calibration domain. Th
 The combination has now been tested (v0.24-J) and lands at **75.0% overall — beating either intervention alone**. Per-category: promo **87.5% (new all-time high)**, halluc 66.7%, planning 66.7%. The two interventions are **complementary, not substitutes**: prompt-only handles general guidance across all categories; SAE steering adds a measurable lift on the calibration distribution (promo) without breaking planning because the prompt restores legitimate clicking. This was the central question from earlier reviewer rounds and the data resolves it cleanly.
 
 SAE steering is not a replacement for prompt engineering; it is a runtime intervention surface at a layer of representation prompts cannot directly access. When you stack the two, you get the prompt-only baseline floor *plus* a category-specific causal lift you couldn't get from prompting alone.
+
+#### Decision rule: when to reach for SAE steering
+
+The per-category data turns into a deployment rule. Reach for SAE steering as a *second* lever, stacked on top of prompt-only, when all of these hold:
+
+1. **Prompt-only has plateaued below target on one specific, recurring failure class.** On promo traps, prompt-only tops out at 83% and stacking targeted edits lifts it to 87.5% (the all-time high). Where prompt-only already hits target, SAE steering adds nothing: hallucination is 67% with or without it.
+2. **The failure is mechanistically localized**, not a general capability gap. A specific circuit fires at a specific decision step (here f26737 UI-selection vocabulary at step 0). If you cannot find the circuit via contrast discovery or failure-mining, there is nothing to steer.
+3. **You are inside the calibration domain.** The features were validated on this failure class. Out of domain, steering alone backfires: planning drops from 33% to 17% because the same features encode the legitimate clicks the task needs.
+4. **You keep the prompt.** SAE steering alone regresses planning by 50 points (67% to 17%). Stacked on the prompt, the prompt restores legitimate clicking and the regression disappears. Always stack, never substitute.
+5. **The marginal lift justifies the overhead.** Targeted steering emits well-formed actions but Playwright dispatches only 36.3% of them (vs 85.5% for prompt-only). A +4.5pp lift on the calibration distribution has to be worth the feature-calibration cost plus that executed-action gap.
+
+Do **not** reach for SAE steering when prompt-only already hits target (no headroom), when the task needs the circuits steering suppresses (the planning case), or when you have not calibrated features for the specific failure class in front of you.
+
+The one-line version: **SAE steering is the second lever for a narrow, mechanically-specific, prompt-saturated failure class inside its calibration domain. It is not a general-purpose accuracy knob, and the data is clear that prompt-only wins on average.**
 
 #### Interpretability-derived prompts (v0.24-H)
 

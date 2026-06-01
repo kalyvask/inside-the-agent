@@ -24,9 +24,14 @@ TASKS_DIR = Path("shopgym/tasks")
 OUT_PATH = Path("artifacts/headline.png")
 
 # Order + colors picked for narrative clarity. Targeted is emerald (the
-# headline). Prompt-only is blue (alternative method, beats targeted overall
-# but for a mechanistic-different reason). Controls are muted.
-POLICY_ORDER = ["baseline", "wrong-sign", "random", "noise", "prompt-only", "targeted"]
+# headline SAE result). Controls (wrong-sign / random / noise) are muted —
+# they isolate the causal direction of the edit. prompt-only (a non-SAE
+# system-prompt control, 73.3%) is intentionally omitted from this chart:
+# it beats targeted on average for a mechanistically-different reason, so
+# putting it on the SAE-causal chart muddies the comparison. It remains fully
+# documented in the README cross-method table + "when does SAE beat prompt"
+# section.
+POLICY_ORDER = ["baseline", "wrong-sign", "random", "noise", "targeted"]
 COLORS = {
     "baseline":     "#737373",  # zinc-500
     "wrong-sign":   "#a78bfa",  # violet-400
@@ -83,6 +88,80 @@ def _task_categories() -> dict[str, str]:
     return out
 
 
+def make_cross_scale() -> None:
+    """v0.25: cross-scale figure — small 8B + SAE steering vs the 70B ceiling.
+
+    Data-driven from artifacts/seed_manifest.json (the same artifact
+    bench/artifact_check.py validates), so the bars cannot silently drift
+    from the published numbers. Shows the SAE-ALONE result (56.7%), not the
+    prompt-stacked 75%, because this chart is about what the SAE signal alone
+    buys a small model. The caption discloses the stacked number + the 70B
+    caveat so the conservative framing is explicit, not hidden."""
+    import json
+    import matplotlib.pyplot as plt
+    import matplotlib.ticker as mtick
+
+    manifest = json.loads(Path("artifacts/seed_manifest.json").read_text(encoding="utf-8"))
+    hr = manifest["headline_results"]["policy_success_rates"]
+    cs = manifest["cross_scale"]["70b_baseline_strict_results"]
+
+    series = [
+        ("Llama-3.1-8B\nbaseline", hr["baseline"]["rate"], hr["baseline"]["wilson_ci_95"], "#737373"),
+        ("Llama-3.1-8B\n+ SAE steering", hr["targeted"]["rate"], hr["targeted"]["wilson_ci_95"], "#34d399"),
+        ("Llama-3.3-70B\nbaseline (format prompt)", cs["rate"], cs["wilson_ci_95"], "#475569"),
+    ]
+    rates = [s[1] for s in series]
+    gap_closed = (rates[1] - rates[0]) / (rates[2] - rates[0])
+
+    fig, ax = plt.subplots(figsize=(7.8, 6.2))
+    x = list(range(len(series)))
+    yerr_lo = [s[1] - s[2][0] for s in series]
+    yerr_hi = [s[2][1] - s[1] for s in series]
+    bars = ax.bar(
+        x, rates, color=[s[3] for s in series], edgecolor="#444",
+        yerr=[yerr_lo, yerr_hi], capsize=6, error_kw={"ecolor": "#444"}, width=0.62,
+    )
+    for s, bar in zip(series, bars):
+        ax.text(bar.get_x() + bar.get_width() / 2, s[1] + 0.025,
+                f"{s[1]*100:.1f}%", ha="center", va="bottom",
+                fontsize=13, fontweight="bold")
+
+    # Gap guides: dashed lines at the 8B floor and the 70B ceiling so the
+    # reader can see what fraction of that span the SAE bar fills.
+    ax.axhline(rates[0], color="#737373", ls=":", lw=1, alpha=0.55)
+    ax.axhline(rates[2], color="#475569", ls=":", lw=1, alpha=0.55)
+    ax.text(
+        0.02, 0.74,
+        f"SAE alone closes {gap_closed*100:.0f}%\nof the 8B→70B gap\n(no prompt, no retraining)",
+        transform=ax.transAxes, fontsize=10.5, fontweight="bold", color="#0f766e",
+        va="top", ha="left",
+        bbox=dict(boxstyle="round,pad=0.4", fc="#ecfdf5", ec="#34d399", lw=1.2),
+    )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([s[0] for s in series], fontsize=10)
+    ax.set_ylabel("Success rate — held-out 20 tasks × 3 trials (lenient)")
+    ax.set_ylim(0, 1.1)
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
+    ax.set_title(
+        "Cross-scale — SAE steering closes half the gap to a model 8× larger",
+        fontsize=12.5, fontweight="bold", pad=12,
+    )
+    ax.grid(axis="y", alpha=0.2)
+    fig.text(
+        0.5, 0.005,
+        "Llama-3.1-8B + two SAE edits at step 0 (f26737 −6, f23803 +6). Wilson 95% CIs, n=60 each. "
+        "Stacking a system prompt (prompt+targeted) reaches 75% (72% of the gap). 70B is a different "
+        "model with a 1-line strict-JSON format prompt — a ceiling reference, not a controlled comparison.",
+        ha="center", fontsize=7.5, color="#666", wrap=True,
+    )
+    plt.tight_layout(rect=(0, 0.05, 1, 1))
+    out = Path("artifacts/cross_scale.png")
+    plt.savefig(out, dpi=150, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"Saved {out}")
+
+
 def main() -> int:
     import matplotlib.pyplot as plt
     import matplotlib.ticker as mtick
@@ -130,7 +209,7 @@ def main() -> int:
     ax_left.set_ylim(0, 1.0)
     ax_left.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
     ax_left.set_title(
-        "Overall success rate — held-out 20 tasks × 3 trials",
+        "SAE steering vs controls — held-out 20 tasks × 3 trials",
         fontsize=12, pad=10,
     )
     ax_left.grid(axis="y", alpha=0.2)
@@ -205,13 +284,15 @@ def main() -> int:
     fig.text(
         0.5, 0.01,
         "Targeted = two SAE feature edits at step 0 (f26737 −6 + f23803 +6, position_mode=all). "
-        "Wilson 95% CIs on overall rates.",
+        "Wilson 95% CIs. Controls isolate the causal direction of the edit. "
+        "Non-SAE prompt-only control (73.3%, wins on average) omitted for clarity; see README.",
         ha="center", fontsize=8, color="#666",
     )
     plt.tight_layout(rect=(0, 0.02, 1, 0.96))
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(OUT_PATH, dpi=150, bbox_inches="tight", facecolor="white")
     print(f"Saved {OUT_PATH}")
+    make_cross_scale()
     return 0
 
 
