@@ -430,11 +430,9 @@ inside-the-agent/
 
 The headline result is locked. Three directions worth pursuing further, in order of cost and impact:
 
-1. **Cross-model replication on a non-Llama open SAE.** ~$15 Modal + 3 hours attended. Defuses the "is the result Llama-specific?" reviewer question.
+1. **Multi-domain expansion.** Today's benchmark covers promotional traps, hallucination tasks, and short planning sequences. Adding forms, comparison shopping, longer multi-step planning, and form-fill suites would test whether the intervention pattern generalizes beyond shopping browser tasks.
 
-2. **Multi-domain expansion.** Today's benchmark covers promotional traps, hallucination tasks, and short planning sequences. Adding forms, comparison shopping, longer multi-step planning, and form-fill suites would test whether the intervention pattern generalizes beyond shopping browser tasks.
-
-3. **Train a dedicated SAE on browser-agent residuals.** The Goodfire SAE was trained on LMSYS-Chat-1M (a chat corpus); its features encode chat concepts. A SAE trained on residual activations from agent episodes should yield features more semantically aligned with agent decisions ("sponsored-banner-recognition" instead of "ui-selection vocabulary"). Significant cost (~$500-1000 GPU training run + infrastructure) but it is the most direct path past the current lexical-feature limit and toward the dedicated interpretability-optimized model framed in the "Where this is going" section above.
+2. **Train a dedicated SAE on browser-agent residuals.** The Goodfire SAE was trained on LMSYS-Chat-1M (a chat corpus); its features encode chat concepts. A SAE trained on residual activations from agent episodes should yield features more semantically aligned with agent decisions ("sponsored-banner-recognition" instead of "ui-selection vocabulary"). Significant cost (~$500-1000 GPU training run + infrastructure) but it is the most direct path past the current lexical-feature limit and toward the dedicated interpretability-optimized model framed in the "Where this is going" section above.
 
 The reviewer "open questions" from earlier rounds (failure-mode features as steering targets, cross-domain hallucination + planning, dynamic step-by-step steering) are wired in the codebase. See `policies/failure_mining.py`, `policies/dynamic.py`, and the per-category breakdown in `artifacts/benchmark_report.md`.
 
