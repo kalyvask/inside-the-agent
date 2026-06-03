@@ -256,10 +256,14 @@ export default function Page() {
           // now we read it off the last step's trajectory if it lands.
           break;
         case "task_done":
-          setVerdictSuccess(ev.success ?? false);
+          // success may be null for qualitative real-web tasks (no verifier).
+          // Preserve null (Verdict renders a neutral "task ended"); only an
+          // explicit false is a real failure. `?? null` keeps false as false
+          // since ?? only coalesces null/undefined.
+          setVerdictSuccess(ev.success ?? null);
           setVerdictVisible(true);
           setAgentLive(false);
-          setRunStatus(ev.success ? "done" : "failed");
+          setRunStatus(ev.success === false ? "failed" : "done");
           break;
       }
     });
