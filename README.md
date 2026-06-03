@@ -465,3 +465,41 @@ If this is useful in your own work:
 ## Acknowledgements
 
 CS153 Frontier Systems (Stanford GSB / SOE, Spring 2026). Thanks to the Goodfire AI team for releasing the open SAE that made this possible.
+
+## Video Requirements Questions
+
+### Q1: Why did you build what you did?
+
+LLM browser agents are black boxes. When one clicks a sponsored ad instead of the product you asked for, you can see *that* it failed but not *why*, and the usual fixes are retraining (expensive) or prompt-guessing (you have to already know the failure). The bottleneck I went after: there was no way to **read** which concept drives an agent's decision at the instant it acts, and no way to **change** that decision at the representation layer a prompt cannot reach, on a cheap open model.
+
+The inspiration was sparse-autoencoder interpretability (Anthropic's *Scaling Monosemanticity*; Goodfire's open SAE for Llama-3.1-8B), which showed a model's tangled internal state can be decomposed into human-readable features. The question I built around: can you not only *read* those features live during an agent's run, but *steer* them at inference time to fix a concrete failure on an 8B open model, with controls strong enough to show the effect is causal rather than noise?
+
+### Q2: How exactly does the product work?
+
+It sits primarily in **[3] Automation / Agent Systems** (a browser agent), built on **[1] Research** (SAE feature steering), and delivered through **[2] a product** (a live interpretability HUD).
+
+**[1] Research — model, data, method.** The agent brain is **Llama-3.1-8B-Instruct** (open weights); we train no model of our own. Interpretability comes from **Goodfire's pretrained SAE on layer 19** (65,536 features). The research work is to discover which features drive a failure (contrast prompts, failure-mining, logit-lens, and a top-activating corpus probe to label them), calibrate a steering magnitude, and measure the effect on a **60-trial held-out benchmark** with causal controls. Two features carry the result: `f26737` (UI-selection vocabulary, suppressed by 6) and `f23803` (distraction-avoidance, amplified by 6), applied only at the first decision step.
+
+**[3] Automation / agent system.** The agent observes a page (text summary plus screenshot), emits a structured action (type / click / scroll), and Playwright executes it against either templated ShopGym storefronts or real public sites. Steering is one hook: add or subtract a feature's direction in the layer-19 residual on the steered forward pass.
+
+**[2] Product / deployment.** A Next.js cockpit connects over WebSocket to a FastAPI bridge, which talks to the agent and a **Modal**-hosted brain-server (L40S GPU) running Llama plus the SAE. The HUD streams live feature activations, the steering edits, and a counterfactual ("what the model would have done un-steered"), and can replay saved trajectories deterministically at no GPU cost.
+
+**The result.** On the held-out suite the 8B baseline solves 10% of tasks. Two SAE feature edits at step 0 take it to **56.7%** (a 47-point lift), while the wrong-sign and matched-noise controls stay near baseline (13-18%), which is the evidence that the *direction* of the edit is causal rather than any perturbation. Stacking a one-line system prompt on top of the edits reaches **75%**, closing **72% of the gap** to Llama-3.3-70B (a model 8x larger) at roughly one-eighth the inference cost.
+
+### Q3: Potential use cases of the product
+
+- **Debugging and auditing agent failures.** The HUD turns "the agent did something dumb" into "this specific circuit fired at this step," a mechanistic audit trail you cannot get from logs alone.
+- **Runtime steering with no retraining.** Two feature edits causally lift the small model from 10% to 56.7%; stacked with a one-line prompt they reach 75%, closing 72% of the gap to a model 8x larger at roughly one-eighth the inference cost. The same edits can be injected live from the HUD to change behavior mid-run.
+- **A reusable interpretability-for-control testbed.** The harness (agent loop, steering hook, controls, HUD, eval suite) is model- and site-agnostic, so others can swap the backbone, the SAE, or the task suite.
+
+The broader value is **interpretability as control for agent oversight**: if the circuits behind off-task or unsafe behavior are legible and steerable at runtime, that is a lever for control that does not require retraining a frontier model. The honest scope: this is shown on one small open model, one failure family, with a chat-trained SAE whose features are lexical rather than task-perfect. It is a working proof of the loop, not a general accuracy knob.
+
+### Q4: What more would you add?
+
+In rough order of cost and impact (expanded under **Future directions** above):
+
+1. **Position-aware steering.** The hook currently edits the entire layer-19 residual on the steered pass, not just the action token; localizing it should sharpen the effect.
+2. **Dynamic, learned steering.** Read the live features and decide *when* and *how much* to steer per step, rather than a fixed step-0 edit. The current dynamic policy underperforms the fixed one, so this is open.
+3. **Close the executed-action gap.** On real sites the steered model emits valid JSON but Playwright dispatches only about 36% of its actions; better selector grounding would convert more intent into action.
+4. **Multi-domain expansion.** Expand beyond shopping into forms, comparison shopping, and longer multi-step planning, to test whether the intervention pattern generalizes.
+5. **Train a dedicated SAE on browser-agent residuals.** Goodfire's SAE was trained on chat text, so its features are lexical ("UI-selection vocabulary" rather than "sponsored-banner recognition"). An agent-trained SAE is the most direct path past that limit.
