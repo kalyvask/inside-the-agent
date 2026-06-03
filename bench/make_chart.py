@@ -31,15 +31,18 @@ OUT_PATH = Path("artifacts/headline.png")
 # putting it on the SAE-causal chart muddies the comparison. It remains fully
 # documented in the README cross-method table + "when does SAE beat prompt"
 # section.
-POLICY_ORDER = ["baseline", "wrong-sign", "random", "noise", "targeted"]
+POLICY_ORDER = ["baseline", "wrong-sign", "random", "noise", "targeted", "prompt-plus-targeted"]
 COLORS = {
-    "baseline":     "#737373",  # zinc-500
-    "wrong-sign":   "#a78bfa",  # violet-400
-    "random":       "#fb923c",  # orange-400
-    "noise":        "#38bdf8",  # sky-400
-    "prompt-only":  "#60a5fa",  # blue-400
-    "targeted":     "#34d399",  # emerald-400
+    "baseline":             "#737373",  # zinc-500
+    "wrong-sign":           "#a78bfa",  # violet-400
+    "random":               "#fb923c",  # orange-400
+    "noise":                "#38bdf8",  # sky-400
+    "prompt-only":          "#60a5fa",  # blue-400
+    "targeted":             "#34d399",  # emerald-400
+    "prompt-plus-targeted": "#0d9488",  # teal-600 (SAE edits + prompt, stacked best)
 }
+# Short display names for x-axis ticks + legend (policy keys are verbose).
+DISPLAY = {"prompt-plus-targeted": "prompt+targeted"}
 
 
 def _wilson(s: int, n: int) -> tuple[float, float]:
@@ -93,10 +96,11 @@ def make_cross_scale() -> None:
 
     Data-driven from artifacts/seed_manifest.json (the same artifact
     bench/artifact_check.py validates), so the bars cannot silently drift
-    from the published numbers. Shows the SAE-ALONE result (56.7%), not the
-    prompt-stacked 75%, because this chart is about what the SAE signal alone
-    buys a small model. The caption discloses the stacked number + the 70B
-    caveat so the conservative framing is explicit, not hidden."""
+    from the published numbers. Bars: 8B baseline, 8B + SAE (the SAE-alone
+    causal lift), 8B + SAE + prompt (stacked best), 70B baseline. The caption
+    + callout disclose that the +prompt bar is mostly the prompt (prompt-only
+    alone is 73.3%) and that the 70B is a different model with a format
+    prompt, so the framing stays honest."""
     import json
     import matplotlib.pyplot as plt
     import matplotlib.ticker as mtick
@@ -108,12 +112,14 @@ def make_cross_scale() -> None:
     series = [
         ("Llama-3.1-8B\nbaseline", hr["baseline"]["rate"], hr["baseline"]["wilson_ci_95"], "#737373"),
         ("Llama-3.1-8B\n+ SAE steering", hr["targeted"]["rate"], hr["targeted"]["wilson_ci_95"], "#34d399"),
+        ("Llama-3.1-8B\n+ SAE + prompt", hr["prompt-plus-targeted"]["rate"], hr["prompt-plus-targeted"]["wilson_ci_95"], "#0d9488"),
         ("Llama-3.3-70B\nbaseline (format prompt)", cs["rate"], cs["wilson_ci_95"], "#475569"),
     ]
     rates = [s[1] for s in series]
-    gap_closed = (rates[1] - rates[0]) / (rates[2] - rates[0])
+    gap_sae = (rates[1] - rates[0]) / (rates[-1] - rates[0])
+    gap_stack = (rates[2] - rates[0]) / (rates[-1] - rates[0])
 
-    fig, ax = plt.subplots(figsize=(7.8, 6.2))
+    fig, ax = plt.subplots(figsize=(8.8, 6.2))
     x = list(range(len(series)))
     yerr_lo = [s[1] - s[2][0] for s in series]
     yerr_hi = [s[2][1] - s[1] for s in series]
@@ -129,11 +135,14 @@ def make_cross_scale() -> None:
     # Gap guides: dashed lines at the 8B floor and the 70B ceiling so the
     # reader can see what fraction of that span the SAE bar fills.
     ax.axhline(rates[0], color="#737373", ls=":", lw=1, alpha=0.55)
-    ax.axhline(rates[2], color="#475569", ls=":", lw=1, alpha=0.55)
+    ax.axhline(rates[-1], color="#475569", ls=":", lw=1, alpha=0.55)
     ax.text(
-        0.02, 0.74,
-        f"SAE alone closes {gap_closed*100:.0f}%\nof the 8B→70B gap\n(no prompt, no retraining)",
-        transform=ax.transAxes, fontsize=10.5, fontweight="bold", color="#0f766e",
+        0.02, 0.97,
+        f"SAE alone closes {gap_sae*100:.0f}% of the gap to the 70B;\n"
+        f"+ prompt reaches {gap_stack*100:.0f}%. But prompt-only (73%) only\n"
+        f"works if you already know the trap; the SAE\n"
+        f"edits are found by reading the model's signals.",
+        transform=ax.transAxes, fontsize=10, fontweight="bold", color="#0f766e",
         va="top", ha="left",
         bbox=dict(boxstyle="round,pad=0.4", fc="#ecfdf5", ec="#34d399", lw=1.2),
     )
@@ -151,7 +160,7 @@ def make_cross_scale() -> None:
     fig.text(
         0.5, 0.005,
         "Llama-3.1-8B + two SAE edits at step 0 (f26737 −6, f23803 +6). Wilson 95% CIs, n=60 each. "
-        "Stacking a system prompt (prompt+targeted) reaches 75% (72% of the gap). 70B is a different "
+        "Stacked, SAE adds only ~+1.7pt over prompt-only (73.3%) on average. 70B is a different "
         "model with a 1-line strict-JSON format prompt — a ceiling reference, not a controlled comparison.",
         ha="center", fontsize=7.5, color="#666", wrap=True,
     )
@@ -186,7 +195,7 @@ def main() -> int:
         ci = _wilson(s, n)
         overall_rates.append(rate)
         overall_cis.append((rate - ci[0], ci[1] - rate))
-        overall_labels.append(f"{policy}\n(n={n})")
+        overall_labels.append(f"{DISPLAY.get(policy, policy)}\n(n={n})")
         overall_colors.append(COLORS.get(policy, "#888"))
 
     x = list(range(len(overall_rates)))
@@ -209,7 +218,7 @@ def main() -> int:
     ax_left.set_ylim(0, 1.0)
     ax_left.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
     ax_left.set_title(
-        "SAE steering vs controls — held-out 20 tasks × 3 trials",
+        "Success rate by policy — held-out 20 tasks × 3 trials",
         fontsize=12, pad=10,
     )
     ax_left.grid(axis="y", alpha=0.2)
@@ -252,7 +261,7 @@ def main() -> int:
             [xi + offset for xi in x], vals, width,
             color=COLORS.get(policy, "#888"),
             edgecolor="#444",
-            label=policy,
+            label=DISPLAY.get(policy, policy),
         )
         # Label only targeted bars to keep the chart legible
         if policy == "targeted":
@@ -284,8 +293,9 @@ def main() -> int:
     fig.text(
         0.5, 0.01,
         "Targeted = two SAE feature edits at step 0 (f26737 −6 + f23803 +6, position_mode=all). "
-        "Wilson 95% CIs. Controls isolate the causal direction of the edit. "
-        "Non-SAE prompt-only control (73.3%, wins on average) omitted for clarity; see README.",
+        "Wilson 95% CIs. prompt+targeted (75%) is mostly the prompt: prompt-only alone is 73.3%. But "
+        "prompt-only requires an instruction that already names the trap; the SAE edits were instead found "
+        "by reading the model's own activations, not by knowing the failure in advance. See README.",
         ha="center", fontsize=8, color="#666",
     )
     plt.tight_layout(rect=(0, 0.02, 1, 0.96))
