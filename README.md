@@ -503,3 +503,12 @@ In rough order of cost and impact (expanded under **Future directions** above):
 3. **Close the executed-action gap.** On real sites the steered model emits valid JSON but Playwright dispatches only about 36% of its actions; better selector grounding would convert more intent into action.
 4. **Multi-domain expansion.** Expand beyond shopping into forms, comparison shopping, and longer multi-step planning, to test whether the intervention pattern generalizes.
 5. **Train a dedicated SAE on browser-agent residuals.** Goodfire's SAE was trained on chat text, so its features are lexical ("UI-selection vocabulary" rather than "sponsored-banner recognition"). An agent-trained SAE is the most direct path past that limit.
+
+## AI use & disclosure
+
+Built in public with heavy AI assistance, and explicit about which parts are which.
+
+- **How it was built.** The code, benchmark harness, HUD, analysis, and this README were written with **Claude Code** (Anthropic's Claude). I set the research question, designed the methodology and the control conditions, decided what to measure, ran the experiments on Modal, and checked every number against the raw artifacts (`bench/artifact_check.py` hard-fails CI on drift).
+- **The system under study.** The agent is **Llama-3.1-8B-Instruct**; interpretability uses **Goodfire's pretrained layer-19 SAE**. No model was trained for this project.
+- **Sources and base code.** Original implementation, not a fork. The steering setup follows the architecture in Cho et al. (cited under Built on); the only external components are the pretrained Goodfire SAE and standard libraries (Transformers, Playwright, Modal, Next.js), each credited above. Any borrowed snippet is cited inline.
+- **Effort over time.** A ~9-day CS153 build sprint. The full commit history is public; the version progression (controls, strict-vs-lenient scoring, the executed-action diagnostic, honesty fixes) shows the project tightening round by round.
