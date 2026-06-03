@@ -492,7 +492,7 @@ It sits primarily in **[3] Automation / Agent Systems** (a browser agent), built
 - **Runtime steering with no retraining.** Two feature edits causally lift the small model from 10% to 56.7%; stacked with a one-line prompt they reach 75%, closing 72% of the gap to a model 8x larger at roughly one-eighth the inference cost. The same edits can be injected live from the HUD to change behavior mid-run.
 - **A reusable interpretability-for-control testbed.** The harness (agent loop, steering hook, controls, HUD, eval suite) is model- and site-agnostic, so others can swap the backbone, the SAE, or the task suite.
 
-The broader value is **interpretability as control for agent oversight**: if the circuits behind off-task or unsafe behavior are legible and steerable at runtime, that is a lever for control that does not require retraining a frontier model. Its a possible reason to develop a dedicated agent interpretability model that would help smaller/cheaper models be almost as accurate as larger and more expensive models (also very important as model labs move to token-based billing)
+The broader value is **interpretability as control for agent oversight**: if the circuits behind off-task or unsafe behavior are legible and steerable at runtime, that is a lever for control that does not require retraining a frontier model. It's a possible reason to develop a dedicated agent interpretability model that would help smaller/cheaper models be almost as accurate as larger and more expensive models (also very important as model labs move to token-based billing).
 
 ### Q4: What more would you add?
 
