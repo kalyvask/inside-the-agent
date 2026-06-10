@@ -149,33 +149,44 @@ export default function SteeringControls({
           @ pause=6.0 (long enough for a human to click presets between
           steps). */}
       <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-zinc-800">
+        {/* v0.26: both buttons are DISABLED while a run is live. Two concurrent
+            runners write the same trajectory file and corrupt it; ws_server
+            also rejects /start_run with 409 while one is alive (belt+braces). */}
         <button
-          disabled={startBusy}
+          disabled={startBusy || agentLive}
           onClick={() => startAgentRun("targeted")}
           className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-colors ${
             startBusy
               ? "bg-zinc-700 text-zinc-500 cursor-wait"
               : agentLive
-                ? "bg-emerald-700 hover:bg-emerald-600 text-white"
+                ? "bg-zinc-700 text-zinc-500 cursor-not-allowed"
                 : "bg-emerald-600 hover:bg-emerald-500 text-white animate-pulse"
           }`}
-          title="Live targeted run on real eBay: f26737 -6 + f23803 +6 at step 0, then unsteered."
+          title={
+            agentLive
+              ? "A run is in progress — wait for it to finish (concurrent runs corrupt the trajectory file)."
+              : "Live targeted run on real eBay: f26737 -6 + f23803 +6 at step 0, then unsteered."
+          }
         >
           {startBusy
             ? "starting…"
             : agentLive
-              ? "↻ run targeted"
+              ? "● run in progress"
               : "▶ targeted (eBay)"}
         </button>
         <button
-          disabled={startBusy}
+          disabled={startBusy || agentLive}
           onClick={() => startAgentRun("baseline")}
           className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-colors ${
-            startBusy
-              ? "bg-zinc-700 text-zinc-500 cursor-wait"
+            startBusy || agentLive
+              ? "bg-zinc-700 text-zinc-500 cursor-not-allowed"
               : "bg-zinc-700 hover:bg-zinc-600 text-zinc-100"
           }`}
-          title="Live baseline run on real eBay — NO steering. Use this for side-by-side comparison against the targeted run."
+          title={
+            agentLive
+              ? "A run is in progress — wait for it to finish (concurrent runs corrupt the trajectory file)."
+              : "Live baseline run on real eBay — NO steering. Use this for side-by-side comparison against the targeted run."
+          }
         >
           ▷ baseline (no steering)
         </button>

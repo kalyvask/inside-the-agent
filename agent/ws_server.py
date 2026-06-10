@@ -33,12 +33,21 @@ from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 
 
 app = FastAPI(title="inside-the-agent ws-server", version="0.1")
+
+# v0.26 concurrency guard: the most recently spawned bench.runner subprocess.
+# TrajectoryLogger opens data/trajectories/{run_id}.jsonl in "w" mode, so TWO
+# live runs on the same task interleave writes into the SAME file and corrupt
+# it (observed: double-clicked HUD run buttons destroyed the saved eBay and
+# Google Shopping demo trajectories). /start_run refuses to spawn while a
+# previous runner is still alive.
+_ACTIVE_RUN: dict = {"proc": None}
 
 # Serve saved Playwright screenshots so the HUD can render them in its
 # BROWSER VIEWPORT panel. Path is relative to where ws_server was started.
@@ -275,6 +284,18 @@ async def start_run(req: StartRunRequest):
     if not Path(req.task).exists():
         return {"ok": False, "error": f"task file not found: {req.task}"}
 
+    # Refuse to spawn a second run while one is live (409). Two concurrent
+    # runners write the same trajectory file (TrajectoryLogger mode "w") and
+    # corrupt it — the HUD treats a non-2xx as "not started" and warns.
+    prev = _ACTIVE_RUN.get("proc")
+    if prev is not None and prev.poll() is None:
+        return JSONResponse(
+            status_code=409,
+            content={"ok": False,
+                     "error": f"a run is already in progress (pid {prev.pid}); "
+                              f"wait for it to finish before starting another"},
+        )
+
     # Spawn detached so the agent run survives this HTTP request.
     env = {
         **os.environ,
@@ -302,6 +323,7 @@ async def start_run(req: StartRunRequest):
         stdout=log_file,
         stderr=subprocess.STDOUT,
     )
+    _ACTIVE_RUN["proc"] = proc
     return {
         "ok": True,
         "pid": proc.pid,

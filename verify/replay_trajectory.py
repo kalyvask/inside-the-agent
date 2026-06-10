@@ -119,13 +119,28 @@ def main(
         step_delay = 0.6
 
     steps = []
-    with path.open() as f:
-        for line in f:
-            if line.strip():
+    skipped = 0
+    with path.open(encoding="utf-8") as f:
+        for lineno, line in enumerate(f, 1):
+            if not line.strip():
+                continue
+            try:
                 steps.append(json.loads(line))
+            except json.JSONDecodeError as e:
+                # A corrupt line usually means two concurrent runs interleaved
+                # writes into this file (TrajectoryLogger opens mode "w").
+                # Skip it LOUDLY rather than crashing or replaying garbage.
+                skipped += 1
+                console.print(f"[yellow]Skipping unparseable line {lineno}: {e}[/yellow]")
+    if skipped:
+        console.print(
+            f"[yellow]{skipped} corrupt line(s) skipped — this file was likely damaged "
+            f"by concurrent runs writing the same trajectory. Replaying the "
+            f"{len(steps)} surviving step(s); re-capture for a clean take.[/yellow]"
+        )
 
     if not steps:
-        console.print("[red]Empty trajectory[/red]")
+        console.print("[red]Empty trajectory (or fully corrupt)[/red]")
         raise typer.Exit(1)
 
     run_id = steps[0].get("run_id", path.stem)
