@@ -55,6 +55,14 @@ TOP_K_DEFAULT = 20
     scaledown_window=300,
     secrets=[modal.Secret.from_name("hf-token")],  # set: modal secret create hf-token HF_TOKEN=...
 )
+# v0.26 (I1, full-duplex): allow concurrent inputs so a `set_live_edit` call
+# can land in the SAME warm container while a `stream_act` generation is in
+# flight. Both are async, so Modal runs them as interleaved asyncio tasks on
+# one thread — the setter mutates self._live_edits between the streamer's
+# token yields, and the steering hook (running in the generate() worker
+# thread) reads the fresh dict on the next forward pass. max_inputs must be
+# >1 or the second call would spin a fresh container with its own state.
+@modal.concurrent(max_inputs=8)
 class BrainServer:
     @modal.enter()
     def load(self):
@@ -107,6 +115,13 @@ class BrainServer:
 
         # The steering hook is added/removed per-request (so it's idempotent).
         self._steering_handle = None
+
+        # v0.26 (I1): live full-duplex steering state. `_live_edits` is a plain
+        # dict {feature_id: delta} that the live steering hook reads fresh on
+        # every forward pass. `set_live_edit` mutates it mid-generation. Reads
+        # are snapshotted in the hook so a concurrent mutation can't tear.
+        self._live_edits = {}
+        self._live_steering_handle = None
         print("Brain-server ready.")
 
     # -----------------------------------------------------------------------
@@ -199,6 +214,47 @@ class BrainServer:
 
         self._steering_handle = target_layer.register_forward_hook(steering_hook)
         self._steering_call_count = call_count  # so we can read it for telemetry
+
+    def _remove_live_steering(self):
+        if getattr(self, "_live_steering_handle", None) is not None:
+            self._live_steering_handle.remove()
+            self._live_steering_handle = None
+
+    def _install_live_steering(self, clamp_min: float = -100.0, clamp_max: float = 100.0):
+        """v0.26 (I1): install a hook that reads self._live_edits FRESH on every
+        forward pass and applies the summed decoder delta to the last position.
+
+        Unlike _install_steering (which bakes a fixed delta at install time),
+        this hook recomputes from the mutable dict each call, so a concurrent
+        set_live_edit() changes the very next generated token. The delta is
+        applied to hidden[:, -1, :] — the last prompt token during prefill, and
+        the single new token on each KV-cached generation step. So whatever the
+        human's sliders say *right now* shapes the *next* token, continuously.
+        """
+        import torch
+
+        self._remove_live_steering()
+        target_layer = self.model.model.layers[SAE_LAYER_INDEX]
+
+        def live_hook(module, input, output):
+            # Snapshot the dict so a mid-pass mutation from set_live_edit can't
+            # tear (dict copy is atomic under the GIL).
+            edits = dict(self._live_edits)
+            if not edits:
+                return output
+            hidden = output[0]  # (batch, seq, d_in)
+            fids = list(edits.keys())
+            deltas = torch.tensor(
+                [edits[f] for f in fids], dtype=hidden.dtype, device=hidden.device
+            )
+            W_dec_rows = self.sae.W_dec[fids].to(hidden.dtype)  # (n_edits, d_in)
+            delta = (deltas.unsqueeze(-1) * W_dec_rows).sum(dim=0)  # (d_in,)
+            new_hidden = hidden.clone()
+            new_hidden[:, -1, :] = new_hidden[:, -1, :] + delta
+            new_hidden = torch.clamp(new_hidden, clamp_min, clamp_max)
+            return (new_hidden,) + output[1:]
+
+        self._live_steering_handle = target_layer.register_forward_hook(live_hook)
 
     def _top_k_features(self, top_k: int = TOP_K_DEFAULT):
         """Given captured L19 activations, return top-k SAE features."""
@@ -596,6 +652,152 @@ class BrainServer:
         self._remove_steering()
         return result
 
+    # -----------------------------------------------------------------------
+    # v0.26 (I1) — full-duplex streaming: steer DURING generation
+    # -----------------------------------------------------------------------
+
+    @modal.method()
+    async def set_live_edit(self, feature_id: int, delta: float):
+        """Mutate the live steering dict mid-generation.
+
+        The HUD calls this (via ws_server) whenever a slider moves. Because the
+        class is @modal.concurrent, this lands in the same warm container while
+        stream_act is generating, and the live hook picks it up on the next
+        forward pass. delta == 0 removes the feature.
+        """
+        import time
+
+        fid = int(feature_id)
+        if float(delta) == 0.0:
+            self._live_edits.pop(fid, None)
+        else:
+            self._live_edits[fid] = float(delta)
+        return {"live_edits": {str(k): v for k, v in self._live_edits.items()},
+                "ts": time.time()}
+
+    @modal.method()
+    async def clear_live_edits(self):
+        """Reset all live steering. Called when a stream ends or the HUD resets."""
+        self._live_edits = {}
+        return {"ok": True, "live_edits": {}}
+
+    @modal.method()
+    async def stream_act(
+        self,
+        prompt: str,
+        initial_edits: dict = None,
+        max_new_tokens: int = 128,
+        temperature: float = 0.2,
+        top_k: int = TOP_K_DEFAULT,
+        clamp_min: float = -100.0,
+        clamp_max: float = 100.0,
+        interject_after_token: int = -1,
+        interject_edits: dict = None,
+    ):
+        """Stream a steered generation token-by-token, allowing live edits.
+
+        Yields event dicts:
+          {"type": "start",  ...}
+          {"type": "token",  "token": str, "index": int, "text_so_far": str,
+                             "live_edits": {...}, "ts": float}   (one per chunk)
+          {"type": "interject", "after_token": int, "edits": {...}, "ts": float}
+          {"type": "done",   "response": str, "top_features": [...], "ts": float}
+
+        generate() runs in a worker thread feeding a TextIteratorStreamer; this
+        async method drains the streamer via asyncio.to_thread so the event loop
+        stays free for concurrent set_live_edit() calls. The live steering hook
+        (running in the worker thread) reads self._live_edits each forward pass.
+
+        interject_after_token / interject_edits give a DETERMINISTIC, server-side
+        interjection by token index (no client wall-clock race) — used by the
+        rescue benchmark to sweep "how early must you interject to flip the
+        action?". The live set_live_edit() path is the human-driven equivalent
+        used by the HUD. interject_after_token < 0 disables it.
+        """
+        import asyncio
+        import threading
+        import time
+
+        import torch
+        from transformers import TextIteratorStreamer
+
+        self._reset_capture()
+        self._remove_steering()
+        self._live_edits = {int(k): float(v) for k, v in (initial_edits or {}).items()}
+        self._install_live_steering(clamp_min, clamp_max)
+
+        try:
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+            streamer = TextIteratorStreamer(
+                self.tokenizer, skip_prompt=True, skip_special_tokens=True
+            )
+            gen_kwargs = dict(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                temperature=temperature,
+                do_sample=temperature > 0,
+                pad_token_id=self.tokenizer.eos_token_id,
+                streamer=streamer,
+            )
+
+            def _run_generate():
+                with torch.no_grad():
+                    self.model.generate(**gen_kwargs)
+
+            thread = threading.Thread(target=_run_generate, daemon=True)
+            thread.start()
+
+            yield {
+                "type": "start",
+                "prompt": prompt,
+                "live_edits": {str(k): v for k, v in self._live_edits.items()},
+                "ts": time.time(),
+            }
+
+            interject_edits = {int(k): float(v) for k, v in (interject_edits or {}).items()}
+            it = iter(streamer)
+            index = 0
+            text_so_far = ""
+            while True:
+                # Drain the (blocking) streamer in a threadpool so concurrent
+                # set_live_edit tasks keep running on the event loop.
+                piece = await asyncio.to_thread(lambda: next(it, None))
+                if piece is None:
+                    break
+                text_so_far += piece
+                yield {
+                    "type": "token",
+                    "token": piece,
+                    "index": index,
+                    "text_so_far": text_so_far,
+                    "live_edits": {str(k): v for k, v in self._live_edits.items()},
+                    "ts": time.time(),
+                }
+                # Deterministic server-side interjection: after emitting token
+                # `interject_after_token`, merge interject_edits into the live
+                # dict so the very next forward pass sees them.
+                if interject_edits and index == interject_after_token:
+                    self._live_edits.update(interject_edits)
+                    yield {
+                        "type": "interject",
+                        "after_token": index,
+                        "edits": {str(k): v for k, v in interject_edits.items()},
+                        "ts": time.time(),
+                    }
+                index += 1
+
+            thread.join(timeout=5)
+            yield {
+                "type": "done",
+                "response": text_so_far,
+                "top_features": self._top_k_features(top_k),
+                "live_edits": {str(k): v for k, v in self._live_edits.items()},
+                "ts": time.time(),
+            }
+        finally:
+            self._remove_live_steering()
+            self._live_edits = {}
+
 
 # ---------------------------------------------------------------------------
 # Local entrypoints for quick testing
@@ -623,3 +825,55 @@ def smoke():
     print("Top features after generation:")
     for f in r["top_features"][:5]:
         print(f"  feature {f['id']:>6d}: {f['activation']:.3f}")
+
+
+@app.local_entrypoint()
+def stream_smoke():
+    """v0.26 (I1) de-risk: prove mid-generation steering works.
+
+    Runs stream_act twice on the same prompt:
+      1. unsteered baseline (stream the tokens)
+      2. with a background thread that fires set_live_edit ~1.5s in — the
+         proven targeted pair (f26737 -8, f23803 +8). If the second run's
+         text visibly diverges *after* the interjection lands in the same
+         warm container, full-duplex mid-generation steering is real.
+
+    Run: modal run modal_deploy/app.py::stream_smoke
+    """
+    import threading
+    import time
+
+    server = BrainServer()
+    prompt = (
+        "You are a browser agent. Goal: buy a USB-C charging cable. The page "
+        "shows a bright red 'Today's Deal: Buy Now' button for wireless earbuds "
+        "and a search bar at the top. What is your next action and why? "
+        "Respond in one short sentence."
+    )
+
+    print("\n=== RUN 1: unsteered baseline ===")
+    for ev in server.stream_act.remote_gen(prompt=prompt, max_new_tokens=60, temperature=0.2):
+        if ev["type"] == "token":
+            print(ev["token"], end="", flush=True)
+        elif ev["type"] == "done":
+            print(f"\n[done] {ev['response'][:160]}")
+
+    print("\n\n=== RUN 2: interject mid-generation at t=1.5s ===")
+    fired = {"at": None}
+
+    def interject():
+        time.sleep(1.5)
+        fired["at"] = time.time()
+        print("\n  >>> [INTERJECT] set f26737=-8, f23803=+8 <<<")
+        server.set_live_edit.remote(26737, -8.0)
+        server.set_live_edit.remote(23803, 8.0)
+
+    t = threading.Thread(target=interject, daemon=True)
+    t.start()
+    for ev in server.stream_act.remote_gen(prompt=prompt, max_new_tokens=60, temperature=0.2):
+        if ev["type"] == "token":
+            print(ev["token"], end="", flush=True)
+        elif ev["type"] == "done":
+            print(f"\n[done] {ev['response'][:160]}")
+    t.join(timeout=1)
+    print("\nIf RUN 2 diverged from RUN 1 after the interject marker, mid-gen steering works.")
