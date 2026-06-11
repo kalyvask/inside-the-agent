@@ -55,6 +55,40 @@ _SCREENSHOTS_DIR = Path("data/screenshots")
 _SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/screenshots", StaticFiles(directory=str(_SCREENSHOTS_DIR)), name="screenshots")
 
+
+def _seed_demo_assets() -> None:
+    """v0.27: make a FRESH CLONE demo-able with zero API keys.
+
+    data/ is gitignored (run artifacts), so a new clone has no trajectories or
+    screenshots — the HUD would have nothing to replay. demo_assets/ ships one
+    real captured run (eBay, 6 steps, step-0 targeted steering) as a tracked
+    fixture; on startup we copy any MISSING files into data/ so the trajectory
+    browser and /screenshots find them. Idempotent: never overwrites existing
+    runs, no-op when demo_assets/ is absent."""
+    import shutil
+
+    src = Path("demo_assets")
+    if not src.exists():
+        return
+    seeded = 0
+    for sub, dst_dir in (("trajectories", Path("data/trajectories")),
+                         ("screenshots", _SCREENSHOTS_DIR)):
+        src_dir = src / sub
+        if not src_dir.exists():
+            continue
+        dst_dir.mkdir(parents=True, exist_ok=True)
+        for f in src_dir.iterdir():
+            dst = dst_dir / f.name
+            if f.is_file() and not dst.exists():
+                shutil.copyfile(f, dst)
+                seeded += 1
+    if seeded:
+        print(f"[ws_server] seeded {seeded} demo file(s) from demo_assets/ — "
+              f"click 'REPLAY SAVED' in the HUD and pick ebay_demo_targeted.")
+
+
+_seed_demo_assets()
+
 # Allow the HUD to connect from any localhost port during dev.
 app.add_middleware(
     CORSMiddleware,

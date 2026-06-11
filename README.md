@@ -32,6 +32,33 @@ The natural next step is a model trained specifically to be intervened on via in
 [![Modal](https://img.shields.io/badge/runs--on-Modal-purple.svg)](https://modal.com)
 [![Built for Stanford CS153](https://img.shields.io/badge/built--for-Stanford%20CS153-red.svg)](https://web.stanford.edu/class/cs153/)
 
+## Try it in 2 minutes — offline, no API keys
+
+The repo ships one real captured run (`demo_assets/`: eBay, 6 steps, the two
+targeted SAE edits firing at step 0) so you can see the full cockpit without a
+Modal account, an HF token, or any spend. The bridge seeds it into `data/`
+automatically on startup.
+
+```bash
+make install        # pip deps + HUD npm install (skip playwright if replay-only)
+
+# Terminal A — WebSocket bridge (seeds the bundled demo run)
+make ws
+# Terminal B — HUD (production build + serve)
+make hud
+
+# Open http://localhost:3000, then either click "REPLAY SAVED" (top right) and
+# pick ebay_demo_targeted, or from a third terminal:
+make replay
+```
+
+You'll see the agent work a real eBay page step by step: live SAE features on
+the right, the two steering edits (`f26737 -6`, `f23803 +6`) flash at step 0 in
+the EFFECT SIZE strip, every action logged in the trajectory panel, ending in a
+neutral "task ended" card (real-web runs are qualitative — no fake ✓). The live
+stack (Modal brain-server, real-site runs, benchmarks) is documented under
+[Quickstart](#quickstart).
+
 ---
 
 ## Headline result (v0.8 — held-out 20 tasks × 3 trials = 60 per policy)

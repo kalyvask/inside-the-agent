@@ -1,0 +1,26 @@
+# Local Python dependencies (the Modal container installs its own GPU stack —
+# torch/transformers run remotely in modal_deploy/, NOT here).
+#
+#   pip install -r requirements.txt
+#
+# The offline HUD demo (ws_server + replay of the bundled demo_assets/ run)
+# needs only: fastapi, uvicorn, pydantic, typer, rich, requests.
+
+# Bridge + replay (the offline demo path)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+typer>=0.12
+rich>=13.7
+requests>=2.31
+
+# Bench + analysis
+pyyaml>=6.0
+matplotlib>=3.8
+
+# Live runs (Modal brain-server + real-site browsing) — not needed for replay
+modal>=0.62
+playwright>=1.42
+
+# Dev
+pytest>=8.0
